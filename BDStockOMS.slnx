@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BdStockOMS.API/BdStockOMS.API.csproj" />
+  <Project Path="BdStockOMS.Tests/BdStockOMS.Tests.csproj" />
+</Solution>

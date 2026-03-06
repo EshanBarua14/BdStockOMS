@@ -1,0 +1,6 @@
+@BdStockOMS.API_HostAddress = http://localhost:5289
+
+GET {{BdStockOMS.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
