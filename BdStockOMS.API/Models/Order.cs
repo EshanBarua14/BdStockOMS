@@ -1,25 +1,40 @@
+// Models/Order.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BdStockOMS.API.Models;
 
-// Enum = fixed set of allowed values
-// Stored as INT in database (0,1,2,3,4,5)
-// But we use readable names in code
 public enum OrderType
 {
-    Buy,   // = 0 — investor wants to buy shares
-    Sell   // = 1 — investor wants to sell shares
+    Buy,    // Investor wants to buy shares
+    Sell    // Investor wants to sell shares
+}
+
+public enum OrderCategory
+{
+    Market, // Execute at current market price immediately
+    Limit   // Execute only when price reaches specified limit
 }
 
 public enum OrderStatus
 {
-    Pending,    // = 0 — just placed by investor
-    Approved,   // = 1 — approved by admin
-    Rejected,   // = 2 — rejected by admin
-    Executed,   // = 3 — executed by trader
-    Completed,  // = 4 — fully processed
-    Cancelled   // = 5 — cancelled by investor
+    Pending,    // Just placed — waiting for exchange
+    Executed,   // Trade confirmed by exchange
+    Completed,  // Settlement done by CCD
+    Cancelled,  // Cancelled before execution
+    Rejected    // Failed system validation
+}
+
+public enum SettlementType
+{
+    T2,   // T+2 — pay within 2 working days (A,B,G,N category)
+    T0    // T+0 — pay same day (Z, Spot category)
+}
+
+public enum PlacedByRole
+{
+    Investor,   // Investor placed their own order
+    Trader      // Trader placed on behalf of investor
 }
 
 public class Order
@@ -27,45 +42,44 @@ public class Order
     public int Id { get; set; }
 
     // ── FOREIGN KEYS ──────────────────────────────
-    public int InvestorId { get; set; }
-    // Which investor placed this order?
-
-    public int? TraderId { get; set; }
-    // nullable — assigned when admin approves
-
-    public int StockId { get; set; }
-    // Which stock is being bought/sold?
-
-    public int BrokerageHouseId { get; set; }
-    // Which firm does this order belong to?
+    public int InvestorId { get; set; }         // Whose order is this?
+    public int? TraderId { get; set; }          // Who placed it? (null if investor placed it)
+    public int StockId { get; set; }            // Which stock?
+    public int BrokerageHouseId { get; set; }   // Which brokerage?
 
     // ── ORDER DETAILS ─────────────────────────────
-    public OrderType OrderType { get; set; }
-    // Buy or Sell — uses our enum above
+    public OrderType OrderType { get; set; }           // Buy or Sell
+    public OrderCategory OrderCategory { get; set; }   // Market or Limit
+    public int Quantity { get; set; }                  // How many shares?
 
-    public int Quantity { get; set; }
-    // How many shares?
-
+    // Price when order was placed (market price at that moment)
     public decimal PriceAtOrder { get; set; }
-    // Stock price WHEN order was placed
-    // Important — price changes, we record the moment
 
+    // For Limit orders — execute only at this price
+    public decimal? LimitPrice { get; set; }
+
+    // Actual price trade was executed at
     public decimal? ExecutionPrice { get; set; }
-    // nullable — filled in WHEN trader executes
-    // null until executed
+
+    // T+2 for normal, T+0 for Z/Spot category
+    public SettlementType SettlementType { get; set; }
+
+    // Was it placed by Investor themselves or by Trader?
+    public PlacedByRole PlacedBy { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
-    // Default = Pending when first created
 
     [MaxLength(500)]
     public string? Notes { get; set; }
-    // Optional notes — rejection reason, etc.
+
+    [MaxLength(500)]
+    public string? RejectionReason { get; set; }
 
     // ── TIMESTAMPS ────────────────────────────────
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? ApprovedAt { get; set; }   // null until approved
-    public DateTime? ExecutedAt { get; set; }   // null until executed
-    public DateTime? CompletedAt { get; set; }  // null until completed
+    public DateTime? ExecutedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public DateTime? CancelledAt { get; set; }
 
     // ── NAVIGATION PROPERTIES ─────────────────────
     [ForeignKey("InvestorId")]

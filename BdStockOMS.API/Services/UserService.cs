@@ -21,7 +21,7 @@ public class UserService : IUserService
 
     // Roles that a BrokerageHouse owner is allowed to create
     private static readonly HashSet<string> AllowedRolesToCreate =
-        new() { "Admin", "Trader", "Investor" };
+        new() { "Admin", "CCD", "ITSupport", "Trader", "Investor" };
 
     public UserService(AppDbContext db)
     {

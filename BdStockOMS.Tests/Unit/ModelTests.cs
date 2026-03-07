@@ -57,12 +57,11 @@ public class ModelTests
     }
 
     [Fact]
-    public void OrderStatus_HasAllSixStatuses()
+    public void OrderStatus_HasAllFiveStatuses()
     {
         // All 6 statuses must exist in the enum
         var values = Enum.GetValues<OrderStatus>();
         Assert.Contains(OrderStatus.Pending, values);
-        Assert.Contains(OrderStatus.Approved, values);
         Assert.Contains(OrderStatus.Rejected, values);
         Assert.Contains(OrderStatus.Executed, values);
         Assert.Contains(OrderStatus.Completed, values);
