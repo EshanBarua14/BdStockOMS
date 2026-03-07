@@ -21,7 +21,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
-builder.Services.AddScoped<IOrderService, OrderService>(); 
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICCDService, CCDService>();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>(); 
 // Scoped = one instance per HTTP request
 
 // ── JWT AUTHENTICATION ─────────────────────────
@@ -132,4 +135,5 @@ app.UseAuthorization();
 // uses the claims from UseAuthentication
 
 app.MapControllers();
+app.MapHub<BdStockOMS.API.Hubs.StockPriceHub>("/hubs/stockprice");
 app.Run();
