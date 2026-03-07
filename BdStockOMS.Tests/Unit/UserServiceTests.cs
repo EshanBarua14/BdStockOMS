@@ -60,7 +60,7 @@ public class UserServiceTests
         var (user, error) = await service.CreateUserAsync(new CreateUserDto
         {
             FullName = "Hacker", Email = "h@test.com",
-            Password = "pass123", Role = "CCD"
+            Password = "pass123", Role = "BrokerageHouse"
         }, 1);
 
         Assert.Null(user);
