@@ -19,7 +19,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // When controller asks for IAuthService,
 // DI gives it an AuthService instance
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserService, UserService>(); 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IStockService, StockService>(); 
 // Scoped = one instance per HTTP request
 
 // ── JWT AUTHENTICATION ─────────────────────────
