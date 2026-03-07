@@ -1,72 +1,74 @@
+// Controllers/AuthController.cs
+using System.Security.Claims;
 using BdStockOMS.API.DTOs.Auth;
+using BdStockOMS.API.DTOs.User;
 using BdStockOMS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BdStockOMS.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    // Controller depends on IAuthService interface
-    // not AuthService directly — loose coupling
     private readonly IAuthService _authService;
 
-    // DI injects IAuthService automatically
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
 
     // POST /api/auth/register-brokerage
-    // Public — no login required to register
     [HttpPost("register-brokerage")]
-    public async Task<IActionResult> RegisterBrokerage(
-        [FromBody] RegisterBrokerageDto dto)
+    public async Task<IActionResult> RegisterBrokerage([FromBody] RegisterBrokerageDto dto)
     {
-        // [FromBody] = read data from request body JSON
-        // ModelState.IsValid = checks [Required],
-        // [EmailAddress] etc from our DTO
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        // BadRequest = HTTP 400
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            var result = await _authService
-                .RegisterBrokerageAsync(dto);
+        var result = await _authService.RegisterBrokerageAsync(dto);
+        if (result == null)
+            return Conflict(new { message = "Email already registered or setup failed." });
 
-            // Created = HTTP 201 — new resource created
-            return Created("", result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // ex.Message = "Email already registered" etc
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(result);
     }
 
     // POST /api/auth/login
-    // Public — no login required obviously
     [HttpPost("login")]
-    public async Task<IActionResult> Login(
-        [FromBody] LoginDto dto)
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            var result = await _authService.LoginAsync(dto);
+        var result = await _authService.LoginAsync(dto);
+        if (result == null)
+            return Unauthorized(new { message = "Invalid email or password." });
 
-            // Ok = HTTP 200 with token in body
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
+        return Ok(result);
+    }
+
+    // GET /api/auth/me  — returns the currently logged-in user's profile
+    [HttpGet("me")]
+    [Authorize]   // Any authenticated user can call this
+    public async Task<IActionResult> GetMe()
+    {
+        // Extract user ID from JWT claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+            return Unauthorized(new { message = "Invalid token." });
+
+        var user = await _authService.GetUserByIdAsync(userId);
+        if (user == null)
+            return NotFound(new { message = "User not found or deactivated." });
+
+        return Ok(new UserResponseDto
         {
-            // Unauthorized = HTTP 401
-            // Don't reveal if email exists or not
-            return Unauthorized(new { message = ex.Message });
-        }
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role?.Name ?? "",
+            BrokerageHouseName = user.BrokerageHouse?.Name,
+            BrokerageHouseId = user.BrokerageHouseId,
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
+        });
     }
 }

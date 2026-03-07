@@ -10,7 +10,6 @@ namespace BdStockOMS.Tests.Unit;
 
 public class AuthServiceTests
 {
-    // Creates fresh in-memory DB for each test
     private AppDbContext CreateInMemoryContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -19,9 +18,6 @@ public class AuthServiceTests
         return new AppDbContext(options);
     }
 
-    // Creates a fake IConfiguration with JWT settings
-    // We don't want to read appsettings.json in tests
-    // We provide known values we control
     private IConfiguration CreateFakeConfiguration()
     {
         var inMemorySettings = new Dictionary<string, string?>
@@ -31,14 +27,11 @@ public class AuthServiceTests
             { "JwtSettings:Audience",      "BdStockOMS" },
             { "JwtSettings:ExpiryInDays",  "7" }
         };
-
         return new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings)
             .Build();
     }
 
-    // Seeds the 6 roles into in-memory DB
-    // AuthService needs roles to exist
     private async Task SeedRolesAsync(AppDbContext context)
     {
         await context.Roles.AddRangeAsync(
@@ -55,13 +48,11 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterBrokerage_CreatesUserAndBrokerage()
     {
-        // ARRANGE
         using var context = CreateInMemoryContext();
         await SeedRolesAsync(context);
-        var config = CreateFakeConfiguration();
-        var service = new AuthService(context, config);
+        var service = new AuthService(context, CreateFakeConfiguration());
 
-        var dto = new RegisterBrokerageDto
+        var result = await service.RegisterBrokerageAsync(new RegisterBrokerageDto
         {
             FirmName = "Test Securities",
             LicenseNumber = "LIC-001",
@@ -69,34 +60,24 @@ public class AuthServiceTests
             FullName = "Test Owner",
             Email = "owner@test.com",
             Password = "Password@123"
-        };
+        });
 
-        // ACT
-        var result = await service.RegisterBrokerageAsync(dto);
-
-        // ASSERT
         Assert.NotNull(result);
         Assert.NotEmpty(result.Token);
         Assert.Equal("Test Owner", result.FullName);
         Assert.Equal("BrokerageHouse", result.Role);
-
-        // Verify records actually saved to DB
-        var userCount = await context.Users.CountAsync();
-        var brokerageCount = await context.BrokerageHouses.CountAsync();
-        Assert.Equal(1, userCount);
-        Assert.Equal(1, brokerageCount);
+        Assert.Equal(1, await context.Users.CountAsync());
+        Assert.Equal(1, await context.BrokerageHouses.CountAsync());
     }
 
     [Fact]
-    public async Task RegisterBrokerage_DuplicateEmail_ThrowsException()
+    public async Task RegisterBrokerage_DuplicateEmail_ReturnsNull()
     {
-        // ARRANGE
         using var context = CreateInMemoryContext();
         await SeedRolesAsync(context);
-        var config = CreateFakeConfiguration();
-        var service = new AuthService(context, config);
+        var service = new AuthService(context, CreateFakeConfiguration());
 
-        var dto = new RegisterBrokerageDto
+        await service.RegisterBrokerageAsync(new RegisterBrokerageDto
         {
             FirmName = "Test Securities",
             LicenseNumber = "LIC-001",
@@ -104,15 +85,10 @@ public class AuthServiceTests
             FullName = "Test Owner",
             Email = "owner@test.com",
             Password = "Password@123"
-        };
+        });
 
-        // Register once successfully
-        await service.RegisterBrokerageAsync(dto);
-
-        // ACT + ASSERT
-        // Second registration with same email
-        // must throw InvalidOperationException
-        var dto2 = new RegisterBrokerageDto
+        // Second registration with same email — should return null
+        var result = await service.RegisterBrokerageAsync(new RegisterBrokerageDto
         {
             FirmName = "Another Securities",
             LicenseNumber = "LIC-002",
@@ -120,23 +96,18 @@ public class AuthServiceTests
             FullName = "Another Owner",
             Email = "owner@test.com", // same email!
             Password = "Password@123"
-        };
+        });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.RegisterBrokerageAsync(dto2)
-        );
+        Assert.Null(result);
     }
 
     [Fact]
     public async Task Login_ValidCredentials_ReturnsToken()
     {
-        // ARRANGE
         using var context = CreateInMemoryContext();
         await SeedRolesAsync(context);
-        var config = CreateFakeConfiguration();
-        var service = new AuthService(context, config);
+        var service = new AuthService(context, CreateFakeConfiguration());
 
-        // Register first so user exists
         await service.RegisterBrokerageAsync(new RegisterBrokerageDto
         {
             FirmName = "Test Securities",
@@ -147,14 +118,12 @@ public class AuthServiceTests
             Password = "Password@123"
         });
 
-        // ACT
         var result = await service.LoginAsync(new LoginDto
         {
             Email = "owner@test.com",
             Password = "Password@123"
         });
 
-        // ASSERT
         Assert.NotNull(result);
         Assert.NotEmpty(result.Token);
         Assert.Equal("owner@test.com", result.Email);
@@ -162,13 +131,11 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task Login_WrongPassword_ThrowsException()
+    public async Task Login_WrongPassword_ReturnsNull()
     {
-        // ARRANGE
         using var context = CreateInMemoryContext();
         await SeedRolesAsync(context);
-        var config = CreateFakeConfiguration();
-        var service = new AuthService(context, config);
+        var service = new AuthService(context, CreateFakeConfiguration());
 
         await service.RegisterBrokerageAsync(new RegisterBrokerageDto
         {
@@ -180,33 +147,28 @@ public class AuthServiceTests
             Password = "Password@123"
         });
 
-        // ACT + ASSERT
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.LoginAsync(new LoginDto
-            {
-                Email = "owner@test.com",
-                Password = "WrongPassword!" // wrong!
-            })
-        );
+        var result = await service.LoginAsync(new LoginDto
+        {
+            Email = "owner@test.com",
+            Password = "WrongPassword!"
+        });
+
+        Assert.Null(result);
     }
 
     [Fact]
-    public async Task Login_NonExistentEmail_ThrowsException()
+    public async Task Login_NonExistentEmail_ReturnsNull()
     {
-        // ARRANGE
         using var context = CreateInMemoryContext();
         await SeedRolesAsync(context);
-        var config = CreateFakeConfiguration();
-        var service = new AuthService(context, config);
+        var service = new AuthService(context, CreateFakeConfiguration());
 
-        // ACT + ASSERT
-        // Login with email that was never registered
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.LoginAsync(new LoginDto
-            {
-                Email = "nobody@test.com",
-                Password = "Password@123"
-            })
-        );
+        var result = await service.LoginAsync(new LoginDto
+        {
+            Email = "nobody@test.com",
+            Password = "Password@123"
+        });
+
+        Assert.Null(result);
     }
 }
