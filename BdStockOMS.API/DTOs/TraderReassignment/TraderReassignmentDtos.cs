@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace BdStockOMS.API.DTOs.TraderReassignment;
 
 public class TraderReassignmentResponseDto
@@ -19,7 +21,12 @@ public class TraderReassignmentResponseDto
 
 public class CreateTraderReassignmentDto
 {
+    [Range(1, int.MaxValue, ErrorMessage = "InvestorId must be a positive integer.")]
     public int InvestorId { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "NewTraderId must be a positive integer.")]
     public int NewTraderId { get; set; }
+
+    [MaxLength(500, ErrorMessage = "Reason cannot exceed 500 characters.")]
     public string? Reason { get; set; }
 }

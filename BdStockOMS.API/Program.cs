@@ -130,7 +130,23 @@ builder.Services.AddHealthChecks()
         tags: new[] { "cache", "redis" });
 
 // ── SWAGGER ────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value!.Errors.Count > 0)
+                .SelectMany(e => e.Value!.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new
+            {
+                message = "Validation failed",
+                errors = errors
+            });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
