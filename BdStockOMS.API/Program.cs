@@ -42,6 +42,7 @@ builder.Services.AddScoped<IWatchlistService, WatchlistService>();
 builder.Services.AddScoped<IPortfolioPnlService, PortfolioPnlService>();
 builder.Services.AddScoped<IBrokerageReportService, BrokerageReportService>();
 builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IOrderAmendmentService, OrderAmendmentService>();
 builder.Services.AddScoped<ITraderReassignmentService, TraderReassignmentService>();
 builder.Services.AddScoped<IMarketDataService, MarketDataService>();
