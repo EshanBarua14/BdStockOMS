@@ -61,6 +61,10 @@ public class User
     // ── STATUS ────────────────────────────────────
     public bool IsActive { get; set; } = true;
     public bool IsLocked { get; set; } = false;
+    public int FailedLoginCount { get; set; } = 0;
+    public DateTime? LockoutUntil { get; set; }
+    public bool ForcePasswordChange { get; set; } = false;
+    public DateTime? PasswordChangedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
 
@@ -79,4 +83,6 @@ public class User
 
     public virtual ICollection<Portfolio> Portfolios { get; set; }
         = new List<Portfolio>();
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 }

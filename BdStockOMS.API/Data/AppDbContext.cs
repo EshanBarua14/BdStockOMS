@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<Portfolio> Portfolios { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<SystemLog> SystemLogs { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<LoginHistory> LoginHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -133,6 +135,25 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(a => a.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── REFRESH TOKEN ────────────────────────────
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasOne(r => r.User)
+                  .WithMany(u => u.RefreshTokens)
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── LOGIN HISTORY ──────────────────────────
+        modelBuilder.Entity<LoginHistory>(entity =>
+        {
+            entity.HasOne(l => l.User)
+                  .WithMany(u => u.LoginHistories)
+                  .HasForeignKey(l => l.UserId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .IsRequired(false);
         });
 
         // ── SEED ROLES (7 roles now) ───────────────

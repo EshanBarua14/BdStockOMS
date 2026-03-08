@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
 using BdStockOMS.API.Data;
+using BdStockOMS.API.Middleware;
 using BdStockOMS.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,57 +17,84 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-// ── AUTH SERVICES ──────────────────────────────
-// Register IAuthService → AuthService
-// When controller asks for IAuthService,
-// DI gives it an AuthService instance
+// ── REDIS ──────────────────────────────────────
+var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(redisConn));
+builder.Services.AddStackExchangeRedisCache(options =>
+    options.Configuration = redisConn);
+
+// ── SERVICES ───────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICCDService, CCDService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+
+// ── BACKGROUND SERVICES ────────────────────────
+builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>();
+builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnlockService>();
+
+// ── SIGNALR ────────────────────────────────────
 builder.Services.AddSignalR();
-builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>(); 
-// Scoped = one instance per HTTP request
 
 // ── JWT AUTHENTICATION ─────────────────────────
-// NEW — tell ASP.NET how to validate JWT tokens
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"]!;
+var secretKey   = jwtSettings["SecretKey"]!;
 
 builder.Services.AddAuthentication(options =>
 {
-    // Default scheme = JWT Bearer
-    options.DefaultAuthenticateScheme =
-        JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme =
-        JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        // Validate that token was issued by US
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"],
-
-        // Validate that token is for OUR app
-        ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"],
-
-        // Validate the signature — most important
-        // Ensures token wasn't tampered with
+        ValidateIssuer           = true,
+        ValidIssuer              = jwtSettings["Issuer"],
+        ValidateAudience         = true,
+        ValidAudience            = jwtSettings["Audience"],
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(secretKey)
-        ),
-
-        // Validate token hasn't expired
-        ValidateLifetime = true,
-
-        // No clock skew — token expires exactly on time
-        ClockSkew = TimeSpan.Zero
+        IssuerSigningKey         = new SymmetricSecurityKey(
+                                       Encoding.UTF8.GetBytes(secretKey)),
+        ValidateLifetime         = true,
+        ClockSkew                = TimeSpan.Zero
     };
+});
+
+// ── CORS ───────────────────────────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BdStockOMSPolicy", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "https://*.vercel.app")
+              .SetIsOriginAllowedToAllowWildcardSubdomains()
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+// ── RATE LIMITING (built-in ASP.NET Core) ─────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", o =>
+    {
+        o.PermitLimit  = 5;
+        o.Window       = TimeSpan.FromMinutes(15);
+        o.QueueLimit   = 0;
+    });
+    options.AddFixedWindowLimiter("api", o =>
+    {
+        o.PermitLimit  = 100;
+        o.Window       = TimeSpan.FromMinutes(1);
+        o.QueueLimit   = 0;
+    });
+    options.RejectionStatusCode = 429;
 });
 
 // ── SWAGGER ────────────────────────────────────
@@ -74,23 +104,19 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "BD Stock OMS API",
-        Version = "v1",
+        Title       = "BD Stock OMS API",
+        Version     = "v1",
         Description = "Bangladesh Stock Exchange — Order Management System"
     });
-
-    // Tell Swagger about JWT auth
-    // This adds "Authorize" button to Swagger UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "Bearer",
+        Name        = "Authorization",
+        Type        = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme      = "Bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        In          = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Description = "Enter your JWT token here"
     });
-
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -109,30 +135,28 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// ── MIDDLEWARE PIPELINE (ORDER MATTERS) ────────
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint(
-            "/swagger/v1/swagger.json",
-            "BD Stock OMS API v1"
-        );
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "BD Stock OMS API v1");
         options.RoutePrefix = string.Empty;
     });
 }
 
+app.UseCors("BdStockOMSPolicy");
+app.UseRateLimiter();
 app.UseHttpsRedirection();
-
-// ORDER MATTERS — Authentication before Authorization
 app.UseAuthentication();
-// UseAuthentication = reads the JWT token
-// from request header, validates it,
-// populates User.Claims
-
+app.UseMiddleware<TokenBlacklistMiddleware>();
 app.UseAuthorization();
-// UseAuthorization = checks [Authorize] attributes
-// uses the claims from UseAuthentication
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapControllers();
 app.MapHub<BdStockOMS.API.Hubs.StockPriceHub>("/hubs/stockprice");
