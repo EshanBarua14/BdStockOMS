@@ -39,6 +39,7 @@ builder.Services.AddScoped<IRMSValidationService, RMSValidationService>();
 builder.Services.AddScoped<IFundRequestService, FundRequestService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IWatchlistService, WatchlistService>();
+builder.Services.AddScoped<IPortfolioPnlService, PortfolioPnlService>();
 builder.Services.AddScoped<IOrderAmendmentService, OrderAmendmentService>();
 builder.Services.AddScoped<ITraderReassignmentService, TraderReassignmentService>();
 builder.Services.AddScoped<IMarketDataService, MarketDataService>();
