@@ -22,6 +22,10 @@ public class AppDbContext : DbContext
     public DbSet<SystemLog> SystemLogs { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<LoginHistory> LoginHistories { get; set; }
+    public DbSet<PasswordHistory> PasswordHistories { get; set; }
+    public DbSet<TwoFactorOtp> TwoFactorOtps { get; set; }
+    public DbSet<TrustedDevice> TrustedDevices { get; set; }
+    public DbSet<UserSession> UserSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -154,6 +158,42 @@ public class AppDbContext : DbContext
                   .HasForeignKey(l => l.UserId)
                   .OnDelete(DeleteBehavior.SetNull)
                   .IsRequired(false);
+        });
+
+        // ── PASSWORD HISTORY ───────────────────────────
+        modelBuilder.Entity<PasswordHistory>(entity =>
+        {
+            entity.HasOne(p => p.User)
+                  .WithMany(u => u.PasswordHistories)
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── TWO FACTOR OTP ─────────────────────────────
+        modelBuilder.Entity<TwoFactorOtp>(entity =>
+        {
+            entity.HasOne(t => t.User)
+                  .WithMany(u => u.TwoFactorOtps)
+                  .HasForeignKey(t => t.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── TRUSTED DEVICE ─────────────────────────────
+        modelBuilder.Entity<TrustedDevice>(entity =>
+        {
+            entity.HasOne(t => t.User)
+                  .WithMany(u => u.TrustedDevices)
+                  .HasForeignKey(t => t.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── USER SESSION ───────────────────────────────
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.HasOne(s => s.User)
+                  .WithMany(u => u.UserSessions)
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── SEED ROLES (7 roles now) ───────────────

@@ -64,6 +64,7 @@ public class User
     public int FailedLoginCount { get; set; } = 0;
     public DateTime? LockoutUntil { get; set; }
     public bool ForcePasswordChange { get; set; } = false;
+    public bool TwoFactorEnabled { get; set; } = false;
     public DateTime? PasswordChangedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
@@ -84,5 +85,9 @@ public class User
     public virtual ICollection<Portfolio> Portfolios { get; set; }
         = new List<Portfolio>();
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<PasswordHistory> PasswordHistories { get; set; } = new List<PasswordHistory>();
+    public virtual ICollection<TwoFactorOtp> TwoFactorOtps { get; set; } = new List<TwoFactorOtp>();
+    public virtual ICollection<TrustedDevice> TrustedDevices { get; set; } = new List<TrustedDevice>();
+    public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
     public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 }
