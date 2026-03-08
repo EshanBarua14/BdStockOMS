@@ -38,6 +38,7 @@ builder.Services.AddScoped<ICommissionCalculatorService, CommissionCalculatorSer
 builder.Services.AddScoped<IRMSValidationService, RMSValidationService>();
 builder.Services.AddScoped<IFundRequestService, FundRequestService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IWatchlistService, WatchlistService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
