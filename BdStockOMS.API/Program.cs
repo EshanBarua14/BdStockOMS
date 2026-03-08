@@ -1,3 +1,5 @@
+using BdStockOMS.API.Repositories;
+using BdStockOMS.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
 using BdStockOMS.API.Data;
@@ -32,6 +34,12 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICCDService, CCDService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+
+// ── REPOSITORIES ──────────────────────────────
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // ── BACKGROUND SERVICES ────────────────────────
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>();
@@ -97,6 +105,14 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = 429;
 });
 
+// ── HEALTH CHECKS ────────────────────────────
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<BdStockOMS.API.Data.AppDbContext>(name: "sqlserver", tags: new[] { "db", "sql" })
+    .AddRedis(
+        builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379",
+        name: "redis",
+        tags: new[] { "cache", "redis" });
+
 // ── SWAGGER ────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -158,6 +174,25 @@ app.UseMiddleware<TokenBlacklistMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<IdempotencyMiddleware>();
 
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = new
+        {
+            status    = report.Status.ToString(),
+            checks    = report.Entries.Select(e => new
+            {
+                name      = e.Key,
+                status    = e.Value.Status.ToString(),
+                duration  = e.Value.Duration.TotalMilliseconds
+            }),
+            timestamp = DateTime.UtcNow
+        };
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
 app.MapControllers();
 app.MapHub<BdStockOMS.API.Hubs.StockPriceHub>("/hubs/stockprice");
 app.Run();

@@ -1,6 +1,8 @@
 // Controllers/UserController.cs
 using System.Security.Claims;
+using BdStockOMS.API.Common;
 using BdStockOMS.API.DTOs.User;
+using BdStockOMS.API.Repositories.Interfaces;
 using BdStockOMS.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +15,12 @@ namespace BdStockOMS.API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IUserRepository _userRepo;
 
-    public UserController(IUserService userService)
+    public UserController(IUserService userService, IUserRepository userRepo)
     {
         _userService = userService;
+        _userRepo    = userRepo;
     }
 
     // ─────────────────────────────────────────────────────────────────

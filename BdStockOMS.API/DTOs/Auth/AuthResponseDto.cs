@@ -8,6 +8,7 @@ public class AuthResponseDto
     // The JWT token — client stores this
     // and sends it with every request
     public string Token { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 
     // When does this token expire?
     public DateTime ExpiresAt { get; set; }
