@@ -39,6 +39,9 @@ builder.Services.AddScoped<IRMSValidationService, RMSValidationService>();
 builder.Services.AddScoped<IFundRequestService, FundRequestService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IWatchlistService, WatchlistService>();
+builder.Services.AddScoped<IMarketDataService, MarketDataService>();
+builder.Services.AddScoped<ICorporateActionService, CorporateActionService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
