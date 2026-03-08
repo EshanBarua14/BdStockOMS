@@ -1,38 +1,46 @@
-// Matches your backend User model
-export interface User {
-  id: number;
+// Matches AuthResponseDto from backend
+export interface AuthResponse {
+  token: string;
+  refreshToken: string;
+  expiresAt: string;
+  userId: number;
   fullName: string;
   email: string;
   role: string;
   brokerageHouseId: number;
-  isActive: boolean;
-  cashBalance: number;
+  brokerageHouseName: string;
 }
 
-// Returned by /api/auth/login
-export interface LoginResponse {
-  token: string;
-  expiration: string;
-  user: User;
-}
-
-// Sent to /api/auth/login
-export interface LoginRequest {
+// Logged-in user stored in memory
+export interface AuthUser {
+  userId: number;
+  fullName: string;
   email: string;
-  password: string;
+  role: string;
+  brokerageHouseId: number;
+  brokerageHouseName: string;
+  expiresAt: string;
 }
 
-// Auth context shape — stored in memory
+// Auth context shape
 export interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
-// Generic API error response
+// Generic API error
 export interface ApiError {
   message: string;
+  errorCode?: string;
   errors?: string[];
+}
+
+// Change password DTO
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }

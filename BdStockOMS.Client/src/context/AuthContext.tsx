@@ -1,32 +1,45 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import api from '../api/axios';
-import type { User, AuthContextType } from '../types';
+import type { AuthUser, AuthContextType, AuthResponse } from '../types';
 
-// Create the context with a default empty value
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Provider wraps the entire app and makes auth available everywhere
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser]   = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
   const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post<AuthResponse>('/auth/login', { email, password });
     const data = response.data;
 
-    // Store token in memory (window object) — NOT localStorage per your rules
+    // Store token in memory only — no localStorage
     (window as any).__authToken = data.token;
+    (window as any).__authUser = { userId: data.userId, fullName: data.fullName, email: data.email, role: data.role, brokerageHouseId: data.brokerageHouseId, brokerageHouseName: data.brokerageHouseName, expiresAt: data.expiresAt };
 
     setToken(data.token);
-    setUser(data.user);
+    setUser({
+      userId:            data.userId,
+      fullName:          data.fullName,
+      email:             data.email,
+      role:              data.role,
+      brokerageHouseId:  data.brokerageHouseId,
+      brokerageHouseName: data.brokerageHouseName,
+      expiresAt:         data.expiresAt
+    });
   };
 
-  const logout = () => {
-    // Clear everything from memory
-    (window as any).__authToken = null;
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Tell backend to blacklist the token
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore errors on logout
+    } finally {
+      (window as any).__authToken = null;
+      setToken(null);
+      setUser(null);
+    }
   };
 
   return (
@@ -42,11 +55,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook — any component can call useAuth() to get user/login/logout
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;
+}
+
+// Helper: get redirect path based on role
+export function getRoleRedirect(role: string): string {
+  switch (role) {
+    case 'SuperAdmin':
+    case 'Admin':       return '/admin/dashboard';
+    case 'Trader':      return '/trader/dashboard';
+    case 'CCD':         return '/ccd/dashboard';
+    case 'ITSupport':   return '/it/dashboard';
+    case 'Investor':    return '/dashboard';
+    default:            return '/dashboard';
+  }
 }
