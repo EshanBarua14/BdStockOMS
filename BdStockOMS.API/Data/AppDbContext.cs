@@ -26,6 +26,21 @@ public class AppDbContext : DbContext
     public DbSet<TwoFactorOtp> TwoFactorOtps { get; set; }
     public DbSet<TrustedDevice> TrustedDevices { get; set; }
     public DbSet<UserSession> UserSessions { get; set; }
+    public DbSet<CommissionRate> CommissionRates { get; set; }
+    public DbSet<BrokerageCommissionRate> BrokerageCommissionRates { get; set; }
+    public DbSet<InvestorCommissionRate> InvestorCommissionRates { get; set; }
+    public DbSet<RMSLimit> RMSLimits { get; set; }
+    public DbSet<SectorConfig> SectorConfigs { get; set; }
+    public DbSet<CorporateAction> CorporateActions { get; set; }
+    public DbSet<FundRequest> FundRequests { get; set; }
+    public DbSet<MarketData> MarketData { get; set; }
+    public DbSet<NewsItem> NewsItems { get; set; }
+    public DbSet<Watchlist> Watchlists { get; set; }
+    public DbSet<WatchlistItem> WatchlistItems { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<SystemSetting> SystemSettings { get; set; }
+    public DbSet<OrderAmendment> OrderAmendments { get; set; }
+    public DbSet<TraderReassignment> TraderReassignments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -194,6 +209,205 @@ public class AppDbContext : DbContext
                   .WithMany(u => u.UserSessions)
                   .HasForeignKey(s => s.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── COMMISSION RATES ───────────────────────────
+        modelBuilder.Entity<CommissionRate>(entity =>
+        {
+            entity.Property(c => c.BuyRate).HasPrecision(18, 4);
+            entity.Property(c => c.SellRate).HasPrecision(18, 4);
+            entity.Property(c => c.CDBLRate).HasPrecision(18, 4);
+            entity.Property(c => c.DSEFeeRate).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<BrokerageCommissionRate>(entity =>
+        {
+            entity.Property(c => c.BuyRate).HasPrecision(18, 4);
+            entity.Property(c => c.SellRate).HasPrecision(18, 4);
+            entity.HasOne(c => c.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(c => c.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<InvestorCommissionRate>(entity =>
+        {
+            entity.Property(c => c.BuyRate).HasPrecision(18, 4);
+            entity.Property(c => c.SellRate).HasPrecision(18, 4);
+            entity.HasOne(c => c.Investor)
+                  .WithMany()
+                  .HasForeignKey(c => c.InvestorId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(c => c.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.ApprovedBy)
+                  .WithMany()
+                  .HasForeignKey(c => c.ApprovedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+        });
+
+        // ── RMS LIMITS ─────────────────────────────────
+        modelBuilder.Entity<RMSLimit>(entity =>
+        {
+            entity.Property(r => r.MaxOrderValue).HasPrecision(18, 4);
+            entity.Property(r => r.MaxDailyValue).HasPrecision(18, 4);
+            entity.Property(r => r.MaxExposure).HasPrecision(18, 4);
+            entity.Property(r => r.ConcentrationPct).HasPrecision(18, 4);
+            entity.HasOne(r => r.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(r => r.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── SECTOR CONFIG ──────────────────────────────
+        modelBuilder.Entity<SectorConfig>(entity =>
+        {
+            entity.Property(s => s.MaxConcentrationPct).HasPrecision(18, 4);
+        });
+
+        // ── CORPORATE ACTIONS ──────────────────────────
+        modelBuilder.Entity<CorporateAction>(entity =>
+        {
+            entity.Property(c => c.Value).HasPrecision(18, 4);
+            entity.HasOne(c => c.Stock)
+                  .WithMany()
+                  .HasForeignKey(c => c.StockId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── FUND REQUEST ───────────────────────────────
+        modelBuilder.Entity<FundRequest>(entity =>
+        {
+            entity.Property(f => f.Amount).HasPrecision(18, 4);
+            entity.HasOne(f => f.Investor)
+                  .WithMany()
+                  .HasForeignKey(f => f.InvestorId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(f => f.Trader)
+                  .WithMany()
+                  .HasForeignKey(f => f.TraderId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+            entity.HasOne(f => f.CCDUser)
+                  .WithMany()
+                  .HasForeignKey(f => f.CCDUserId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+            entity.HasOne(f => f.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(f => f.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── MARKET DATA ────────────────────────────────
+        modelBuilder.Entity<MarketData>(entity =>
+        {
+            entity.Property(m => m.Open).HasPrecision(18, 4);
+            entity.Property(m => m.High).HasPrecision(18, 4);
+            entity.Property(m => m.Low).HasPrecision(18, 4);
+            entity.Property(m => m.Close).HasPrecision(18, 4);
+            entity.Property(m => m.ValueInMillionTaka).HasPrecision(18, 4);
+            entity.HasOne(m => m.Stock)
+                  .WithMany()
+                  .HasForeignKey(m => m.StockId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(m => new { m.StockId, m.Date, m.Exchange }).IsUnique();
+        });
+
+        // ── NEWS ───────────────────────────────────────
+        modelBuilder.Entity<NewsItem>(entity =>
+        {
+            entity.HasOne(n => n.RelatedStock)
+                  .WithMany()
+                  .HasForeignKey(n => n.RelatedStockId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+        });
+
+        // ── WATCHLIST ──────────────────────────────────
+        modelBuilder.Entity<Watchlist>(entity =>
+        {
+            entity.HasOne(w => w.User)
+                  .WithMany()
+                  .HasForeignKey(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WatchlistItem>(entity =>
+        {
+            entity.HasIndex(w => new { w.WatchlistId, w.StockId }).IsUnique();
+            entity.HasOne(w => w.Watchlist)
+                  .WithMany(w => w.Items)
+                  .HasForeignKey(w => w.WatchlistId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(w => w.Stock)
+                  .WithMany()
+                  .HasForeignKey(w => w.StockId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── NOTIFICATION ───────────────────────────────
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasOne(n => n.User)
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── SYSTEM SETTING ─────────────────────────────
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.HasIndex(s => s.Key).IsUnique();
+            entity.HasOne(s => s.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(s => s.UpdatedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+        });
+
+        // ── ORDER AMENDMENT ────────────────────────────
+        modelBuilder.Entity<OrderAmendment>(entity =>
+        {
+            entity.Property(o => o.OldPrice).HasPrecision(18, 4);
+            entity.Property(o => o.NewPrice).HasPrecision(18, 4);
+            entity.HasOne(o => o.Order)
+                  .WithMany()
+                  .HasForeignKey(o => o.OrderId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(o => o.AmendedBy)
+                  .WithMany()
+                  .HasForeignKey(o => o.AmendedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── TRADER REASSIGNMENT ────────────────────────
+        modelBuilder.Entity<TraderReassignment>(entity =>
+        {
+            entity.HasOne(t => t.Investor)
+                  .WithMany()
+                  .HasForeignKey(t => t.InvestorId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.OldTrader)
+                  .WithMany()
+                  .HasForeignKey(t => t.OldTraderId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+            entity.HasOne(t => t.NewTrader)
+                  .WithMany()
+                  .HasForeignKey(t => t.NewTraderId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.ReassignedBy)
+                  .WithMany()
+                  .HasForeignKey(t => t.ReassignedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(t => t.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ── SEED ROLES (7 roles now) ───────────────
