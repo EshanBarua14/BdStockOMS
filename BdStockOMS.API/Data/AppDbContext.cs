@@ -54,6 +54,8 @@ public class AppDbContext : DbContext
     public DbSet<StockAnalytics> StockAnalytics { get; set; }
     public DbSet<FileImportBatch> FileImportBatches { get; set; }
     public DbSet<FileImportRow> FileImportRows { get; set; }
+    public DbSet<BrokerageSettings> BrokerageSettings { get; set; }
+    public DbSet<BranchOffice> BranchOffices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -479,7 +481,30 @@ public class AppDbContext : DbContext
         });
 
 
-        modelBuilder.Entity<FileImportBatch>(entity =>
+        modelBuilder.Entity<BrokerageSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.BrokerageHouseId).IsUnique();
+            entity.HasOne(e => e.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(e => e.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BranchOffice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.BranchCode).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Address).IsRequired().HasMaxLength(500);
+            entity.HasIndex(e => new { e.BrokerageHouseId, e.BranchCode }).IsUnique();
+            entity.HasOne(e => e.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(e => e.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+                modelBuilder.Entity<FileImportBatch>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
