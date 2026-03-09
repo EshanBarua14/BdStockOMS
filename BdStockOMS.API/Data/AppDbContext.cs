@@ -44,6 +44,7 @@ public class AppDbContext : DbContext
     public DbSet<Trade> Trades { get; set; }
     public DbSet<OrderEvent> OrderEvents { get; set; }
     public DbSet<TradeAlert> TradeAlerts { get; set; }
+    public DbSet<CommissionLedger> CommissionLedgers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -425,6 +426,17 @@ public class AppDbContext : DbContext
         {
             entity.Property(t => t.ThresholdValue).HasPrecision(18, 4);
             entity.Property(t => t.ActualValue).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<CommissionLedger>(entity =>
+        {
+            entity.Property(c => c.TradeValue).HasPrecision(18, 4);
+            entity.Property(c => c.BrokerCommission).HasPrecision(18, 4);
+            entity.Property(c => c.CDBLCharge).HasPrecision(18, 4);
+            entity.Property(c => c.ExchangeFee).HasPrecision(18, 4);
+            entity.Property(c => c.TotalCharges).HasPrecision(18, 4);
+            entity.Property(c => c.NetAmount).HasPrecision(18, 4);
+            entity.Property(c => c.CommissionRate).HasPrecision(18, 6);
         });
         modelBuilder.Entity<Role>().HasData(
             new Role { Id = 1, Name = "SuperAdmin" },

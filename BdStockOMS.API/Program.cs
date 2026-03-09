@@ -43,6 +43,7 @@ builder.Services.AddKeyedScoped<IExchangeConnector, SimulatedExchangeConnector>(
 builder.Services.AddSingleton<IExchangeConnectorFactory, ExchangeConnectorFactory>();
 
 builder.Services.AddScoped<IOrderStateMachine, OrderStateMachine>();
+builder.Services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
