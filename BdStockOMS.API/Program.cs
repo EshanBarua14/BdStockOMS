@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
+using BdStockOMS.API.Exchange;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ── DATABASE ───────────────────────────────────
@@ -27,6 +29,19 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = redisConn);
 
 // ── SERVICES ───────────────────────────────────
+// Tenant context
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
+
+// Exchange connectors (plug-and-play — swap SimulatedExchangeConnector for real connector here)
+builder.Services.AddKeyedScoped<IExchangeConnector, SimulatedExchangeConnector>("DSE",
+    (sp, _) => new SimulatedExchangeConnector("DSE",
+        sp.GetRequiredService<ILogger<SimulatedExchangeConnector>>()));
+builder.Services.AddKeyedScoped<IExchangeConnector, SimulatedExchangeConnector>("CSE",
+    (sp, _) => new SimulatedExchangeConnector("CSE",
+        sp.GetRequiredService<ILogger<SimulatedExchangeConnector>>()));
+builder.Services.AddSingleton<IExchangeConnectorFactory, ExchangeConnectorFactory>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
