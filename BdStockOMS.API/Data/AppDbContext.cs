@@ -48,6 +48,8 @@ public class AppDbContext : DbContext
     public DbSet<SettlementBatch> SettlementBatches { get; set; }
     public DbSet<SettlementItem> SettlementItems { get; set; }
     public DbSet<MarketDepth> MarketDepths { get; set; }
+    public DbSet<KycDocument> KycDocuments { get; set; }
+    public DbSet<KycApproval> KycApprovals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -471,6 +473,38 @@ public class AppDbContext : DbContext
             entity.Property(c => c.NetAmount).HasPrecision(18, 4);
             entity.Property(c => c.CommissionRate).HasPrecision(18, 6);
         });
+
+
+        modelBuilder.Entity<KycDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DocumentNumber).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.BackFilePath).HasMaxLength(500);
+            entity.Property(e => e.RejectionReason).HasMaxLength(1000);
+            entity.Property(e => e.Status).HasConversion<string>();
+            entity.Property(e => e.DocumentType).HasConversion<string>();
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<KycApproval>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Remarks).HasMaxLength(1000);
+            entity.Property(e => e.Action).HasConversion<string>();
+            entity.HasOne(e => e.KycDocument)
+                  .WithMany(d => d.KycApprovals)
+                  .HasForeignKey(e => e.KycDocumentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ActorUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.ActorUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<Role>().HasData(
             new Role { Id = 1, Name = "SuperAdmin" },
             new Role { Id = 2, Name = "BrokerageHouse" },

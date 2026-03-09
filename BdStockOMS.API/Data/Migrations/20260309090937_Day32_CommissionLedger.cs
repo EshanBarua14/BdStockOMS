@@ -88,13 +88,13 @@ namespace BdStockOMS.API.Data.Migrations
                         column: x => x.TradeId,
                         principalTable: "Trades",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
                         name: "FK_CommissionLedgers_Users_InvestorId",
                         column: x => x.InvestorId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateIndex(
