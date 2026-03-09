@@ -45,6 +45,7 @@ builder.Services.AddSingleton<IExchangeConnectorFactory, ExchangeConnectorFactor
 builder.Services.AddScoped<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
 builder.Services.AddScoped<ISettlementService, SettlementService>();
+builder.Services.AddScoped<IMarketDepthService, MarketDepthService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();

@@ -47,6 +47,7 @@ public class AppDbContext : DbContext
     public DbSet<CommissionLedger> CommissionLedgers { get; set; }
     public DbSet<SettlementBatch> SettlementBatches { get; set; }
     public DbSet<SettlementItem> SettlementItems { get; set; }
+    public DbSet<MarketDepth> MarketDepths { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -428,6 +429,21 @@ public class AppDbContext : DbContext
         {
             entity.Property(t => t.ThresholdValue).HasPrecision(18, 4);
             entity.Property(t => t.ActualValue).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<MarketDepth>(entity =>
+        {
+            entity.HasIndex(d => d.StockId).IsUnique();
+            entity.Property(d => d.Bid1Price).HasPrecision(18, 4);
+            entity.Property(d => d.Bid2Price).HasPrecision(18, 4);
+            entity.Property(d => d.Bid3Price).HasPrecision(18, 4);
+            entity.Property(d => d.Bid4Price).HasPrecision(18, 4);
+            entity.Property(d => d.Bid5Price).HasPrecision(18, 4);
+            entity.Property(d => d.Ask1Price).HasPrecision(18, 4);
+            entity.Property(d => d.Ask2Price).HasPrecision(18, 4);
+            entity.Property(d => d.Ask3Price).HasPrecision(18, 4);
+            entity.Property(d => d.Ask4Price).HasPrecision(18, 4);
+            entity.Property(d => d.Ask5Price).HasPrecision(18, 4);
         });
 
         modelBuilder.Entity<SettlementBatch>(entity =>
