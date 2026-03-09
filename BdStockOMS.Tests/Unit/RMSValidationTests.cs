@@ -1,6 +1,8 @@
 using BdStockOMS.API.Data;
 using BdStockOMS.API.Models;
 using BdStockOMS.API.Services;
+using BdStockOMS.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -24,7 +26,12 @@ public class RMSValidationTests
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<string?>(),
             It.IsAny<string?>())).Returns(Task.CompletedTask);
-        return new RMSValidationService(db, auditMock.Object);
+        var clientsMock = new Mock<IHubClients>();
+        var clientProxyMock = new Mock<IClientProxy>();
+        clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(clientProxyMock.Object);
+        var hubMock = new Mock<IHubContext<NotificationHub>>();
+        hubMock.Setup(h => h.Clients).Returns(clientsMock.Object);
+        return new RMSValidationService(db, auditMock.Object, hubMock.Object);
     }
 
     private async Task SeedBaseDataAsync(AppDbContext db)
@@ -39,7 +46,7 @@ public class RMSValidationTests
         {
             Id = 1, FullName = "Test Investor", Email = "investor@test.com",
             PasswordHash = "hash", Phone = "01700000000",
-            RoleId = 1, BrokerageHouseId = 1
+            RoleId = 1, BrokerageHouseId = 1, CashBalance = 10_000_000m
         });
         db.Stocks.Add(new Stock
         {

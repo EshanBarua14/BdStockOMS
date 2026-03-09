@@ -43,6 +43,7 @@ public class AppDbContext : DbContext
     public DbSet<TraderReassignment> TraderReassignments { get; set; }
     public DbSet<Trade> Trades { get; set; }
     public DbSet<OrderEvent> OrderEvents { get; set; }
+    public DbSet<TradeAlert> TradeAlerts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -413,6 +414,18 @@ public class AppDbContext : DbContext
         });
 
         // ── SEED ROLES (7 roles now) ───────────────
+
+        modelBuilder.Entity<Trade>(entity =>
+        {
+            entity.Property(t => t.Price).HasPrecision(18, 4);
+            entity.Property(t => t.TotalValue).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<TradeAlert>(entity =>
+        {
+            entity.Property(t => t.ThresholdValue).HasPrecision(18, 4);
+            entity.Property(t => t.ActualValue).HasPrecision(18, 4);
+        });
         modelBuilder.Entity<Role>().HasData(
             new Role { Id = 1, Name = "SuperAdmin" },
             new Role { Id = 2, Name = "BrokerageHouse" },

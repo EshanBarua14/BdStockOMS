@@ -1,6 +1,8 @@
 using BdStockOMS.API.Common;
 using BdStockOMS.API.Data;
 using BdStockOMS.API.Models;
+using BdStockOMS.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BdStockOMS.API.Services;
@@ -26,24 +28,28 @@ public interface IRMSValidationService
         int investorId, int stockId, decimal orderValue);
     Task<RMSValidationResult> CheckSectorConcentrationAsync(
         int investorId, int stockId, decimal orderValue);
+    Task<RMSValidationResult> CheckCashBalanceAsync(
+        int investorId, decimal orderValue, int brokerageHouseId);
 }
 
 public class RMSValidationService : IRMSValidationService
 {
     private readonly AppDbContext _db;
     private readonly IAuditService _audit;
+    private readonly IHubContext<NotificationHub> _hub;
 
-    // BSEC default limits when no RMSLimit configured
-    private const decimal DefaultMaxOrderValue      = 5_000_000m;   // 50 lakh BDT
-    private const decimal DefaultMaxDailyValue      = 20_000_000m;  // 2 crore BDT
-    private const decimal DefaultMaxExposure        = 50_000_000m;  // 5 crore BDT
-    private const decimal DefaultConcentrationPct   = 10m;          // 10% per stock
-    private const decimal DefaultSectorConcentration = 25m;         // 25% per sector
+    private const decimal DefaultMaxOrderValue       = 5_000_000m;
+    private const decimal DefaultMaxDailyValue       = 20_000_000m;
+    private const decimal DefaultMaxExposure         = 50_000_000m;
+    private const decimal DefaultConcentrationPct    = 10m;
+    private const decimal DefaultSectorConcentration = 25m;
 
-    public RMSValidationService(AppDbContext db, IAuditService audit)
+    public RMSValidationService(AppDbContext db, IAuditService audit,
+        IHubContext<NotificationHub> hub)
     {
         _db    = db;
         _audit = audit;
+        _hub   = hub;
     }
 
     public async Task<RMSValidationResult> ValidateOrderAsync(
@@ -52,15 +58,22 @@ public class RMSValidationService : IRMSValidationService
     {
         var result = new RMSValidationResult { IsAllowed = true };
 
-        // 1. Order value limit
+        // 1. Cash balance (buy orders only)
+        if (orderSide.ToUpper() == "BUY")
+        {
+            var cashCheck = await CheckCashBalanceAsync(investorId, orderValue, brokerageHouseId);
+            MergeResult(result, cashCheck);
+        }
+
+        // 2. Order value limit
         var orderCheck = await CheckOrderValueLimitAsync(investorId, orderValue, brokerageHouseId);
         MergeResult(result, orderCheck);
 
-        // 2. Daily exposure
+        // 3. Daily exposure
         var dailyCheck = await CheckDailyExposureAsync(investorId, orderValue, brokerageHouseId);
         MergeResult(result, dailyCheck);
 
-        // 3. Stock concentration (buy orders only)
+        // 4. Stock + sector concentration (buy orders only)
         if (orderSide.ToUpper() == "BUY")
         {
             var concentrationCheck = await CheckConcentrationAsync(investorId, stockId, orderValue);
@@ -74,13 +87,39 @@ public class RMSValidationService : IRMSValidationService
         {
             result.IsAllowed = false;
             result.Action    = RMSAction.Block;
+
+            await CreateTradeAlertAsync(investorId, brokerageHouseId,
+                TradeAlertSeverity.Breach, result.Violations);
+
             await _audit.LogAsync(investorId, "RMS_ORDER_BLOCKED", "Order",
                 null, null, string.Join("; ", result.Violations), null);
         }
         else if (result.Warnings.Any())
         {
             result.Action = RMSAction.Warn;
+
+            await CreateTradeAlertAsync(investorId, brokerageHouseId,
+                TradeAlertSeverity.Warning, result.Warnings);
         }
+
+        return result;
+    }
+
+    public async Task<RMSValidationResult> CheckCashBalanceAsync(
+        int investorId, decimal orderValue, int brokerageHouseId)
+    {
+        var result = new RMSValidationResult { IsAllowed = true };
+
+        var investor    = await _db.Users.FindAsync(investorId);
+        var cashBalance = investor?.CashBalance ?? 0m;
+
+        if (cashBalance < orderValue)
+            result.Violations.Add(
+                $"Insufficient cash balance. Available: {cashBalance:N2} BDT, Required: {orderValue:N2} BDT.");
+        else if (cashBalance < orderValue * 1.1m)
+            result.Warnings.Add(
+                $"Cash balance {cashBalance:N2} BDT is low relative to order value {orderValue:N2} BDT.");
+        if (result.Violations.Any()) result.IsAllowed = false;
 
         return result;
     }
@@ -90,7 +129,7 @@ public class RMSValidationService : IRMSValidationService
     {
         var result = new RMSValidationResult { IsAllowed = true };
 
-        var limit = await GetRMSLimitAsync(investorId, brokerageHouseId, RMSLevel.Investor);
+        var limit         = await GetRMSLimitAsync(investorId, brokerageHouseId, RMSLevel.Investor);
         var maxOrderValue = limit?.MaxOrderValue ?? DefaultMaxOrderValue;
 
         if (orderValue > maxOrderValue)
@@ -100,6 +139,7 @@ public class RMSValidationService : IRMSValidationService
             result.Warnings.Add(
                 $"Order value {orderValue:N2} is above 80% of your limit.");
 
+        if (result.Violations.Any()) result.IsAllowed = false;
         return result;
     }
 
@@ -108,11 +148,10 @@ public class RMSValidationService : IRMSValidationService
     {
         var result = new RMSValidationResult { IsAllowed = true };
 
-        var limit = await GetRMSLimitAsync(investorId, brokerageHouseId, RMSLevel.Investor);
+        var limit         = await GetRMSLimitAsync(investorId, brokerageHouseId, RMSLevel.Investor);
         var maxDailyValue = limit?.MaxDailyValue ?? DefaultMaxDailyValue;
 
-        // Sum today's orders
-        var today = DateTime.UtcNow.Date;
+        var today      = DateTime.UtcNow.Date;
         var todayTotal = await _db.Orders
             .Where(o => o.InvestorId == investorId &&
                         o.CreatedAt.Date == today &&
@@ -129,6 +168,7 @@ public class RMSValidationService : IRMSValidationService
             result.Warnings.Add(
                 $"Daily exposure {projectedTotal:N2} is above 80% of your daily limit.");
 
+        if (result.Violations.Any()) result.IsAllowed = false;
         return result;
     }
 
@@ -137,7 +177,6 @@ public class RMSValidationService : IRMSValidationService
     {
         var result = new RMSValidationResult { IsAllowed = true };
 
-        // Total portfolio value
         var portfolio = await _db.Portfolios
             .Where(p => p.InvestorId == investorId)
             .ToListAsync();
@@ -147,16 +186,14 @@ public class RMSValidationService : IRMSValidationService
         var totalPortfolioValue = portfolio.Sum(p => p.Quantity * p.AverageBuyPrice);
         if (totalPortfolioValue <= 0) return result;
 
-        // Current holding in this stock
-        var currentHolding = portfolio
+        var currentHolding   = portfolio
             .Where(p => p.StockId == stockId)
             .Sum(p => p.Quantity * p.AverageBuyPrice);
 
-        var projectedHolding  = currentHolding + orderValue;
-        var projectedPct      = (projectedHolding / (totalPortfolioValue + orderValue)) * 100m;
-        var maxConcentration  = DefaultConcentrationPct;
+        var projectedHolding = currentHolding + orderValue;
+        var projectedPct     = (projectedHolding / (totalPortfolioValue + orderValue)) * 100m;
+        var maxConcentration = DefaultConcentrationPct;
 
-        // Check SectorConfig for stock-specific limit
         var stock = await _db.Stocks.FindAsync(stockId);
         if (stock != null)
         {
@@ -174,6 +211,7 @@ public class RMSValidationService : IRMSValidationService
             result.Warnings.Add(
                 $"Stock concentration {projectedPct:N2}% is approaching limit of {maxConcentration}%.");
 
+        if (result.Violations.Any()) result.IsAllowed = false;
         return result;
     }
 
@@ -213,6 +251,34 @@ public class RMSValidationService : IRMSValidationService
                 $"Sector concentration {projectedSectorPct:N2}% would exceed limit of {maxSectorPct}%.");
 
         return result;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────
+
+    private async Task CreateTradeAlertAsync(int investorId, int brokerageHouseId,
+        TradeAlertSeverity severity, List<string> messages)
+    {
+        var alert = new TradeAlert
+        {
+            InvestorId       = investorId,
+            BrokerageHouseId = brokerageHouseId,
+            Severity         = severity,
+            AlertType        = TradeAlertType.OrderValueLimit, // generic fallback
+            Message          = string.Join(" | ", messages),
+            CreatedAt        = DateTime.UtcNow,
+        };
+
+        _db.TradeAlerts.Add(alert);
+        await _db.SaveChangesAsync();
+
+        // SignalR — push to investor's group
+        await _hub.Clients.Group($"user-{investorId}")
+            .SendAsync("RmsAlert", new
+            {
+                severity = severity.ToString(),
+                messages,
+                timestamp = DateTime.UtcNow,
+            });
     }
 
     private async Task<RMSLimit?> GetRMSLimitAsync(
