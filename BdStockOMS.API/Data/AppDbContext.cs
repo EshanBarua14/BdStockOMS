@@ -52,6 +52,8 @@ public class AppDbContext : DbContext
     public DbSet<KycApproval> KycApprovals { get; set; }
     public DbSet<PortfolioSnapshot> PortfolioSnapshots { get; set; }
     public DbSet<StockAnalytics> StockAnalytics { get; set; }
+    public DbSet<FileImportBatch> FileImportBatches { get; set; }
+    public DbSet<FileImportRow> FileImportRows { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -477,7 +479,37 @@ public class AppDbContext : DbContext
         });
 
 
-        modelBuilder.Entity<PortfolioSnapshot>(entity =>
+        modelBuilder.Entity<FileImportBatch>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.Status).HasConversion<string>();
+            entity.Property(e => e.FileType).HasConversion<string>();
+            entity.HasOne(e => e.UploadedByUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.UploadedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(e => e.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FileImportRow>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RawData).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.ValidationError).HasMaxLength(1000);
+            entity.Property(e => e.ParsedData).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasConversion<string>();
+            entity.HasOne(e => e.FileImportBatch)
+                  .WithMany(b => b.Rows)
+                  .HasForeignKey(e => e.FileImportBatchId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+                modelBuilder.Entity<PortfolioSnapshot>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => new { e.UserId, e.SnapshotDate });
