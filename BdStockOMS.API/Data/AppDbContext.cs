@@ -45,6 +45,8 @@ public class AppDbContext : DbContext
     public DbSet<OrderEvent> OrderEvents { get; set; }
     public DbSet<TradeAlert> TradeAlerts { get; set; }
     public DbSet<CommissionLedger> CommissionLedgers { get; set; }
+    public DbSet<SettlementBatch> SettlementBatches { get; set; }
+    public DbSet<SettlementItem> SettlementItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -426,6 +428,21 @@ public class AppDbContext : DbContext
         {
             entity.Property(t => t.ThresholdValue).HasPrecision(18, 4);
             entity.Property(t => t.ActualValue).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<SettlementBatch>(entity =>
+        {
+            entity.Property(s => s.TotalBuyValue).HasPrecision(18, 4);
+            entity.Property(s => s.TotalSellValue).HasPrecision(18, 4);
+            entity.Property(s => s.NetObligations).HasPrecision(18, 4);
+        });
+
+        modelBuilder.Entity<SettlementItem>(entity =>
+        {
+            entity.Property(s => s.Price).HasPrecision(18, 4);
+            entity.Property(s => s.TradeValue).HasPrecision(18, 4);
+            entity.Property(s => s.TotalCharges).HasPrecision(18, 4);
+            entity.Property(s => s.NetAmount).HasPrecision(18, 4);
         });
 
         modelBuilder.Entity<CommissionLedger>(entity =>
