@@ -54,6 +54,7 @@ builder.Services.AddScoped<IBrokerSummaryService, BrokerSummaryService>();
 builder.Services.AddScoped<IEmailService, SimulatedEmailService>();
 builder.Services.AddScoped<ISmsService, SimulatedSmsService>();
 builder.Services.AddScoped<INotificationDispatcherService, NotificationDispatcherService>();
+builder.Services.AddScoped<IAuditComplianceService, AuditComplianceService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
