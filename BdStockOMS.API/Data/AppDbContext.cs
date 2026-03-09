@@ -56,6 +56,8 @@ public class AppDbContext : DbContext
     public DbSet<FileImportRow> FileImportRows { get; set; }
     public DbSet<BrokerageSettings> BrokerageSettings { get; set; }
     public DbSet<BranchOffice> BranchOffices { get; set; }
+    public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+    public DbSet<NotificationLog> NotificationLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

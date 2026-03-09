@@ -1,74 +1,67 @@
-using System.Security.Claims;
-using BdStockOMS.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BdStockOMS.API.Models;
+using BdStockOMS.API.Services;
 
-namespace BdStockOMS.API.Controllers;
-
-[ApiController]
-[Route("api/notifications")]
-[Authorize]
-public class NotificationController : ControllerBase
+namespace BdStockOMS.API.Controllers
 {
-    private readonly INotificationService _notificationService;
-
-    public NotificationController(INotificationService notificationService)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class NotificationController : ControllerBase
     {
-        _notificationService = notificationService;
+        private readonly INotificationDispatcherService _dispatcher;
+
+        public NotificationController(INotificationDispatcherService dispatcher)
+        {
+            _dispatcher = dispatcher;
+        }
+
+        // GET api/notification/logs
+        [HttpGet("logs")]
+        [Authorize(Roles = "SuperAdmin,Admin,Compliance")]
+        public async Task<IActionResult> GetLogs([FromQuery] int? userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var logs = await _dispatcher.GetLogsAsync(userId, page, pageSize);
+            return Ok(logs);
+        }
+
+        // GET api/notification/preferences/{userId}
+        [HttpGet("preferences/{userId}")]
+        public async Task<IActionResult> GetPreferences(int userId)
+        {
+            var prefs = await _dispatcher.GetPreferencesAsync(userId);
+            return Ok(prefs);
+        }
+
+        // POST api/notification/preferences
+        [HttpPost("preferences")]
+        public async Task<IActionResult> UpsertPreference([FromBody] UpsertPreferenceRequest request)
+        {
+            await _dispatcher.UpsertPreferenceAsync(request.UserId, request.EventType, request.Channel, request.IsEnabled);
+            return Ok(new { message = "Preference saved." });
+        }
+
+        // POST api/notification/dispatch
+        [HttpPost("dispatch")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> Dispatch([FromBody] DispatchRequest request)
+        {
+            await _dispatcher.DispatchAsync(request.UserId, request.EventType, request.Subject, request.Body);
+            return Ok(new { message = "Notification dispatched." });
+        }
+
+        // POST api/notification/dispatch-role
+        [HttpPost("dispatch-role")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> DispatchToRole([FromBody] DispatchRoleRequest request)
+        {
+            await _dispatcher.DispatchToRoleAsync(request.Role, request.EventType, request.Subject, request.Body);
+            return Ok(new { message = "Role notification dispatched." });
+        }
     }
 
-    private int GetUserId()
-    {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                 ?? User.FindFirst("userId")?.Value;
-        return int.TryParse(claim, out int id) ? id : 0;
-    }
-
-    // GET /api/notifications
-    [HttpGet]
-    public async Task<IActionResult> GetNotifications(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] bool unreadOnly = false)
-    {
-        var result = await _notificationService.GetMyNotificationsAsync(
-            GetUserId(), page, pageSize, unreadOnly);
-        return Ok(result);
-    }
-
-    // GET /api/notifications/unread-count
-    [HttpGet("unread-count")]
-    public async Task<IActionResult> GetUnreadCount()
-    {
-        var count = await _notificationService.GetUnreadCountAsync(GetUserId());
-        return Ok(new { unreadCount = count });
-    }
-
-    // PUT /api/notifications/{id}/read
-    [HttpPut("{id}/read")]
-    public async Task<IActionResult> MarkAsRead(int id)
-    {
-        var result = await _notificationService.MarkAsReadAsync(id, GetUserId());
-        if (!result.IsSuccess)
-            return NotFound(new { message = result.Error });
-        return Ok(new { message = "Notification marked as read." });
-    }
-
-    // PUT /api/notifications/read-all
-    [HttpPut("read-all")]
-    public async Task<IActionResult> MarkAllAsRead()
-    {
-        var count = await _notificationService.MarkAllAsReadAsync(GetUserId());
-        return Ok(new { message = $"{count} notifications marked as read." });
-    }
-
-    // DELETE /api/notifications/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var result = await _notificationService.DeleteAsync(id, GetUserId());
-        if (!result.IsSuccess)
-            return NotFound(new { message = result.Error });
-        return Ok(new { message = "Notification deleted." });
-    }
+    public record UpsertPreferenceRequest(int UserId, NotificationEventType EventType, NotificationChannel Channel, bool IsEnabled);
+    public record DispatchRequest(int UserId, NotificationEventType EventType, string Subject, string Body);
+    public record DispatchRoleRequest(string Role, NotificationEventType EventType, string Subject, string Body);
 }

@@ -51,6 +51,9 @@ builder.Services.AddScoped<IPortfolioSnapshotService, PortfolioSnapshotService>(
 builder.Services.AddScoped<IFileImportService, FileImportService>();
 builder.Services.AddScoped<IBrokerageSettingsService, BrokerageSettingsService>();
 builder.Services.AddScoped<IBrokerSummaryService, BrokerSummaryService>();
+builder.Services.AddScoped<IEmailService, SimulatedEmailService>();
+builder.Services.AddScoped<ISmsService, SimulatedSmsService>();
+builder.Services.AddScoped<INotificationDispatcherService, NotificationDispatcherService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
