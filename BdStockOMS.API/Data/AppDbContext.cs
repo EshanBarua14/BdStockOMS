@@ -41,6 +41,8 @@ public class AppDbContext : DbContext
     public DbSet<SystemSetting> SystemSettings { get; set; }
     public DbSet<OrderAmendment> OrderAmendments { get; set; }
     public DbSet<TraderReassignment> TraderReassignments { get; set; }
+    public DbSet<Trade> Trades { get; set; }
+    public DbSet<OrderEvent> OrderEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

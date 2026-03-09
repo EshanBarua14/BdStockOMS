@@ -42,6 +42,7 @@ builder.Services.AddKeyedScoped<IExchangeConnector, SimulatedExchangeConnector>(
         sp.GetRequiredService<ILogger<SimulatedExchangeConnector>>()));
 builder.Services.AddSingleton<IExchangeConnectorFactory, ExchangeConnectorFactory>();
 
+builder.Services.AddScoped<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStockService, StockService>();
