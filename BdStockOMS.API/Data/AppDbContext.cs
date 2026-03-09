@@ -50,6 +50,8 @@ public class AppDbContext : DbContext
     public DbSet<MarketDepth> MarketDepths { get; set; }
     public DbSet<KycDocument> KycDocuments { get; set; }
     public DbSet<KycApproval> KycApprovals { get; set; }
+    public DbSet<PortfolioSnapshot> PortfolioSnapshots { get; set; }
+    public DbSet<StockAnalytics> StockAnalytics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -475,7 +477,32 @@ public class AppDbContext : DbContext
         });
 
 
-        modelBuilder.Entity<KycDocument>(entity =>
+        modelBuilder.Entity<PortfolioSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.SnapshotDate });
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.BrokerageHouse)
+                  .WithMany()
+                  .HasForeignKey(e => e.BrokerageHouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<StockAnalytics>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.StockId, e.Exchange }).IsUnique();
+            entity.Property(e => e.Exchange).IsRequired().HasMaxLength(10);
+            entity.HasOne(e => e.Stock)
+                  .WithMany()
+                  .HasForeignKey(e => e.StockId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+                modelBuilder.Entity<KycDocument>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.DocumentNumber).IsRequired().HasMaxLength(200);
