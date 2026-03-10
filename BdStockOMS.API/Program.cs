@@ -91,6 +91,7 @@ builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUp
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnlockService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 builder.Services.AddScoped<IFlextradeBosComplianceService, FlextradeBosComplianceService>();
+builder.Services.AddScoped<IBosXmlService, BosXmlService>();
 builder.Services.AddScoped<IContractNoteService, ContractNoteService>();
 builder.Services.AddHostedService<BosComplianceHostedService>();
 
