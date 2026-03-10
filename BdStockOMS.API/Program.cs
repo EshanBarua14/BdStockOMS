@@ -92,6 +92,9 @@ builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnloc
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 builder.Services.AddScoped<IFlextradeBosComplianceService, FlextradeBosComplianceService>();
 builder.Services.AddScoped<IBosXmlService, BosXmlService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddScoped<ISessionPolicyService, SessionPolicyService>();
+builder.Services.AddScoped<IUserPermissionService, UserPermissionService>();
 builder.Services.AddScoped<IContractNoteService, ContractNoteService>();
 builder.Services.AddHostedService<BosComplianceHostedService>();
 

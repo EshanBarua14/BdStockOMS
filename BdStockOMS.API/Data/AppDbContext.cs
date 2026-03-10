@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<TwoFactorOtp> TwoFactorOtps { get; set; }
     public DbSet<TrustedDevice> TrustedDevices { get; set; }
     public DbSet<UserSession> UserSessions { get; set; }
+    public DbSet<UserPermission> UserPermissions { get; set; }
     public DbSet<CommissionRate> CommissionRates { get; set; }
     public DbSet<BrokerageCommissionRate> BrokerageCommissionRates { get; set; }
     public DbSet<InvestorCommissionRate> InvestorCommissionRates { get; set; }
@@ -593,6 +594,20 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ActorUserId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserPermission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.GrantedBy)
+                  .WithMany()
+                  .HasForeignKey(e => e.GrantedByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.UserId, e.Permission }).IsUnique();
         });
 
         modelBuilder.Entity<Role>().HasData(

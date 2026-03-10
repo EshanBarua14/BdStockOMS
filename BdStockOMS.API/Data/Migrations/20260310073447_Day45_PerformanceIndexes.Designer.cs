@@ -4,6 +4,7 @@ using BdStockOMS.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BdStockOMS.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310073447_Day45_PerformanceIndexes")]
+    partial class Day45_PerformanceIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2812,47 +2815,6 @@ namespace BdStockOMS.API.Data.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("BdStockOMS.API.Models.UserPermission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("GrantedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("GrantedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsGranted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Module")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Permission")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrantedByUserId");
-
-                    b.HasIndex("UserId", "Permission")
-                        .IsUnique();
-
-                    b.ToTable("UserPermissions");
-                });
-
             modelBuilder.Entity("BdStockOMS.API.Models.UserSession", b =>
                 {
                     b.Property<int>("Id")
@@ -3622,25 +3584,6 @@ namespace BdStockOMS.API.Data.Migrations
                     b.Navigation("BrokerageHouse");
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("BdStockOMS.API.Models.UserPermission", b =>
-                {
-                    b.HasOne("BdStockOMS.API.Models.User", "GrantedBy")
-                        .WithMany()
-                        .HasForeignKey("GrantedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BdStockOMS.API.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GrantedBy");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.UserSession", b =>
