@@ -1,3 +1,6 @@
+using FluentValidation;
+using BdStockOMS.API.Middleware;
+using BdStockOMS.API.Validators;
 using BdStockOMS.API.Repositories;
 using BdStockOMS.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
@@ -238,6 +241,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("BdStockOMSPolicy");
 app.UseRateLimiter();
 app.UseHttpsRedirection();
+app.UseGlobalExceptionHandler();
 app.UseAuthentication();
 app.UseMiddleware<TokenBlacklistMiddleware>();
 app.UseAuthorization();

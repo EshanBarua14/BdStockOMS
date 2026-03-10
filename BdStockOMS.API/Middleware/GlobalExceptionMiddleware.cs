@@ -1,6 +1,5 @@
 using System.Net;
-using BdStockOMS.API.Data;
-using BdStockOMS.API.Models;
+using System.Text.Json;
 
 namespace BdStockOMS.API.Middleware;
 
@@ -16,7 +15,7 @@ public class GlobalExceptionMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, AppDbContext db)
+    public async Task InvokeAsync(HttpContext context)
     {
         try
         {
@@ -25,30 +24,45 @@ public class GlobalExceptionMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception: {Message}", ex.Message);
-
-            try
-            {
-                db.SystemLogs.Add(new SystemLog
-                {
-                    Level      = (BdStockOMS.API.Models.LogLevel)3,
-                    Source     = context.Request.Path,
-                    Message    = ex.Message,
-                    StackTrace = ex.StackTrace,
-                    CreatedAt  = DateTime.UtcNow
-                });
-                await db.SaveChangesAsync();
-            }
-            catch { /* never let logging crash the app */ }
-
-            context.Response.StatusCode  = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            await context.Response.WriteAsJsonAsync(new
-            {
-                message   = "An unexpected error occurred. Please try again later.",
-                errorCode = "INTERNAL_ERROR",
-                timestamp = DateTime.UtcNow
-            });
+            await HandleExceptionAsync(context, ex);
         }
     }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
+    {
+        context.Response.ContentType = "application/json";
+
+        var (statusCode, errorCode, message) = ex switch
+        {
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized,     "UNAUTHORIZED",   "Access denied."),
+            KeyNotFoundException        => (HttpStatusCode.NotFound,         "NOT_FOUND",      ex.Message),
+            ArgumentException           => (HttpStatusCode.BadRequest,       "INVALID_INPUT",  ex.Message),
+            InvalidOperationException   => (HttpStatusCode.BadRequest,       "INVALID_OPERATION", ex.Message),
+            _                           => (HttpStatusCode.InternalServerError, "SERVER_ERROR","An unexpected error occurred.")
+        };
+
+        context.Response.StatusCode = (int)statusCode;
+
+        var response = new
+        {
+            success   = false,
+            errorCode = errorCode,
+            message   = message,
+            traceId   = context.TraceIdentifier
+        };
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
+        await context.Response.WriteAsync(json);
+    }
+}
+
+public static class GlobalExceptionMiddlewareExtensions
+{
+    public static IApplicationBuilder UseGlobalExceptionHandler(
+        this IApplicationBuilder app) =>
+        app.UseMiddleware<GlobalExceptionMiddleware>();
 }
