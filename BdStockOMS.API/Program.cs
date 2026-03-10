@@ -262,3 +262,5 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
 app.MapControllers();
 app.MapHub<BdStockOMS.API.Hubs.StockPriceHub>("/hubs/stockprice");
 app.Run();
+
+public partial class Program { }

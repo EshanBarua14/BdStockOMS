@@ -33,4 +33,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BdStockOMS.Tests" />
+  </ItemGroup>
 </Project>
