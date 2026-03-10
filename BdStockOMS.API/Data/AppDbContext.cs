@@ -58,6 +58,9 @@ public class AppDbContext : DbContext
     public DbSet<BranchOffice> BranchOffices { get; set; }
     public DbSet<NotificationPreference> NotificationPreferences { get; set; }
     public DbSet<NotificationLog> NotificationLogs { get; set; }
+    public DbSet<ContractNote> ContractNotes { get; set; }
+    public DbSet<BosImportLog> BosImportLogs { get; set; }
+    public DbSet<BrokerageConnection> BrokerageConnections { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -5,6 +5,7 @@ using System.Text;
 using BdStockOMS.API.Data;
 using BdStockOMS.API.Middleware;
 using BdStockOMS.API.Services;
+using BdStockOMS.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -88,6 +89,10 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 // ── BACKGROUND SERVICES ────────────────────────
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>();
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnlockService>();
+builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+builder.Services.AddScoped<IFlextradeBosComplianceService, FlextradeBosComplianceService>();
+builder.Services.AddScoped<IContractNoteService, ContractNoteService>();
+builder.Services.AddHostedService<BosComplianceHostedService>();
 
 // ── SIGNALR ────────────────────────────────────
 builder.Services.AddSignalR();
