@@ -4,12 +4,13 @@ import type { AuthUser, Order, MarketTicker, PortfolioSummary, Holding, ApiRespo
 describe('Type shape assertions', () => {
   it('AuthUser has required fields', () => {
     const user: AuthUser = {
-      userId: 'u1', email: 'a@b.com', role: 'Investor',
-      permissions: [], accessToken: 'tok', refreshToken: 'ref',
-      expiresAt: Date.now() + 3600_000,
+      userId: 163, fullName: 'Eshan Barua', email: 'admin@bdstockoms.com',
+      role: 'SuperAdmin', brokerageHouseId: 1,
+      brokerageHouseName: 'Pioneer Securities Ltd',
+      token: 'tok', expiresAt: Date.now() + 3600_000,
     }
-    expect(user.userId).toBe('u1')
-    expect(user.role).toBe('Investor')
+    expect(user.userId).toBe(163)
+    expect(user.role).toBe('SuperAdmin')
   })
 
   it('Order has correct status union type', () => {

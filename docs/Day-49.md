@@ -140,6 +140,17 @@ AuthUser shape, Order status union, MarketTicker fields, PortfolioSummary P&L fi
 
 ---
 
+## Test Folder Structure
+
+Mirrors backend BdStockOMS.Tests/ exactly:
+```
+src/test/
+  Unit/Day49/       ← unit tests per day
+  Integration/      ← API integration tests (Day 50+)
+  Security/         ← auth/RBAC security tests (Day 50+)
+  setup.ts
+```
+
 ## Test Count Progression
 
 | Day | Backend | Frontend | Total | Notes |

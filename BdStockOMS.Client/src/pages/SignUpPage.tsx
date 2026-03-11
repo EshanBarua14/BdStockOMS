@@ -1,424 +1,355 @@
-import { useState, FormEvent, useEffect } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
-import { useThemeStore, THEMES, ACCENTS, type ThemeId, type AccentId } from '@/store/themeStore'
-import { Logo } from '@/components/ui/Logo'
+import { ThemeMenu } from '@/components/ui/ThemeMenu'
+import type { AuthUser } from '@/types'
 
-type Step = 1 | 2 | 3
+interface BrokerageItem { id: number; name: string; email: string; phone?: string }
 
-function StepIndicator({ current, total }: { current: Step; total: number }) {
+// ── Registration hierarchy ────────────────────────────────────────────────
+// SuperAdmin  → creates BrokerageHouse accounts (via /register-brokerage)
+// BrokerageHouse/Admin → creates CCD, Admin users  (via admin panel — Day 50)
+// CCD/Admin   → creates Traders                     (via admin panel — Day 50)
+// Investor    → self-registers here                  (via /register-investor)
+// ─────────────────────────────────────────────────────────────────────────
+
+type Mode = 'select' | 'investor' | 'brokerage'
+
+function Input({ label, type = 'text', value, onChange, placeholder, required = true }: {
+  label: string; type?: string; value: string
+  onChange: (v: string) => void; placeholder?: string; required?: boolean
+}) {
+  const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 28 }}>
-      {Array.from({ length: total }, (_, i) => {
-        const step = (i + 1) as Step
-        const done = step < current
-        const active = step === current
-        return (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, flex: step < total ? 1 : undefined }}>
-            <div style={{
-              width: 26, height: 26, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-              fontSize: 11, fontWeight: 700,
-              background: done ? 'var(--accent-600)' : active ? 'var(--accent-glow)' : 'var(--bg-hover)',
-              border: `1.5px solid ${done || active ? 'var(--accent-500)' : 'var(--border-default)'}`,
-              color: done ? '#fff' : active ? 'var(--accent-300)' : 'var(--text-tertiary)',
-              transition: 'all 300ms var(--ease-out-expo)',
-            }}>
-              {done ? (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              ) : step}
-            </div>
-            {step < total && (
-              <div style={{
-                flex: 1, height: 1.5, borderRadius: 99,
-                background: done ? 'var(--accent-600)' : 'var(--border-default)',
-                transition: 'background 300ms',
-              }} />
-            )}
-          </div>
-        )
-      })}
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', color: 'rgba(255,255,255,0.45)', fontSize: 11, marginBottom: 5, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+        {label}{required && <span style={{ color: '#FF6B6B', marginLeft: 2 }}>*</span>}
+      </label>
+      <input
+        type={type} value={value} required={required}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder}
+        style={{
+          width: '100%', boxSizing: 'border-box',
+          background: 'rgba(255,255,255,0.04)',
+          border: `1px solid ${focused ? 'rgba(0,212,170,0.5)' : 'rgba(255,255,255,0.08)'}`,
+          borderRadius: 7, padding: '10px 12px',
+          color: '#fff', fontSize: 13, outline: 'none',
+          transition: 'border-color 0.2s',
+          fontFamily: "'Outfit', sans-serif",
+        }}
+      />
     </div>
   )
 }
 
-function FormField({
-  label, type = 'text', placeholder, value, onChange,
-  error, hint, required, autoComplete, children,
-}: {
-  label: string; type?: string; placeholder?: string
-  value: string; onChange: (v: string) => void
-  error?: string; hint?: string; required?: boolean; autoComplete?: string
-  children?: React.ReactNode
-}) {
-  const [_focused, setFocused] = useState(false)
+function PasswordStrength({ password }: { password: string }) {
+  const checks = [
+    { label: '8+ chars',    ok: password.length >= 8 },
+    { label: 'Uppercase',   ok: /[A-Z]/.test(password) },
+    { label: 'Number',      ok: /[0-9]/.test(password) },
+    { label: 'Special',     ok: /[^A-Za-z0-9]/.test(password) },
+  ]
+  const score = checks.filter(c => c.ok).length
+  const colors = ['#FF6B6B', '#FF6B6B', '#F59E0B', '#F59E0B', '#00D4AA']
   return (
-    <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>
-        {label}{required && <span style={{ color: 'var(--bear-base)', marginLeft: 3 }}>*</span>}
-      </label>
-      {children ?? (
-        <input
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          autoComplete={autoComplete}
-          className={`input input-lg ${error ? 'input-error' : ''}`}
-        />
-      )}
-      {hint && !error && (
-        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>{hint}</p>
-      )}
-      {error && (
-        <p className="animate-fade-in" style={{ fontSize: 11, color: 'var(--bear-strong)', marginTop: 4 }}>⚠ {error}</p>
-      )}
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 3, marginBottom: 5 }}>
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 2,
+            background: i < score ? colors[score] : 'rgba(255,255,255,0.08)',
+            transition: 'background 0.2s',
+          }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {checks.map(c => (
+          <span key={c.label} style={{
+            fontSize: 10, color: c.ok ? '#00D4AA' : 'rgba(255,255,255,0.25)',
+            transition: 'color 0.2s',
+          }}>
+            {c.ok ? '✓' : '○'} {c.label}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
 
 export function SignUpPage() {
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
-  const { theme, accent, setTheme, setAccent } = useThemeStore()
-  const [mounted, setMounted] = useState(false)
-  const [step, setStep] = useState<Step>(1)
+  const navigate   = useNavigate()
+  const setUser    = useAuthStore(s => s.setUser)
+  const [mode, setMode]           = useState<Mode>('select')
+  const [brokerages, setBrokerages] = useState<BrokerageItem[]>([])
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState<string | null>(null)
 
-  // Step 1 fields
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName]   = useState('')
-  const [email, setEmail]         = useState('')
+  // Investor form
+  const [invFull, setInvFull]     = useState('')
+  const [invEmail, setInvEmail]   = useState('')
+  const [invPhone, setInvPhone]   = useState('')
+  const [invPass, setInvPass]     = useState('')
+  const [invBH, setInvBH]         = useState<number>(0)
+  const [invBO, setInvBO]         = useState('')
 
-  // Step 2 fields
-  const [role, setRole]       = useState('')
-  const [brokerId, setBroker] = useState('')
-  const [phone, setPhone]     = useState('')
+  // Brokerage form
+  const [bhFirm, setBhFirm]       = useState('')
+  const [bhLic, setBhLic]         = useState('')
+  const [bhFirmEmail, setBhFirmEmail] = useState('')
+  const [bhPhone, setBhPhone]     = useState('')
+  const [bhAddr, setBhAddr]       = useState('')
+  const [bhFull, setBhFull]       = useState('')
+  const [bhEmail, setBhEmail]     = useState('')
+  const [bhPass, setBhPass]       = useState('')
 
-  // Step 3 fields
-  const [password, setPassword]   = useState('')
-  const [confirm, setConfirm]     = useState('')
-  const [showPw, setShowPw]       = useState(false)
-  const [agreed, setAgreed]       = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors]       = useState<Record<string, string>>({})
+  useEffect(() => {
+    authApi.getBrokerages().then(setBrokerages).catch(() => {})
+  }, [])
 
-  useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t) }, [])
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
-
-  function validateStep(s: Step): boolean {
-    const e: Record<string, string> = {}
-    if (s === 1) {
-      if (!firstName.trim()) e.firstName = 'First name is required'
-      if (!lastName.trim())  e.lastName  = 'Last name is required'
-      if (!email.includes('@')) e.email  = 'Enter a valid email address'
-    } else if (s === 2) {
-      if (!role)  e.role  = 'Select your role'
-      if (!phone.match(/^[0-9+\s-]{10,}$/)) e.phone = 'Enter a valid phone number'
-    } else if (s === 3) {
-      if (password.length < 8) e.password = 'Minimum 8 characters'
-      if (password !== confirm) e.confirm  = 'Passwords do not match'
-      if (!agreed) e.agreed = 'You must accept the terms'
-    }
-    setErrors(e)
-    return Object.keys(e).length === 0
+  const card: React.CSSProperties = {
+    background: 'rgba(13,19,32,0.88)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(0,212,170,0.15)',
+    borderRadius: 14,
+    padding: '32px 30px',
+    boxShadow: '0 0 60px rgba(0,0,0,0.5)',
   }
 
-  function handleNext(e: FormEvent) {
-    e.preventDefault()
-    if (!validateStep(step)) return
-    if (step < 3) setStep(s => (s + 1) as Step)
-    else handleRegister()
-  }
+  // ── Mode selector ───────────────────────────────────────────────────────
+  if (mode === 'select') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#080C14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", padding: '20px 16px' }}>
+        <div style={{ position: 'absolute', top: 16, right: 20 }}><ThemeMenu /></div>
+        <div style={{ width: '100%', maxWidth: 480 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <svg width="40" height="40" viewBox="0 0 28 28" style={{ marginBottom: 12 }}>
+              <polygon points="14,2 24,8 24,20 14,26 4,20 4,8" fill="none" stroke="#00D4AA" strokeWidth="1.5"/>
+              <text x="14" y="17" textAnchor="middle" fill="#00D4AA" fontSize="6" fontFamily="Space Mono" fontWeight="bold">OMS</text>
+            </svg>
+            <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>Create an account</h1>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, margin: 0 }}>Who are you registering as?</p>
+          </div>
 
-  async function handleRegister() {
-    setIsLoading(true)
-    // TODO: connect to /api/auth/register
-    await new Promise(r => setTimeout(r, 1500))
-    setIsLoading(false)
-  }
-
-  const stepTitles = ['Your Identity', 'Role & Access', 'Secure Password']
-  const stepSubtitles = [
-    'Tell us who you are',
-    'Set up your access level',
-    'Protect your account',
-  ]
-
-  const ROLES = [
-    { id: 'Investor',       label: 'Investor',         desc: 'Buy and sell securities' },
-    { id: 'Broker',         label: 'Broker',            desc: 'Execute client orders' },
-    { id: 'BrokerageAdmin', label: 'Brokerage Admin',   desc: 'Manage brokerage operations' },
-  ]
-
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-base)', padding: '24px 24px 40px', position: 'relative', overflow: 'auto',
-    }}>
-      {/* Background */}
-      <div aria-hidden style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none',
-        background: `
-          radial-gradient(ellipse 50% 50% at 80% 20%, var(--accent-glow), transparent),
-          radial-gradient(ellipse 40% 40% at 10% 80%, color-mix(in srgb, var(--accent-700) 10%, transparent), transparent)
-        `,
-      }} />
-      <div aria-hidden style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', opacity: .025,
-        backgroundImage: 'linear-gradient(var(--text-primary) 1px, transparent 1px), linear-gradient(90deg, var(--text-primary) 1px, transparent 1px)',
-        backgroundSize: '56px 56px',
-      }} />
-
-      {/* Theme strip */}
-      <div style={{
-        position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', alignItems: 'center', gap: 4,
-        padding: '5px 10px', borderRadius: 99,
-        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
-        backdropFilter: 'blur(20px)', zIndex: 10,
-      }}>
-        {THEMES.map(t => (
-          <button key={t.id} onClick={() => setTheme(t.id as ThemeId)} title={t.label}
-            style={{
-              width: 22, height: 22, borderRadius: '50%', fontSize: 11,
-              border: `1.5px solid ${theme === t.id ? 'var(--accent-400)' : 'transparent'}`,
-              background: theme === t.id ? 'var(--accent-glow)' : 'transparent',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 120ms',
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Investor */}
+            <button onClick={() => setMode('investor')} style={{
+              display: 'flex', alignItems: 'center', gap: 16,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(0,212,170,0.2)',
+              borderRadius: 10, padding: '18px 20px', cursor: 'pointer', textAlign: 'left',
+              transition: 'all 0.15s',
             }}>
-            {t.emoji}
-          </button>
-        ))}
-        <div style={{ width: 1, height: 12, background: 'var(--border-default)', margin: '0 2px' }} />
-        {ACCENTS.map(a => (
-          <button key={a.id} onClick={() => setAccent(a.id as AccentId)} title={a.label}
-            style={{
-              width: 14, height: 14, borderRadius: '50%', background: a.color,
-              border: `2px solid ${accent === a.id ? '#fff' : 'transparent'}`,
-              outline: accent === a.id ? `2px solid ${a.color}` : 'none', outlineOffset: 1,
-              cursor: 'pointer', transition: 'all 120ms',
-              boxShadow: accent === a.id ? `0 0 8px ${a.color}90` : 'none',
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main card */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        width: '100%', maxWidth: 460,
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? 'translateY(0)' : 'translateY(24px)',
-        transition: 'opacity 600ms var(--ease-out-expo), transform 600ms var(--ease-out-expo)',
-        marginTop: 56,
-      }}>
-        <div style={{
-          background: 'var(--glass-bg)',
-          border: '1px solid var(--glass-border)',
-          backdropFilter: 'blur(32px) saturate(180%)',
-          borderRadius: 'var(--r-2xl)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-xl)',
-        }}>
-          <div style={{ height: 3, background: `linear-gradient(90deg, transparent, var(--accent-500), var(--accent-300), var(--accent-500), transparent)` }} />
-
-          <div style={{ padding: '30px 36px 36px' }}>
-            {/* Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-              <Logo size={36} />
+              <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(0,212,170,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l4-8 4 5 3-3 4 6" stroke="#00D4AA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
-                  BD<span style={{ color: 'var(--accent-400)' }}>OMS</span>
-                </div>
-                <div style={{ fontSize: 9.5, color: 'var(--text-tertiary)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 1 }}>
-                  Create Account
-                </div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>Investor</div>
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 2 }}>Self-register under a licensed brokerage house</div>
+              </div>
+              <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+
+            {/* Brokerage */}
+            <button onClick={() => setMode('brokerage')} style={{
+              display: 'flex', alignItems: 'center', gap: 16,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(167,139,250,0.2)',
+              borderRadius: 10, padding: '18px 20px', cursor: 'pointer', textAlign: 'left',
+              transition: 'all 0.15s',
+            }}>
+              <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(167,139,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="#A78BFA" strokeWidth="1.5"/><path d="M9 22V12h6v10" stroke="#A78BFA" strokeWidth="1.5"/></svg>
+              </div>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>Brokerage House</div>
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 2 }}>Register your firm — BSEC licensed brokerages only</div>
+              </div>
+              <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+
+            {/* Trader/CCD/Admin info box */}
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>
+                <strong style={{ color: 'rgba(255,255,255,0.6)' }}>Trader / CCD / Admin?</strong><br/>
+                Accounts for Traders are created by your CCD or Admin.<br/>
+                CCD and Admin accounts are created by the Brokerage House.
               </div>
             </div>
+          </div>
 
-            <StepIndicator current={step} total={3} />
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 20 }}>
+            Already have an account?{' '}
+            <Link to="/login" style={{ color: '#00D4AA', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
 
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 4, lineHeight: 1 }}>
-              {stepTitles[step - 1]}
-            </h2>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
-              {stepSubtitles[step - 1]}
-            </p>
+  // ── Investor registration ───────────────────────────────────────────────
+  if (mode === 'investor') {
+    const handleInvestorSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!invBH) { setError('Please select a brokerage house'); return }
+      setLoading(true); setError(null)
+      try {
+        const data = await authApi.registerInvestor({
+          fullName: invFull, email: invEmail, phone: invPhone,
+          password: invPass, brokerageHouseId: invBH, boNumber: invBO || undefined,
+        })
+        const authUser: AuthUser = {
+          userId: data.userId, fullName: data.fullName, email: data.email,
+          role: data.role, brokerageHouseId: data.brokerageHouseId,
+          brokerageHouseName: data.brokerageHouseName,
+          token: data.token, expiresAt: new Date(data.expiresAt).getTime(),
+        }
+        setUser(authUser)
+        navigate('/dashboard')
+      } catch (err: unknown) {
+        setError((err as any)?.response?.data?.message ?? 'Registration failed')
+      } finally { setLoading(false) }
+    }
 
-            <form onSubmit={handleNext} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    return (
+      <div style={{ minHeight: '100vh', background: '#080C14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", padding: '20px 16px' }}>
+        <div style={{ position: 'absolute', top: 16, right: 20 }}><ThemeMenu /></div>
+        <div style={{ width: '100%', maxWidth: 460 }}>
+          <button onClick={() => { setMode('select'); setError(null) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13, marginBottom: 16, padding: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            Back
+          </button>
+          <div style={card}>
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>Investor Registration</h2>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, margin: 0 }}>Self-register under a BSEC-licensed brokerage</p>
+            </div>
 
-              {/* STEP 1 */}
-              {step === 1 && (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <FormField label="First Name" placeholder="Eshan" value={firstName} onChange={setFirstName} error={errors.firstName} required />
-                    <FormField label="Last Name" placeholder="Barua" value={lastName} onChange={setLastName} error={errors.lastName} required />
-                  </div>
-                  <FormField label="Email Address" type="email" placeholder="you@brokerage.com.bd" value={email} onChange={setEmail} error={errors.email} required autoComplete="email" />
-                </>
-              )}
+            {error && (
+              <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: 7, padding: '9px 12px', marginBottom: 16, color: '#FF6B6B', fontSize: 13 }}>{error}</div>
+            )}
 
-              {/* STEP 2 */}
-              {step === 2 && (
-                <>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                      Account Role <span style={{ color: 'var(--bear-base)' }}>*</span>
-                    </label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {ROLES.map(r => (
-                        <button key={r.id} type="button" onClick={() => setRole(r.id)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '10px 14px', borderRadius: 'var(--r-md)', textAlign: 'left',
-                            border: `1.5px solid ${role === r.id ? 'var(--accent-500)' : 'var(--border-default)'}`,
-                            background: role === r.id ? 'var(--accent-glow)' : 'var(--bg-elevated)',
-                            cursor: 'pointer', transition: 'all 150ms',
-                          }}>
-                          <div style={{
-                            width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                            border: `2px solid ${role === r.id ? 'var(--accent-500)' : 'var(--border-strong)'}`,
-                            background: role === r.id ? 'var(--accent-500)' : 'transparent',
-                            transition: 'all 150ms',
-                          }} />
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: role === r.id ? 'var(--accent-300)' : 'var(--text-primary)' }}>{r.label}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{r.desc}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    {errors.role && <p style={{ fontSize: 11, color: 'var(--bear-strong)', marginTop: 6 }}>⚠ {errors.role}</p>}
-                  </div>
-                  <FormField label="Brokerage ID (optional)" placeholder="e.g. DSE-2024-001" value={brokerId} onChange={setBroker} hint="Leave blank if you're an independent investor" />
-                  <FormField label="Phone Number" type="tel" placeholder="+880 17XX-XXXXXX" value={phone} onChange={setPhone} error={errors.phone} required autoComplete="tel" />
-                </>
-              )}
+            <form onSubmit={handleInvestorSubmit}>
+              <Input label="Full Name"    value={invFull}  onChange={setInvFull}  placeholder="e.g. Rahim Uddin" />
+              <Input label="Email"        value={invEmail} onChange={setInvEmail} placeholder="you@example.com" type="email" />
+              <Input label="Phone"        value={invPhone} onChange={setInvPhone} placeholder="01XXXXXXXXX" />
+              <Input label="BO Number"    value={invBO}    onChange={setInvBO}    placeholder="Beneficiary Owner Number (optional)" required={false} />
 
-              {/* STEP 3 */}
-              {step === 3 && (
-                <>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                      Password <span style={{ color: 'var(--bear-base)' }}>*</span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type={showPw ? 'text' : 'password'}
-                        placeholder="••••••••••••"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className={`input input-lg ${errors.password ? 'input-error' : ''}`}
-                        style={{ paddingRight: 46 }}
-                        autoComplete="new-password"
-                      />
-                      <button type="button" onClick={() => setShowPw(s => !s)}
-                        style={{
-                          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', padding: 4,
-                        }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          {showPw
-                            ? <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>
-                            : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
-                          }
-                        </svg>
-                      </button>
-                    </div>
-                    {/* Strength bar */}
-                    {password && (
-                      <div style={{ marginTop: 6 }}>
-                        <div style={{ display: 'flex', gap: 3, marginBottom: 3 }}>
-                          {[1,2,3,4].map(n => {
-                            const strength = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^a-zA-Z0-9]/.test(password)].filter(Boolean).length
-                            return (
-                              <div key={n} style={{
-                                flex: 1, height: 3, borderRadius: 99,
-                                background: n <= strength
-                                  ? strength <= 1 ? 'var(--bear-base)' : strength <= 2 ? 'var(--warn-base)' : strength <= 3 ? 'var(--accent-500)' : 'var(--bull-base)'
-                                  : 'var(--border-default)',
-                                transition: 'background 200ms',
-                              }} />
-                            )
-                          })}
-                        </div>
-                        {errors.password && <p style={{ fontSize: 11, color: 'var(--bear-strong)' }}>⚠ {errors.password}</p>}
-                      </div>
-                    )}
-                  </div>
-                  <FormField label="Confirm Password" type={showPw ? 'text' : 'password'} placeholder="••••••••••••" value={confirm} onChange={setConfirm} error={errors.confirm} required autoComplete="new-password" />
-
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 4 }}>
-                    <div
-                      onClick={() => setAgreed(a => !a)}
-                      style={{
-                        width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
-                        border: `2px solid ${agreed ? 'var(--accent-500)' : errors.agreed ? 'var(--bear-base)' : 'var(--border-strong)'}`,
-                        background: agreed ? 'var(--accent-600)' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 150ms',
-                        cursor: 'pointer',
-                      }}>
-                      {agreed && (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                      )}
-                    </div>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      I agree to the{' '}
-                      <span style={{ color: 'var(--accent-400)', cursor: 'pointer' }}>Terms of Service</span>
-                      {' '}and{' '}
-                      <span style={{ color: 'var(--accent-400)', cursor: 'pointer' }}>Privacy Policy</span>
-                      {' '}of BD Stock OMS
-                    </span>
-                  </label>
-                  {errors.agreed && <p style={{ fontSize: 11, color: 'var(--bear-strong)', marginTop: -8 }}>⚠ {errors.agreed}</p>}
-                </>
-              )}
-
-              {/* Nav buttons */}
-              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                {step > 1 && (
-                  <button type="button" onClick={() => setStep(s => (s - 1) as Step)}
-                    className="btn btn-secondary btn-lg"
-                    style={{ flex: 1 }}>
-                    ← Back
-                  </button>
-                )}
-                <button type="submit" className="btn btn-primary btn-lg"
-                  disabled={isLoading}
-                  style={{ flex: 2, fontFamily: 'var(--font-display)', fontWeight: 700 }}>
-                  {isLoading ? (
-                    <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spinSlow 0.8s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/></svg> Creating…</>
-                  ) : step < 3 ? 'Continue →' : 'Create Account'}
-                </button>
+              {/* Brokerage selector */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', color: 'rgba(255,255,255,0.45)', fontSize: 11, marginBottom: 5, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                  Brokerage House <span style={{ color: '#FF6B6B' }}>*</span>
+                </label>
+                <select value={invBH} onChange={e => setInvBH(Number(e.target.value))} required style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: '#0D1320', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 7, padding: '10px 12px',
+                  color: invBH ? '#fff' : 'rgba(255,255,255,0.3)',
+                  fontSize: 13, outline: 'none', cursor: 'pointer',
+                }}>
+                  <option value={0} disabled>Select your brokerage house…</option>
+                  {brokerages.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
-            </form>
 
-            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-tertiary)', marginTop: 20 }}>
-              Already have an account?{' '}
-              <Link to="/login" style={{ color: 'var(--accent-400)', fontWeight: 500 }}>Sign in</Link>
-            </p>
+              <div style={{ marginBottom: 14 }}>
+                <Input label="Password" value={invPass} onChange={setInvPass} type="password" placeholder="Min 8 chars" />
+                <PasswordStrength password={invPass} />
+              </div>
+
+              <button type="submit" disabled={loading} style={{
+                width: '100%', padding: '11px', marginTop: 4,
+                background: loading ? 'rgba(0,212,170,0.3)' : '#00D4AA',
+                border: 'none', borderRadius: 7, color: '#0A1628',
+                fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+              }}>
+                {loading ? 'Creating account…' : 'Create Investor Account'}
+              </button>
+            </form>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-            © {new Date().getFullYear()} BD Stock OMS · Bangladesh Securities & Exchange Commission
-          </p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>
-            Design & Developed by{' '}
-            <span style={{ color: 'var(--accent-400)', fontWeight: 600 }}>Eshan Barua</span>
-          </p>
+  // ── Brokerage registration ─────────────────────────────────────────────
+  const handleBrokerageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true); setError(null)
+    try {
+      const data = await authApi.registerBrokerage({
+        firmName: bhFirm, licenseNumber: bhLic, firmEmail: bhFirmEmail,
+        firmPhone: bhPhone, firmAddress: bhAddr,
+        fullName: bhFull, email: bhEmail, password: bhPass,
+      })
+      const authUser: AuthUser = {
+        userId: data.userId, fullName: data.fullName, email: data.email,
+        role: data.role, brokerageHouseId: data.brokerageHouseId,
+        brokerageHouseName: data.brokerageHouseName,
+        token: data.token, expiresAt: new Date(data.expiresAt).getTime(),
+      }
+      setUser(authUser)
+      navigate('/dashboard')
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message ?? 'Registration failed')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#080C14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", padding: '20px 16px' }}>
+      <div style={{ position: 'absolute', top: 16, right: 20 }}><ThemeMenu /></div>
+      <div style={{ width: '100%', maxWidth: 520 }}>
+        <button onClick={() => { setMode('select'); setError(null) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13, marginBottom: 16, padding: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Back
+        </button>
+        <div style={card}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 20, padding: '3px 10px', marginBottom: 10 }}>
+              <span style={{ color: '#A78BFA', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em' }}>BSEC LICENSED</span>
+            </div>
+            <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>Register Brokerage House</h2>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, margin: 0 }}>Creates a new brokerage account + admin user. Tenant DB provisioned by SuperAdmin.</p>
+          </div>
+
+          {error && (
+            <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: 7, padding: '9px 12px', marginBottom: 16, color: '#FF6B6B', fontSize: 13 }}>{error}</div>
+          )}
+
+          <form onSubmit={handleBrokerageSubmit}>
+            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, fontFamily: "'Space Mono', monospace", letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Firm Details</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+              <Input label="Firm Name"        value={bhFirm}      onChange={setBhFirm}      placeholder="Pioneer Securities Ltd" />
+              <Input label="License Number"   value={bhLic}       onChange={setBhLic}       placeholder="BSEC/MB/2024/XXX" />
+              <Input label="Firm Email"       value={bhFirmEmail} onChange={setBhFirmEmail} placeholder="info@firm.com.bd" type="email" />
+              <Input label="Firm Phone"       value={bhPhone}     onChange={setBhPhone}     placeholder="01XXXXXXXXX" required={false} />
+            </div>
+            <Input label="Firm Address"     value={bhAddr}  onChange={setBhAddr}  placeholder="Motijheel, Dhaka" />
+
+            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, fontFamily: "'Space Mono', monospace", letterSpacing: '0.1em', textTransform: 'uppercase', margin: '14px 0 10px' }}>Admin Account</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+              <Input label="Admin Full Name"  value={bhFull}  onChange={setBhFull}  placeholder="Full Name" />
+              <Input label="Admin Email"      value={bhEmail} onChange={setBhEmail} placeholder="admin@firm.com" type="email" />
+            </div>
+            <Input label="Password" value={bhPass} onChange={setBhPass} type="password" placeholder="Min 8 chars" />
+            <PasswordStrength password={bhPass} />
+
+            <button type="submit" disabled={loading} style={{
+              width: '100%', padding: '11px', marginTop: 8,
+              background: loading ? 'rgba(167,139,250,0.3)' : '#A78BFA',
+              border: 'none', borderRadius: 7, color: '#fff',
+              fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+            }}>
+              {loading ? 'Registering…' : 'Register Brokerage House'}
+            </button>
+          </form>
         </div>
       </div>
     </div>
   )
 }
+
+export default SignUpPage

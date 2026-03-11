@@ -620,6 +620,7 @@ public class AppDbContext : DbContext
             new Role { Id = 7, Name = "Investor" }
         );
 
+
         // ── SEED STOCKS ────────────────────────────
         modelBuilder.Entity<Stock>().HasData(
             // DSE Stocks

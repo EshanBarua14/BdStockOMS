@@ -1,5 +1,3 @@
-// ─── API Response Envelope ───────────────────────────────────────────────────
-
 export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
@@ -16,59 +14,61 @@ export interface PaginatedResponse<T> {
   totalPages: number
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
 export interface LoginRequest {
   email: string
   password: string
 }
 
 export interface LoginResponse {
-  accessToken: string
+  token: string
   refreshToken: string
-  expiresIn: number
-  requiresMfa: boolean
-  userId: string
+  expiresAt: string
+  userId: number
+  fullName: string
   email: string
   role: UserRole
-  permissions: string[]
+  brokerageHouseId: number
+  brokerageHouseName: string
 }
 
-export interface RefreshTokenRequest {
-  refreshToken: string
+export interface RegisterBrokerageRequest {
+  firmName: string
+  licenseNumber: string
+  firmEmail: string
+  firmPhone?: string
+  firmAddress: string
+  fullName: string
+  email: string
+  password: string
 }
 
+// Matches backend DB seed exactly — 'Trader' not 'Broker'
 export type UserRole =
   | 'SuperAdmin'
   | 'Admin'
+  | 'BrokerageHouse'
   | 'BrokerageAdmin'
-  | 'Broker'
+  | 'Trader'
   | 'Investor'
-
-// ─── User ─────────────────────────────────────────────────────────────────────
+  | 'ITSupport'
+  | 'CCD'
 
 export interface AuthUser {
-  userId: string
+  userId: number
+  fullName: string
   email: string
   role: UserRole
-  permissions: string[]
-  accessToken: string
-  refreshToken: string
-  expiresAt: number // unix ms
+  brokerageHouseId: number
+  brokerageHouseName: string
+  token: string
+  expiresAt: number
 }
-
-// ─── Orders ──────────────────────────────────────────────────────────────────
 
 export type OrderSide = 'Buy' | 'Sell'
 export type OrderType = 'Market' | 'Limit' | 'StopLoss' | 'StopLimit'
 export type OrderStatus =
-  | 'Pending'
-  | 'Open'
-  | 'PartiallyFilled'
-  | 'Filled'
-  | 'Cancelled'
-  | 'Rejected'
-  | 'Expired'
+  | 'Pending' | 'Open' | 'PartiallyFilled'
+  | 'Filled' | 'Cancelled' | 'Rejected' | 'Expired'
 
 export interface Order {
   orderId: string
@@ -82,8 +82,8 @@ export interface Order {
   status: OrderStatus
   createdAt: string
   updatedAt: string
-  brokerageId?: string
-  investorId?: string
+  brokerageId?: number
+  investorId?: number
 }
 
 export interface PlaceOrderRequest {
@@ -99,8 +99,6 @@ export interface CancelOrderRequest {
   orderId: string
   reason?: string
 }
-
-// ─── Portfolio ────────────────────────────────────────────────────────────────
 
 export interface PortfolioSummary {
   totalValue: number
@@ -123,8 +121,6 @@ export interface Holding {
   unrealizedPnlPercent: number
 }
 
-// ─── Market Data ──────────────────────────────────────────────────────────────
-
 export interface MarketTicker {
   symbol: string
   name: string
@@ -136,14 +132,4 @@ export interface MarketTicker {
   low: number
   open: number
   previousClose: number
-}
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
-
-export interface NavItem {
-  label: string
-  path: string
-  icon: React.ReactNode
-  roles?: UserRole[]
-  badge?: number
 }

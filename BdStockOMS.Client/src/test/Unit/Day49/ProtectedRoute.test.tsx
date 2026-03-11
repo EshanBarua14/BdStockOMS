@@ -6,9 +6,9 @@ import { useAuthStore } from '@/store/authStore'
 import type { AuthUser } from '@/types'
 
 const mockUser = (role: AuthUser['role']): AuthUser => ({
-  userId: 'u1', email: 'test@test.com', role,
-  permissions: [], accessToken: 'tok', refreshToken: 'ref',
-  expiresAt: Date.now() + 3600_000,
+  userId: 163, fullName: 'Test User', email: 'test@test.com', role,
+  brokerageHouseId: 1, brokerageHouseName: 'Test Brokerage',
+  token: 'tok', expiresAt: Date.now() + 3600_000,
 })
 
 function renderRoute(user: AuthUser | null, allowedRoles?: AuthUser['role'][]) {
@@ -19,8 +19,8 @@ function renderRoute(user: AuthUser | null, allowedRoles?: AuthUser['role'][]) {
         <Route element={<ProtectedRoute allowedRoles={allowedRoles} />}>
           <Route path="/dashboard" element={<div>Protected Content</div>} />
         </Route>
-        <Route path="/login" element={<div>Login Page</div>} />
-        <Route path="/forbidden" element={<div>Forbidden</div>} />
+        <Route path="/login"     element={<div>Login Page</div>} />
+        <Route path="/403"       element={<div>Forbidden</div>} />
       </Routes>
     </MemoryRouter>
   )
@@ -37,18 +37,18 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('Protected Content')).toBeInTheDocument()
   })
 
-  it('redirects to /forbidden when role not allowed', () => {
-    renderRoute(mockUser('Investor'), ['Admin', 'SuperAdmin'])
+  it('redirects to /403 when role not allowed', () => {
+    renderRoute(mockUser('Investor'), ['SuperAdmin', 'Admin'])
     expect(screen.getByText('Forbidden')).toBeInTheDocument()
   })
 
   it('allows Admin through role-restricted route', () => {
-    renderRoute(mockUser('Admin'), ['Admin', 'SuperAdmin'])
+    renderRoute(mockUser('Admin'), ['SuperAdmin', 'Admin'])
     expect(screen.getByText('Protected Content')).toBeInTheDocument()
   })
 
   it('allows SuperAdmin through any role-restricted route', () => {
-    renderRoute(mockUser('SuperAdmin'), ['Admin', 'SuperAdmin'])
+    renderRoute(mockUser('SuperAdmin'), ['SuperAdmin', 'Admin'])
     expect(screen.getByText('Protected Content')).toBeInTheDocument()
   })
 })

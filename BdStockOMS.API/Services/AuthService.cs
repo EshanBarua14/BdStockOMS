@@ -19,6 +19,8 @@ public interface IAuthService
     Task<Result<AuthResponseDto>> RefreshTokenAsync(string token, string ipAddress);
     Task<Result> LogoutAsync(string accessToken, string refreshToken, string ipAddress);
     Task<User?> GetUserByIdAsync(int userId);
+    Task<List<BrokerageListItemDto>> GetActiveBrokeragesAsync();
+    Task<AuthResponseDto?> RegisterInvestorAsync(RegisterInvestorDto dto);
 }
 
 public class AuthService : IAuthService
@@ -93,6 +95,7 @@ public class AuthService : IAuthService
     {
         var user = await _db.Users
             .Include(u => u.Role)
+            .Include(u => u.BrokerageHouse)
             .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
         // Unknown email
@@ -158,12 +161,15 @@ public class AuthService : IAuthService
 
         return Result<AuthResponseDto>.Success(new AuthResponseDto
         {
-            Token        = accessToken,
-            RefreshToken = refreshToken.Token,
-            UserId       = user.Id,
-            FullName     = user.FullName,
-            Email        = user.Email,
-            Role         = user.Role.Name
+            Token               = accessToken,
+            RefreshToken        = refreshToken.Token,
+            ExpiresAt           = DateTime.UtcNow.AddMinutes(15),
+            UserId              = user.Id,
+            FullName            = user.FullName,
+            Email               = user.Email,
+            Role                = user.Role!.Name,
+            BrokerageHouseId    = user.BrokerageHouseId,
+            BrokerageHouseName  = user.BrokerageHouse?.Name ?? string.Empty
         });
     }
 
@@ -304,4 +310,64 @@ public class AuthService : IAuthService
         });
         await _db.SaveChangesAsync();
     }
+    public async Task<List<BrokerageListItemDto>> GetActiveBrokeragesAsync()
+    {
+        return await _db.BrokerageHouses
+            .Where(b => b.IsActive)
+            .OrderBy(b => b.Name)
+            .Select(b => new BrokerageListItemDto
+            {
+                Id    = b.Id,
+                Name  = b.Name,
+                Email = b.Email,
+                Phone = b.Phone,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<AuthResponseDto?> RegisterInvestorAsync(RegisterInvestorDto dto)
+    {
+        if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
+            return null;
+
+        var investorRole = await _db.Roles.FirstOrDefaultAsync(r => r.Name == "Investor");
+        if (investorRole == null) return null;
+
+        var brokerage = await _db.BrokerageHouses
+            .FirstOrDefaultAsync(b => b.Id == dto.BrokerageHouseId && b.IsActive);
+        if (brokerage == null) return null;
+
+        var user = new User
+        {
+            FullName         = dto.FullName,
+            Email            = dto.Email,
+            Phone            = dto.Phone,
+            PasswordHash     = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            RoleId           = investorRole.Id,
+            BrokerageHouseId = dto.BrokerageHouseId,
+            BONumber         = dto.BONumber,
+            IsActive         = true,
+            CreatedAt        = DateTime.UtcNow,
+        };
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        var token        = GenerateJwt(user, investorRole.Name);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id, "registration");
+        await _audit.LogAsync(user.Id, "INVESTOR_REGISTERED", "User", user.Id, null, null, "registration");
+
+        return new AuthResponseDto
+        {
+            Token               = token,
+            RefreshToken        = refreshToken.Token,
+            ExpiresAt           = DateTime.UtcNow.AddMinutes(15),
+            UserId              = user.Id,
+            FullName            = user.FullName,
+            Email               = user.Email,
+            Role                = investorRole.Name,
+            BrokerageHouseId    = brokerage.Id,
+            BrokerageHouseName  = brokerage.Name,
+        };
+    }
+
 }

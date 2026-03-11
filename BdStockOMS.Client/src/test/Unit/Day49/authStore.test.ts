@@ -3,13 +3,14 @@ import { useAuthStore } from '@/store/authStore'
 import type { AuthUser } from '@/types'
 
 const mockUser: AuthUser = {
-  userId: 'u1',
-  email: 'eshan@bdstockoms.com',
-  role: 'Admin',
-  permissions: ['orders:read', 'orders:write'],
-  accessToken: 'access-token-abc',
-  refreshToken: 'refresh-token-xyz',
-  expiresAt: Date.now() + 3600_000,
+  userId:             163,
+  fullName:           'Eshan Barua',
+  email:              'admin@bdstockoms.com',
+  role:               'SuperAdmin',
+  brokerageHouseId:   1,
+  brokerageHouseName: 'Pioneer Securities Ltd',
+  token:              'access-token-abc',
+  expiresAt:          Date.now() + 3600_000,
 }
 
 beforeEach(() => {
@@ -39,12 +40,12 @@ describe('authStore', () => {
 
   it('setUser stores correct role', () => {
     useAuthStore.getState().setUser(mockUser)
-    expect(useAuthStore.getState().user?.role).toBe('Admin')
+    expect(useAuthStore.getState().user?.role).toBe('SuperAdmin')
   })
 
-  it('setUser stores permissions array', () => {
+  it('setUser stores brokerageHouseName', () => {
     useAuthStore.getState().setUser(mockUser)
-    expect(useAuthStore.getState().user?.permissions).toContain('orders:read')
+    expect(useAuthStore.getState().user?.brokerageHouseName).toBe('Pioneer Securities Ltd')
   })
 
   it('logout is idempotent — calling twice does not throw', () => {

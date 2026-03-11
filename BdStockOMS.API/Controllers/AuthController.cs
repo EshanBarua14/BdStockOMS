@@ -22,6 +22,7 @@ public class AuthController : ControllerBase
         HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
     // POST /api/auth/register-brokerage
+    [AllowAnonymous]
     [HttpPost("register-brokerage")]
     public async Task<IActionResult> RegisterBrokerage([FromBody] RegisterBrokerageDto dto)
     {
@@ -32,7 +33,28 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    // GET /api/auth/brokerages — public list for investor signup dropdown
+    [AllowAnonymous]
+    [HttpGet("brokerages")]
+    public async Task<IActionResult> GetBrokerages()
+    {
+        var list = await _authService.GetActiveBrokeragesAsync();
+        return Ok(list);
+    }
+
+    // POST /api/auth/register-investor — self-registration by investor
+    [AllowAnonymous]
+    [HttpPost("register-investor")]
+    public async Task<IActionResult> RegisterInvestor([FromBody] RegisterInvestorDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var result = await _authService.RegisterInvestorAsync(dto);
+        if (result == null) return Conflict(new { message = "Email already registered." });
+        return Ok(result);
+    }
+
     // POST /api/auth/login
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {

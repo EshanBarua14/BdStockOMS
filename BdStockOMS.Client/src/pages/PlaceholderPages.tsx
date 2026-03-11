@@ -1,62 +1,60 @@
 import { Link } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 
-function ComingSoon({ title, day }: { title: string; day: number }) {
+const card: React.CSSProperties = {
+  minHeight: '100vh', display: 'flex', flexDirection: 'column',
+  alignItems: 'center', justifyContent: 'center',
+  background: '#080C14', color: '#fff', fontFamily: "'Outfit', sans-serif", gap: 16,
+}
+const tag: React.CSSProperties = {
+  background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)',
+  color: '#00D4AA', padding: '4px 12px', borderRadius: 20, fontSize: 12,
+  fontFamily: "'Space Mono', monospace",
+}
+
+function ComingSoon({ title, scope }: { title: string; scope: string }) {
+  const user = useAuthStore(s => s.user)
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 6 }}>{title}</h1>
-      <div style={{
-        background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--r-xl)', padding: '48px 32px', textAlign: 'center',
-        marginTop: 24,
-      }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%',
-          background: 'var(--accent-glow)', border: '1px solid color-mix(in srgb, var(--accent-500) 30%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-        }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-400)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 8 }}>
-          <strong style={{ color: 'var(--text-primary)' }}>{title}</strong> is coming in Day {day}
-        </p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-          Full implementation with real-time data, charts, and advanced filtering.
-        </p>
-      </div>
+    <div style={card}>
+      <span style={tag}>{scope}</span>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{title}</h1>
+      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}>
+        Day 50 — coming next sprint
+      </p>
+      <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, margin: 0 }}>
+        Logged in as <strong style={{ color: '#00D4AA' }}>{user?.fullName}</strong>
+        {' '}· Role: <strong style={{ color: '#00D4AA' }}>{user?.role}</strong>
+        {' '}· Brokerage: <strong style={{ color: '#00D4AA' }}>{user?.brokerageHouseName}</strong>
+      </p>
+      <Link to="/dashboard" style={{ color: '#00D4AA', fontSize: 13, marginTop: 8 }}>← Back to dashboard</Link>
     </div>
   )
 }
 
-export const OrdersPage    = () => <ComingSoon title="Orders"       day={50} />
-export const PortfolioPage = () => <ComingSoon title="Portfolio"    day={50} />
-export const MarketPage    = () => <ComingSoon title="Market Watch" day={50} />
-export const WatchlistPage = () => <ComingSoon title="Watchlist"    day={51} />
-export const ReportsPage   = () => <ComingSoon title="Reports"      day={51} />
+export const OrdersPage     = () => <ComingSoon title="Orders"          scope="All Roles" />
+export const PortfolioPage  = () => <ComingSoon title="Portfolio"       scope="Investor · Trader" />
+export const MarketPage     = () => <ComingSoon title="Market Data"     scope="All Roles" />
+export const SuperAdminPage = () => <ComingSoon title="Admin Dashboard" scope="SuperAdmin · Admin" />
+export const TenantPage     = () => <ComingSoon title="Tenant Manager"  scope="SuperAdmin only" />
+export const RbacPage       = () => <ComingSoon title="RBAC Dashboard"  scope="SuperAdmin only" />
 
 export function ForbiddenPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 72, fontWeight: 700, color: 'var(--bear-muted)', lineHeight: 1, marginBottom: 8 }}>403</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', marginBottom: 8 }}>Access Forbidden</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>You don't have permission to view this page.</p>
-        <Link to="/dashboard" className="btn btn-primary">← Back to Dashboard</Link>
-      </div>
+    <div style={card}>
+      <span style={{ ...tag, background: 'rgba(255,107,107,0.1)', borderColor: 'rgba(255,107,107,0.3)', color: '#FF6B6B' }}>403 Forbidden</span>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Access Denied</h1>
+      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>You do not have permission to view this page.</p>
+      <Link to="/dashboard" style={{ color: '#00D4AA', fontSize: 13 }}>← Back to dashboard</Link>
     </div>
   )
 }
 
 export function NotFoundPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 72, fontWeight: 700, color: 'var(--accent-glow)', lineHeight: 1, marginBottom: 8, background: 'linear-gradient(135deg, var(--accent-400), var(--accent-600))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>404</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', marginBottom: 8 }}>Page Not Found</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>The page you're looking for doesn't exist.</p>
-        <Link to="/dashboard" className="btn btn-primary">← Back to Dashboard</Link>
-      </div>
+    <div style={card}>
+      <span style={tag}>404</span>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Page Not Found</h1>
+      <Link to="/dashboard" style={{ color: '#00D4AA', fontSize: 13 }}>← Back to dashboard</Link>
     </div>
   )
 }

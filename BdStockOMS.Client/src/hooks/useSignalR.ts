@@ -17,7 +17,7 @@ export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions
   const buildConnection = useCallback(() => {
     return new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
-        accessTokenFactory: () => user?.accessToken ?? '',
+        accessTokenFactory: () => user?.token ?? '',
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(
@@ -26,10 +26,10 @@ export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions
           : signalR.LogLevel.Warning,
       )
       .build()
-  }, [hubUrl, user?.accessToken])
+  }, [hubUrl, user?.token])
 
   useEffect(() => {
-    if (!enabled || !user?.accessToken) return
+    if (!enabled || !user?.token) return
 
     const connection = buildConnection()
     connectionRef.current = connection
@@ -51,7 +51,7 @@ export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions
       connectionRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, user?.accessToken, hubUrl])
+  }, [enabled, user?.token, hubUrl])
 
   const invoke = useCallback(
     async (method: string, ...args: unknown[]) => {

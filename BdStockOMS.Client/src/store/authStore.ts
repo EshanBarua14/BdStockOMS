@@ -9,38 +9,24 @@ interface AuthState {
   logout: () => void
 }
 
-const STORAGE_KEY = 'bd_oms_auth'
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
       isAuthenticated: false,
-
-      setUser: (user: AuthUser) => {
-        set({ user, isAuthenticated: true })
-      },
-
-      logout: () => {
-        set({ user: null, isAuthenticated: false })
-        // Clear any other stores / caches here
-      },
+      setUser: (user: AuthUser) => set({ user, isAuthenticated: true }),
+      logout: () => set({ user: null, isAuthenticated: false }),
     }),
     {
-      name: STORAGE_KEY,
-      // Only persist necessary fields; never persist raw tokens in prod
-      // (use httpOnly cookies in a real deployment)
+      name: 'bd_oms_auth_v2',
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-    },
-  ),
+    }
+  )
 )
 
-// ─── Selector helpers ─────────────────────────────────────────────────────────
-
-export const selectUser = (s: AuthState) => s.user
+export const selectUser            = (s: AuthState) => s.user
 export const selectIsAuthenticated = (s: AuthState) => s.isAuthenticated
-export const selectRole = (s: AuthState) => s.user?.role
-export const selectPermissions = (s: AuthState) => s.user?.permissions ?? []
+export const selectRole            = (s: AuthState) => s.user?.role

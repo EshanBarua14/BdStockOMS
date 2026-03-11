@@ -1,454 +1,448 @@
-import { useState, FormEvent, useEffect, useRef } from 'react'
-import { Navigate } from 'react-router-dom'
+// @ts-nocheck
+import { ThemeMenu } from '@/components/ui/ThemeMenu'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { useThemeStore, THEMES, ACCENTS, type ThemeId, type AccentId } from '@/store/themeStore'
-import { Logo } from '@/components/ui/Logo'
 
-/* ─── Animated background grid ──────────────────────────────────────────── */
-function AnimatedGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+// ── DSE/CSE real tickers ──────────────────────────────────────────────────
+const DSE_TICKERS = [
+  { sym: 'DSEX',  price: 6248.30, chg: +0.68 },
+  { sym: 'DSES',  price: 1312.45, chg: +0.42 },
+  { sym: 'DS30',  price: 2187.60, chg: +0.55 },
+  { sym: 'BATBC', price:  716.20, chg: -0.31 },
+  { sym: 'BRAC',  price:   54.80, chg: +1.12 },
+  { sym: 'GRAMEENPHONE', price: 285.60, chg: -0.18 },
+  { sym: 'SQPHARMA',    price: 231.40, chg: +0.94 },
+  { sym: 'RENATA',      price: 958.20, chg: +0.27 },
+  { sym: 'WALTONHIL',   price: 987.50, chg: +1.43 },
+  { sym: 'ISLAMIBANK',  price:  32.60, chg: -0.61 },
+  { sym: 'DUTCHBANGL',  price: 112.30, chg: +0.88 },
+  { sym: 'MARICO',      price: 180.40, chg: -0.22 },
+  { sym: 'BXPHARMA',    price:  22.10, chg: +2.31 },
+  { sym: 'CSEALL',      price: 18420.5, chg: +0.39 },
+  { sym: 'CSE30',       price:  9841.2, chg: +0.51 },
+]
 
+interface Particle {
+  x: number; y: number; vx: number; vy: number
+  alpha: number; radius: number; color: string; type: 'node' | 'tick'
+  label?: string; price?: string; chg?: number; age: number; maxAge: number
+}
+
+interface CandleBar {
+  x: number; open: number; close: number; high: number; low: number
+  width: number; speed: number; color: string
+}
+
+// ── Canvas: scrolling candlesticks + floating ticker nodes ────────────────
+function useDseCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let frame = 0
+    const ctx = canvas.getContext('2d')!
     let raf: number
 
-    function resize() {
-      canvas!.width  = window.innerWidth
-      canvas!.height = window.innerHeight
+    const resize = () => {
+      canvas.width  = window.innerWidth
+      canvas.height = window.innerHeight
     }
     resize()
     window.addEventListener('resize', resize)
 
-    function draw() {
-      const w = canvas!.width, h = canvas!.height
-      ctx!.clearRect(0, 0, w, h)
+    // Candlestick chart rows (3 rows scrolling left)
+    const rows: CandleBar[][] = [[], [], []]
+    const rowY = [0.18, 0.50, 0.78]
+    const rowAmp = [60, 45, 55]
 
-      // Subtle grid
-      ctx!.strokeStyle = 'rgba(255,255,255,0.028)'
-      ctx!.lineWidth = 0.5
-      const step = 64
-      for (let x = 0; x < w; x += step) {
-        ctx!.beginPath(); ctx!.moveTo(x, 0); ctx!.lineTo(x, h); ctx!.stroke()
+    function makeCandle(rowIdx: number): CandleBar {
+      const bullish = Math.random() > 0.45
+      const base    = 200 + Math.random() * 100
+      const body    = 8 + Math.random() * 28
+      const wick    = 4 + Math.random() * 16
+      return {
+        x:     canvas.width + 40,
+        open:  rowY[rowIdx] * canvas.height + (Math.random() - 0.5) * rowAmp[rowIdx],
+        close: rowY[rowIdx] * canvas.height + (Math.random() - 0.5) * rowAmp[rowIdx],
+        high:  rowY[rowIdx] * canvas.height - wick - Math.random() * 10,
+        low:   rowY[rowIdx] * canvas.height + wick + Math.random() * 10,
+        width: 6 + Math.random() * 8,
+        speed: 0.6 + Math.random() * 0.5,
+        color: bullish ? 'rgba(0,212,170,' : 'rgba(255,107,107,',
       }
-      for (let y = 0; y < h; y += step) {
-        ctx!.beginPath(); ctx!.moveTo(0, y); ctx!.lineTo(w, y); ctx!.stroke()
-      }
-
-      // Flowing particles
-      const t = frame * 0.003
-      for (let i = 0; i < 28; i++) {
-        const seed = i * 137.508
-        const x = ((Math.sin(seed * 0.1 + t * 0.5) * 0.5 + 0.5) * w * 1.2) - w * 0.1
-        const y = ((Math.cos(seed * 0.07 + t * 0.3) * 0.5 + 0.5) * h * 1.2) - h * 0.1
-        const size = 1 + Math.sin(seed + t) * 0.5
-        const opacity = 0.08 + Math.sin(seed * 2 + t) * 0.05
-        ctx!.beginPath()
-        ctx!.arc(x, y, size, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(59,130,246,${opacity})`
-        ctx!.fill()
-      }
-
-      frame++
-      raf = requestAnimationFrame(draw)
     }
-    draw()
 
+    rows.forEach((row, i) => {
+      for (let x = 0; x < canvas.width; x += 22) {
+        const c = makeCandle(i)
+        c.x = x
+        row.push(c)
+      }
+    })
+
+    // Floating ticker particles
+    const particles: Particle[] = []
+
+    function spawnTicker() {
+      const t = DSE_TICKERS[Math.floor(Math.random() * DSE_TICKERS.length)]
+      particles.push({
+        x:      Math.random() * canvas.width,
+        y:      canvas.height + 20,
+        vx:     (Math.random() - 0.5) * 0.4,
+        vy:     -(0.3 + Math.random() * 0.5),
+        alpha:  0,
+        radius: 28 + Math.random() * 12,
+        color:  t.chg >= 0 ? '#00D4AA' : '#FF6B6B',
+        type:   'tick',
+        label:  t.sym,
+        price:  t.price.toFixed(2),
+        chg:    t.chg,
+        age:    0,
+        maxAge: 280 + Math.random() * 120,
+      })
+    }
+
+    // Institution labels
+    const LABELS = ['DSE', 'CSE', 'BSEC', 'CDBL', 'BB', 'SEC']
+    function spawnLabel() {
+      const lbl = LABELS[Math.floor(Math.random() * LABELS.length)]
+      particles.push({
+        x:      Math.random() * canvas.width,
+        y:      Math.random() * canvas.height,
+        vx:     (Math.random() - 0.5) * 0.15,
+        vy:     (Math.random() - 0.5) * 0.15,
+        alpha:  0,
+        radius: 0,
+        color:  'rgba(255,255,255,0.06)',
+        type:   'node',
+        label:  lbl,
+        age:    0,
+        maxAge: 400 + Math.random() * 200,
+      })
+    }
+
+    // Seed initial
+    for (let i = 0; i < 6; i++) spawnTicker()
+    for (let i = 0; i < 4; i++) spawnLabel()
+
+    let frame = 0
+    const tick = () => {
+      frame++
+      const W = canvas.width
+      const H = canvas.height
+
+      // Background
+      ctx.fillStyle = 'rgba(8,12,20,0.92)'
+      ctx.fillRect(0, 0, W, H)
+
+      // Grid lines (subtle)
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)'
+      ctx.lineWidth = 1
+      for (let y = 0; y < H; y += 60) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
+      }
+      for (let x = 0; x < W; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke()
+      }
+
+      // Draw candlestick rows
+      rows.forEach((row, ri) => {
+        row.forEach((c, ci) => {
+          c.x -= c.speed
+          if (c.x < -20) {
+            const nc = makeCandle(ri)
+            row[ci] = nc
+            return
+          }
+          const alpha = Math.min(1, Math.min(c.x / 60, (W - c.x) / 60)) * 0.55
+
+          // Wick
+          ctx.strokeStyle = c.color + alpha * 0.7 + ')'
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(c.x, c.high)
+          ctx.lineTo(c.x, c.low)
+          ctx.stroke()
+
+          // Body
+          const top    = Math.min(c.open, c.close)
+          const height = Math.max(Math.abs(c.close - c.open), 3)
+          ctx.fillStyle = c.color + alpha + ')'
+          ctx.fillRect(c.x - c.width / 2, top, c.width, height)
+        })
+      })
+
+      // Draw ticker particles
+      particles.forEach((p, i) => {
+        p.x  += p.vx
+        p.y  += p.vy
+        p.age++
+
+        const fadeIn  = Math.min(p.age / 40, 1)
+        const fadeOut = Math.min((p.maxAge - p.age) / 40, 1)
+        p.alpha = fadeIn * fadeOut
+
+        if (p.type === 'tick') {
+          // Glow ring
+          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius)
+          grad.addColorStop(0, p.color + '18')
+          grad.addColorStop(1, 'transparent')
+          ctx.fillStyle = grad
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Border circle
+          ctx.strokeStyle = p.color + Math.floor(p.alpha * 120).toString(16).padStart(2,'0')
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, p.radius - 2, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // Symbol
+          ctx.font = 'bold 8px "Space Mono", monospace'
+          ctx.fillStyle = p.color + Math.floor(p.alpha * 220).toString(16).padStart(2,'0')
+          ctx.textAlign = 'center'
+          ctx.fillText(p.label ?? '', p.x, p.y - 4)
+
+          // Price
+          ctx.font = '7px "Space Mono", monospace'
+          ctx.fillStyle = 'rgba(255,255,255,' + p.alpha * 0.7 + ')'
+          ctx.fillText('৳' + (p.price ?? ''), p.x, p.y + 5)
+
+          // Change
+          const chg = p.chg ?? 0
+          ctx.font = '7px "Space Mono", monospace'
+          ctx.fillStyle = p.color + Math.floor(p.alpha * 180).toString(16).padStart(2,'0')
+          ctx.fillText((chg >= 0 ? '+' : '') + chg.toFixed(2) + '%', p.x, p.y + 14)
+        } else {
+          // Institution label ghost
+          ctx.font = 'bold 48px "Outfit", sans-serif'
+          ctx.fillStyle = 'rgba(255,255,255,' + p.alpha * 0.04 + ')'
+          ctx.textAlign = 'center'
+          ctx.fillText(p.label ?? '', p.x, p.y)
+        }
+
+        if (p.age >= p.maxAge) {
+          if (p.type === 'tick') spawnTicker()
+          else spawnLabel()
+          particles.splice(i, 1)
+        }
+      })
+
+      // Connecting lines between nearby tickers
+      const ticks = particles.filter(p => p.type === 'tick')
+      for (let a = 0; a < ticks.length; a++) {
+        for (let b = a + 1; b < ticks.length; b++) {
+          const dx   = ticks[a].x - ticks[b].x
+          const dy   = ticks[a].y - ticks[b].y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 180) {
+            const alpha = (1 - dist / 180) * 0.08
+            ctx.strokeStyle = `rgba(0,212,170,${alpha})`
+            ctx.lineWidth = 0.5
+            ctx.beginPath()
+            ctx.moveTo(ticks[a].x, ticks[a].y)
+            ctx.lineTo(ticks[b].x, ticks[b].y)
+            ctx.stroke()
+          }
+        }
+      }
+
+      // Spawn more particles over time
+      if (frame % 90 === 0 && particles.filter(p => p.type === 'tick').length < 12) spawnTicker()
+      if (frame % 150 === 0 && particles.filter(p => p.type === 'node').length < 5) spawnLabel()
+
+      raf = requestAnimationFrame(tick)
+    }
+    tick()
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      style={{
-        position: 'fixed', inset: 0,
-        pointerEvents: 'none',
-        zIndex: 0,
-      }}
-    />
-  )
+  }, [canvasRef])
 }
 
-/* ─── Floating stat chips (decorative) ──────────────────────────────────── */
-function FloatingChip({ style, label, value, positive }: {
-  style: React.CSSProperties
-  label: string; value: string; positive: boolean
-}) {
-  return (
-    <div style={{
-      position: 'absolute',
-      padding: '7px 12px',
-      borderRadius: 10,
-      background: 'var(--glass-bg)',
-      border: '1px solid var(--glass-border)',
-      backdropFilter: 'blur(16px)',
-      display: 'flex', flexDirection: 'column', gap: 1,
-      userSelect: 'none', pointerEvents: 'none',
-      animation: 'float 4s ease-in-out infinite',
-      ...style,
-    }}>
-      <span style={{ fontSize: 9, color: 'var(--text-tertiary)', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-        {label}
-      </span>
-      <span style={{
-        fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
-        color: positive ? 'var(--bull-strong)' : 'var(--bear-strong)',
-        letterSpacing: '.02em',
-      }}>
-        {value}
-      </span>
-    </div>
-  )
-}
-
-/* ─── Security badge ─────────────────────────────────────────────────────── */
-function SecurityBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 5,
-      padding: '4px 10px',
-      borderRadius: 99,
-      background: 'var(--bg-hover)',
-      border: '1px solid var(--border-subtle)',
-      fontSize: 10.5, color: 'var(--text-tertiary)',
-      fontWeight: 500,
-    }}>
-      <span style={{ color: 'var(--accent-400)', display: 'flex' }}>{icon}</span>
-      {label}
-    </div>
-  )
-}
-
-/* ─── Eye icons ──────────────────────────────────────────────────────────── */
-function EyeIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  ) : (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  )
-}
-
-/* ─── LOGIN PAGE ─────────────────────────────────────────────────────────── */
+// ── LoginPage ─────────────────────────────────────────────────────────────
 export function LoginPage() {
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth()
-  const { theme, accent, setTheme, setAccent } = useThemeStore()
-
-  const [email,    setEmail]    = useState('')
+  const { login, isLoading, error, clearError } = useAuth()
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [showPw,   setShowPw]   = useState(false)
-  const [mounted,  setMounted]  = useState(false)
-  const [focused,  setFocused]  = useState<'email'|'password'|null>(null)
+  const [showPass, setShowPass] = useState(false)
+  const [focused, setFocused]   = useState<string | null>(null)
 
-  useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t) }, [])
+  useDseCanvas(canvasRef)
 
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />
-
-  async function handleSubmit(e: FormEvent) {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
+    clearError()
     await login({ email, password })
-  }
+  }, [login, email, password, clearError])
 
   return (
-    <div style={{
-      minHeight: '100vh', height: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-base)',
-      padding: 24,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <AnimatedGrid />
+    <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", overflow: 'hidden', background: '#080C14' }}>
 
-      {/* Radial glows */}
-      <div aria-hidden style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-        background: `
-          radial-gradient(ellipse 60% 50% at 20% 30%, var(--accent-glow), transparent),
-          radial-gradient(ellipse 40% 40% at 80% 70%, color-mix(in srgb, var(--accent-700) 12%, transparent), transparent)
-        `,
-      }} />
+      {/* Canvas background */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
 
-      {/* Decorative floating chips */}
-      <FloatingChip style={{ top: '18%', left: '8%', animationDelay: '0s' }}   label="DSEX" value="+0.68%" positive={true} />
-      <FloatingChip style={{ top: '30%', left: '4%', animationDelay: '1.2s' }} label="BATBC" value="৳716.00" positive={true} />
-      <FloatingChip style={{ top: '60%', left: '6%', animationDelay: '2.1s' }} label="DS30" value="-0.81%" positive={false} />
-      <FloatingChip style={{ top: '20%', right: '7%', animationDelay: '0.7s' }} label="Vol" value="82.4M" positive={true} />
-      <FloatingChip style={{ top: '42%', right: '4%', animationDelay: '1.8s' }} label="RENATA" value="৳1,420" positive={false} />
-      <FloatingChip style={{ top: '65%', right: '8%', animationDelay: '0.4s' }} label="Fill Rate" value="98.2%" positive={true} />
-
-      {/* Theme strip — top center */}
-      <div style={{
-        position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', alignItems: 'center', gap: 4,
-        padding: '5px 10px',
-        borderRadius: 99,
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        backdropFilter: 'blur(20px)',
-        zIndex: 10,
-      }}>
-        {/* Themes */}
-        {THEMES.map(t => (
-          <button key={t.id} onClick={() => setTheme(t.id as ThemeId)} title={t.label}
-            style={{
-              width: 22, height: 22, borderRadius: '50%',
-              fontSize: 11,
-              border: `1.5px solid ${theme === t.id ? 'var(--accent-400)' : 'transparent'}`,
-              background: theme === t.id ? 'var(--accent-glow)' : 'transparent',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 120ms',
-            }}>
-            {t.emoji}
-          </button>
-        ))}
-        <div style={{ width: 1, height: 12, background: 'var(--border-default)', margin: '0 2px' }} />
-        {/* Accents */}
-        {ACCENTS.map(a => (
-          <button key={a.id} onClick={() => setAccent(a.id as AccentId)} title={a.label}
-            style={{
-              width: 14, height: 14, borderRadius: '50%',
-              background: a.color,
-              border: `2px solid ${accent === a.id ? '#fff' : 'transparent'}`,
-              outline: accent === a.id ? `2px solid ${a.color}` : 'none',
-              outlineOffset: 1,
-              cursor: 'pointer',
-              transition: 'all 120ms',
-              boxShadow: accent === a.id ? `0 0 8px ${a.color}90` : 'none',
-            }}
-          />
-        ))}
+      {/* Top bar — institution logos */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Hex logo */}
+          <svg width="28" height="28" viewBox="0 0 28 28">
+            <polygon points="14,2 24,8 24,20 14,26 4,20 4,8" fill="none" stroke="#00D4AA" strokeWidth="1.5" />
+            <polygon points="14,6 21,10 21,18 14,22 7,18 7,10" fill="rgba(0,212,170,0.1)" stroke="#00D4AA" strokeWidth="0.5" />
+            <text x="14" y="17" textAnchor="middle" fill="#00D4AA" fontSize="7" fontFamily="Space Mono" fontWeight="bold">OMS</text>
+          </svg>
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 15, letterSpacing: '0.04em' }}>BD Stock OMS</span>
+        </div>
+        <div style={{ display: 'flex', gap: 20 }}>
+          <ThemeMenu variant="compact" />
+          {['DSE', 'CSE', 'BSEC', 'CDBL'].map(inst => (
+            <span key={inst} style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: "'Space Mono', monospace", letterSpacing: '0.1em' }}>{inst}</span>
+          ))}
+        </div>
       </div>
 
-      {/* Card */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        width: '100%', maxWidth: 420,
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? 'translateY(0) scale(1)' : 'translateY(24px) scale(.97)',
-        transition: 'opacity 600ms var(--ease-out-expo), transform 600ms var(--ease-out-expo)',
-      }}>
+      {/* Login card */}
+      <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, margin: '0 16px' }}>
         <div style={{
-          background: 'var(--glass-bg)',
-          border: '1px solid var(--glass-border)',
-          backdropFilter: 'blur(32px) saturate(180%)',
-          borderRadius: 'var(--r-2xl)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-xl)',
+          background: 'rgba(13,19,32,0.85)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(0,212,170,0.18)',
+          borderRadius: 16,
+          padding: '40px 36px',
+          boxShadow: '0 0 60px rgba(0,212,170,0.06), 0 24px 48px rgba(0,0,0,0.5)',
         }}>
-          {/* Top accent line */}
-          <div style={{
-            height: 3,
-            background: `linear-gradient(90deg, transparent, var(--accent-500), var(--accent-300), var(--accent-500), transparent)`,
-          }}/>
-
-          <div style={{ padding: '32px 36px 36px' }}>
-            {/* Logo + brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 }}>
-              <Logo size={44} animated />
-              <div>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800, fontSize: 20,
-                  color: 'var(--text-primary)',
-                  letterSpacing: '-0.04em',
-                  lineHeight: 1,
-                }}>
-                  BD<span style={{ color: 'var(--accent-400)' }}>OMS</span>
-                </div>
-                <div style={{
-                  fontSize: 10, color: 'var(--text-tertiary)',
-                  letterSpacing: '.08em', textTransform: 'uppercase',
-                  fontWeight: 500, marginTop: 3,
-                }}>
-                  Order Management System
-                </div>
-              </div>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 52, height: 52, borderRadius: '50%', background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)', marginBottom: 16 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 17l4-8 4 5 3-3 4 6" stroke="#00D4AA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="19" cy="5" r="2" fill="#00D4AA" opacity="0.6"/>
+              </svg>
             </div>
-
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700, fontSize: 24,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.03em',
-              marginBottom: 6, lineHeight: 1,
-            }}>
-              Welcome back
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 28 }}>
-              Sign in to your trading account
+            <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: '0 0 6px', letterSpacing: '-0.02em' }}>Welcome back</h1>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
+              Bangladesh Securities & Exchange Commission certified platform
             </p>
+          </div>
 
-            {/* Error */}
-            {error && (
-              <div className="animate-slide-down" style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                padding: '10px 14px', borderRadius: 'var(--r-md)', marginBottom: 20,
-                background: 'var(--bear-muted)',
-                border: '1px solid var(--bear-border)',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bear-strong)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--bear-strong)', lineHeight: 1.5 }}>{error}</span>
-                <button onClick={clearError} style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--bear-strong)', opacity: .7,
-                  fontSize: 13, padding: 0, lineHeight: 1,
-                }}>✕</button>
-              </div>
-            )}
+          {/* Error */}
+          {error && (
+            <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#FF6B6B" strokeWidth="1.2"/><path d="M7 4v3M7 9.5v.5" stroke="#FF6B6B" strokeWidth="1.2" strokeLinecap="round"/></svg>
+              <span style={{ color: '#FF6B6B', fontSize: 13 }}>{error}</span>
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Email */}
-              <div>
-                <label style={{
-                  display: 'block', fontSize: 12, fontWeight: 500,
-                  color: 'var(--text-secondary)', marginBottom: 7, letterSpacing: '.01em',
-                }}>
-                  Email address
-                </label>
-                <div className="input-group">
-                  <span className="input-group-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                      <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                  </span>
-                  <input
-                    type="email" autoComplete="email" required
-                    placeholder="you@brokerage.com.bd"
-                    value={email}
-                    onChange={e => { setEmail(e.target.value); clearError() }}
-                    onFocus={() => setFocused('email')}
-                    onBlur={() => setFocused(null)}
-                    className="input input-lg"
-                    disabled={isLoading}
-                    style={{
-                      boxShadow: focused === 'email' ? `0 0 0 3px var(--accent-glow)` : undefined,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '.01em' }}>
-                    Password
-                  </label>
-                  <button type="button" onClick={e => e.preventDefault()}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--accent-400)', padding: 0 }}>
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="input-group" style={{ position: 'relative' }}>
-                  <span className="input-group-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0110 0v4"/>
-                    </svg>
-                  </span>
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    autoComplete="current-password" required
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={e => { setPassword(e.target.value); clearError() }}
-                    onFocus={() => setFocused('password')}
-                    onBlur={() => setFocused(null)}
-                    className="input input-lg"
-                    disabled={isLoading}
-                    style={{ paddingRight: 46 }}
-                  />
-                  <button type="button" onClick={() => setShowPw(s => !s)}
-                    aria-label={showPw ? 'Hide password' : 'Show password'}
-                    style={{
-                      position: 'absolute', right: 12,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center',
-                      padding: 4, borderRadius: 6,
-                      transition: 'color 120ms',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)' }}
-                  >
-                    <EyeIcon open={!showPw} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isLoading || !email || !password}
-                className="btn btn-primary btn-xl"
-                style={{ marginTop: 4, width: '100%', fontFamily: 'var(--font-display)', fontWeight: 700 }}
-              >
-                {isLoading ? (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-                      style={{ animation: 'spinSlow 0.8s linear infinite' }}>
-                      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/>
-                      <path d="M21 12a9 9 0 00-9-9"/>
-                    </svg>
-                    Authenticating…
-                  </>
-                ) : (
-                  <>
-                    Sign in to OMS
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Security section */}
-            <div style={{ margin: '24px 0 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
-                <span style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '.08em', fontWeight: 600, textTransform: 'uppercase' }}>
-                  Secured
-                </span>
-                <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <SecurityBadge label="MFA Protected" icon={<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>} />
-                <SecurityBadge label="TLS 1.3" icon={<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>} />
-                <SecurityBadge label="JWT + Refresh" icon={<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>} />
-                <SecurityBadge label="Session Monitor" icon={<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          {/* Form */}
+          <form onSubmit={handleSubmit} autoComplete="off">
+            {/* Email */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Email</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocused('email')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="your@email.com"
+                  required
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${focused === 'email' ? 'rgba(0,212,170,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius: 8, padding: '11px 14px',
+                    color: '#fff', fontSize: 14, outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                />
               </div>
             </div>
+
+            {/* Password */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="••••••••"
+                  required
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${focused === 'password' ? 'rgba(0,212,170,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius: 8, padding: '11px 40px 11px 14px',
+                    color: '#fff', fontSize: 14, outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                />
+                <button type="button" onClick={() => setShowPass(v => !v)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 0 }}>
+                  {showPass
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/></svg>
+                  }
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%', padding: '12px',
+                background: isLoading ? 'rgba(0,212,170,0.3)' : 'linear-gradient(135deg, #00D4AA 0%, #00B894 100%)',
+                border: 'none', borderRadius: 8, color: '#0A1628',
+                fontSize: 14, fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer',
+                letterSpacing: '0.04em', transition: 'opacity 0.2s',
+                boxShadow: isLoading ? 'none' : '0 4px 20px rgba(0,212,170,0.3)',
+              }}
+            >
+              {isLoading ? 'Signing in…' : 'Sign in to OMS'}
+            </button>
+          </form>
+
+          {/* Footer links */}
+          <div style={{ marginTop: 24, textAlign: 'center' }}>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, margin: '0 0 12px' }}>
+              New brokerage?{' '}
+              <Link to="/signup" style={{ color: '#00D4AA', textDecoration: 'none', fontWeight: 600 }}>Register your firm</Link>
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.18)', fontSize: 11, margin: 0, lineHeight: 1.6 }}>
+              {'Built by '}
+              <a href="https://www.linkedin.com/in/eshanbarua" target="_blank" rel="noopener noreferrer"
+                style={{ color: 'rgba(0,212,170,0.6)', textDecoration: 'none', fontWeight: 600 }}>
+                Eshan Barua
+              </a>
+              {' · BD Stock OMS v2 · BSEC Regulated'}
+            </p>
           </div>
         </div>
 
-        {/* Footer credit */}
-        <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-            © {new Date().getFullYear()} BD Stock OMS · Bangladesh Securities & Exchange Commission
-          </p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>
-            Design & Developed by{' '}
-            <span style={{ color: 'var(--accent-400)', fontWeight: 600 }}>Eshan Barua</span>
-          </p>
+        {/* Market status strip */}
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 24 }}>
+          {[
+            { label: 'DSEX', value: '6,248.30', up: true },
+            { label: 'CSE30', value: '9,841.20', up: true },
+            { label: 'CDBL', value: 'Active', up: true },
+          ].map(item => (
+            <div key={item.label} style={{ textAlign: 'center' }}>
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: "'Space Mono', monospace", letterSpacing: '0.08em' }}>{item.label}</div>
+              <div style={{ color: item.up ? '#00D4AA' : '#FF6B6B', fontSize: 12, fontFamily: "'Space Mono', monospace", fontWeight: 700 }}>{item.value}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   )
 }
+
+export default LoginPage

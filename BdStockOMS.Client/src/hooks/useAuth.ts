@@ -10,83 +10,48 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const login = useCallback(
-    async (credentials: LoginRequest) => {
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const res = await authApi.login(credentials)
-
-        if (!res.success || !res.data) {
-          setError(res.message ?? 'Login failed')
-          return false
-        }
-
-        const { data } = res
-
-        if (data.requiresMfa) {
-          // Future: redirect to MFA page
-          navigate('/auth/mfa', { state: { email: credentials.email } })
-          return false
-        }
-
-        const authUser: AuthUser = {
-          userId: data.userId,
-          email: data.email,
-          role: data.role,
-          permissions: data.permissions,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresAt: Date.now() + data.expiresIn * 1000,
-        }
-
-        setUser(authUser)
-        navigate('/dashboard')
-        return true
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : 'An unexpected error occurred'
-        setError(message)
-        return false
-      } finally {
-        setIsLoading(false)
+  const login = useCallback(async (credentials: LoginRequest) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.login(credentials)
+      const authUser: AuthUser = {
+        userId:             data.userId,
+        fullName:           data.fullName,
+        email:              data.email,
+        role:               data.role,
+        brokerageHouseId:   data.brokerageHouseId,
+        brokerageHouseName: data.brokerageHouseName,
+        token:              data.token,
+        expiresAt:          new Date(data.expiresAt).getTime(),
       }
-    },
-    [navigate, setUser],
-  )
+      setUser(authUser)
+      navigate('/dashboard')
+      return true
+    } catch (err: unknown) {
+      const msg =
+        (err as any)?.response?.data?.message ??
+        (err instanceof Error ? err.message : 'Login failed')
+      setError(msg)
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }, [navigate, setUser])
 
   const logout = useCallback(async () => {
-    try {
-      await authApi.logout()
-    } catch {
-      // Swallow — still log out locally
-    } finally {
-      storeLogout()
-      navigate('/login')
-    }
+    try { await authApi.logout() } catch { /* swallow */ }
+    finally { storeLogout(); navigate('/login') }
   }, [storeLogout, navigate])
 
-  const hasPermission = useCallback(
-    (permission: string) => user?.permissions.includes(permission) ?? false,
-    [user],
-  )
-
   const hasRole = useCallback(
-    (...roles: AuthUser['role'][]) =>
-      user ? roles.includes(user.role) : false,
-    [user],
+    (...roles: AuthUser['role'][]) => (user ? roles.includes(user.role) : false),
+    [user]
   )
 
   return {
-    user,
-    isAuthenticated,
-    isLoading,
-    error,
-    login,
-    logout,
-    hasPermission,
-    hasRole,
+    user, isAuthenticated, isLoading, error,
+    login, logout, hasRole,
     clearError: () => setError(null),
   }
 }

@@ -1,33 +1,13 @@
-import { apiGet, apiPost } from './client'
-import type {
-  ApiResponse,
-  Order,
-  PlaceOrderRequest,
-  CancelOrderRequest,
-  PaginatedResponse,
-} from '@/types'
+import { apiClient } from './client'
+import type { PlaceOrderRequest, CancelOrderRequest } from '@/types'
 
 export const ordersApi = {
-  list(params?: {
-    page?: number
-    pageSize?: number
-    status?: string
-    symbol?: string
-  }): Promise<ApiResponse<PaginatedResponse<Order>>> {
-    return apiGet<PaginatedResponse<Order>>('/orders', { params })
-  },
-
-  getById(orderId: string): Promise<ApiResponse<Order>> {
-    return apiGet<Order>(`/orders/${orderId}`)
-  },
-
-  place(body: PlaceOrderRequest): Promise<ApiResponse<Order>> {
-    return apiPost<Order>('/orders', body)
-  },
-
-  cancel(body: CancelOrderRequest): Promise<ApiResponse<void>> {
-    return apiPost<void>(`/orders/${body.orderId}/cancel`, {
-      reason: body.reason,
-    })
-  },
+  getAll:    (params?: Record<string, unknown>) =>
+    apiClient.get('/Order', { params }).then(r => r.data),
+  getById:   (id: string) => apiClient.get(`/Order/${id}`).then(r => r.data),
+  place:     (data: PlaceOrderRequest) => apiClient.post('/Order', data).then(r => r.data),
+  cancel:    (id: string, data: CancelOrderRequest) =>
+    apiClient.post(`/Order/${id}/cancel`, data).then(r => r.data),
+  getHistory: (params?: Record<string, unknown>) =>
+    apiClient.get('/Order/history', { params }).then(r => r.data),
 }

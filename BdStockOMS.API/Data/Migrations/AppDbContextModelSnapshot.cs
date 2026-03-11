@@ -63,7 +63,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BosImportLog", b =>
@@ -116,7 +116,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BosImportLogs");
+                    b.ToTable("BosImportLogs", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BosImportSession", b =>
@@ -188,7 +188,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("ImportedByUserId");
 
-                    b.ToTable("BosImportSessions");
+                    b.ToTable("BosImportSessions", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BranchOffice", b =>
@@ -243,7 +243,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("BrokerageHouseId", "BranchCode")
                         .IsUnique();
 
-                    b.ToTable("BranchOffices");
+                    b.ToTable("BranchOffices", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BrokerageCommissionRate", b =>
@@ -281,7 +281,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("BrokerageHouseId");
 
-                    b.ToTable("BrokerageCommissionRates");
+                    b.ToTable("BrokerageCommissionRates", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BrokerageConnection", b =>
@@ -322,7 +322,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("BrokerageHouseId");
 
-                    b.ToTable("BrokerageConnections");
+                    b.ToTable("BrokerageConnections", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BrokerageHouse", b =>
@@ -366,7 +366,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BrokerageHouses");
+                    b.ToTable("BrokerageHouses", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.BrokerageSettings", b =>
@@ -432,7 +432,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("BrokerageHouseId")
                         .IsUnique();
 
-                    b.ToTable("BrokerageSettings");
+                    b.ToTable("BrokerageSettings", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.CommissionLedger", b =>
@@ -504,7 +504,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("TradeId");
 
-                    b.ToTable("CommissionLedgers");
+                    b.ToTable("CommissionLedgers", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.CommissionRate", b =>
@@ -545,7 +545,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CommissionRates");
+                    b.ToTable("CommissionRates", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.ContractNote", b =>
@@ -646,7 +646,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("ContractNotes");
+                    b.ToTable("ContractNotes", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.CorporateAction", b =>
@@ -686,7 +686,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("StockId");
 
-                    b.ToTable("CorporateActions");
+                    b.ToTable("CorporateActions", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.FileImportBatch", b =>
@@ -747,7 +747,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("FileImportBatches");
+                    b.ToTable("FileImportBatches", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.FileImportRow", b =>
@@ -788,7 +788,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("FileImportBatchId");
 
-                    b.ToTable("FileImportRows");
+                    b.ToTable("FileImportRows", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.FundRequest", b =>
@@ -849,7 +849,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("TraderId");
 
-                    b.ToTable("FundRequests");
+                    b.ToTable("FundRequests", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.InvestorCommissionRate", b =>
@@ -897,7 +897,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("InvestorId");
 
-                    b.ToTable("InvestorCommissionRates");
+                    b.ToTable("InvestorCommissionRates", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.KycApproval", b =>
@@ -931,7 +931,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("KycDocumentId");
 
-                    b.ToTable("KycApprovals");
+                    b.ToTable("KycApprovals", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.KycDocument", b =>
@@ -984,7 +984,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("KycDocuments");
+                    b.ToTable("KycDocuments", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.LoginHistory", b =>
@@ -1022,7 +1022,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("LoginHistories");
+                    b.ToTable("LoginHistories", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.MarketData", b =>
@@ -1077,7 +1077,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("StockId", "Date", "Exchange")
                         .IsUnique();
 
-                    b.ToTable("MarketData");
+                    b.ToTable("MarketData", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.MarketDepth", b =>
@@ -1174,7 +1174,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("StockId")
                         .IsUnique();
 
-                    b.ToTable("MarketDepths");
+                    b.ToTable("MarketDepths", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.NewsItem", b =>
@@ -1218,7 +1218,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("RelatedStockId");
 
-                    b.ToTable("NewsItems");
+                    b.ToTable("NewsItems", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Notification", b =>
@@ -1259,7 +1259,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.NotificationLog", b =>
@@ -1306,7 +1306,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("NotificationLogs");
+                    b.ToTable("NotificationLogs", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.NotificationPreference", b =>
@@ -1337,7 +1337,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NotificationPreferences");
+                    b.ToTable("NotificationPreferences", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Order", b =>
@@ -1420,7 +1420,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("TraderId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.OrderAmendment", b =>
@@ -1463,7 +1463,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderAmendments");
+                    b.ToTable("OrderAmendments", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.OrderEvent", b =>
@@ -1502,7 +1502,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderEvents");
+                    b.ToTable("OrderEvents", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.PasswordHistory", b =>
@@ -1527,7 +1527,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PasswordHistories");
+                    b.ToTable("PasswordHistories", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Portfolio", b =>
@@ -1566,7 +1566,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("InvestorId", "StockId")
                         .IsUnique();
 
-                    b.ToTable("Portfolios");
+                    b.ToTable("Portfolios", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.PortfolioSnapshot", b =>
@@ -1619,7 +1619,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId", "SnapshotDate");
 
-                    b.ToTable("PortfolioSnapshots");
+                    b.ToTable("PortfolioSnapshots", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.RMSLimit", b =>
@@ -1675,7 +1675,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("BrokerageHouseId");
 
-                    b.ToTable("RMSLimits");
+                    b.ToTable("RMSLimits", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.RefreshToken", b =>
@@ -1716,7 +1716,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Role", b =>
@@ -1737,7 +1737,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -1805,7 +1805,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SectorConfigs");
+                    b.ToTable("SectorConfigs", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.SettlementBatch", b =>
@@ -1862,7 +1862,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("BrokerageHouseId");
 
-                    b.ToTable("SettlementBatches");
+                    b.ToTable("SettlementBatches", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.SettlementItem", b =>
@@ -1941,7 +1941,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("TradeId");
 
-                    b.ToTable("SettlementItems");
+                    b.ToTable("SettlementItems", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Stock", b =>
@@ -2023,7 +2023,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("TradingCode", "Exchange")
                         .IsUnique();
 
-                    b.ToTable("Stocks");
+                    b.ToTable("Stocks", (string)null);
 
                     b.HasData(
                         new
@@ -2403,7 +2403,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("StockId", "Exchange")
                         .IsUnique();
 
-                    b.ToTable("StockAnalytics");
+                    b.ToTable("StockAnalytics", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.SystemLog", b =>
@@ -2434,7 +2434,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SystemLogs");
+                    b.ToTable("SystemLogs", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.SystemSetting", b =>
@@ -2476,7 +2476,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
-                    b.ToTable("SystemSettings");
+                    b.ToTable("SystemSettings", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Trade", b =>
@@ -2535,7 +2535,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("StockId");
 
-                    b.ToTable("Trades");
+                    b.ToTable("Trades", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.TradeAlert", b =>
@@ -2591,7 +2591,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("TradeAlerts");
+                    b.ToTable("TradeAlerts", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.TraderReassignment", b =>
@@ -2635,7 +2635,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("ReassignedByUserId");
 
-                    b.ToTable("TraderReassignments");
+                    b.ToTable("TraderReassignments", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.TrustedDevice", b =>
@@ -2674,7 +2674,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TrustedDevices");
+                    b.ToTable("TrustedDevices", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.TwoFactorOtp", b =>
@@ -2709,7 +2709,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TwoFactorOtps");
+                    b.ToTable("TwoFactorOtps", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.User", b =>
@@ -2809,7 +2809,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.UserPermission", b =>
@@ -2850,7 +2850,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("UserId", "Permission")
                         .IsUnique();
 
-                    b.ToTable("UserPermissions");
+                    b.ToTable("UserPermissions", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.UserSession", b =>
@@ -2891,7 +2891,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserSessions");
+                    b.ToTable("UserSessions", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.Watchlist", b =>
@@ -2919,7 +2919,7 @@ namespace BdStockOMS.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Watchlists");
+                    b.ToTable("Watchlists", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.WatchlistItem", b =>
@@ -2949,7 +2949,7 @@ namespace BdStockOMS.API.Data.Migrations
                     b.HasIndex("WatchlistId", "StockId")
                         .IsUnique();
 
-                    b.ToTable("WatchlistItems");
+                    b.ToTable("WatchlistItems", (string)null);
                 });
 
             modelBuilder.Entity("BdStockOMS.API.Models.AuditLog", b =>
