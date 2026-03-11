@@ -21,7 +21,7 @@ export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(
-        import.meta.env.DEV
+        (import.meta as any).env.DEV
           ? signalR.LogLevel.Information
           : signalR.LogLevel.Warning,
       )

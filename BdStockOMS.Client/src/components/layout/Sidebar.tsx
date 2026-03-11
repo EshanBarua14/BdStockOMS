@@ -1,3 +1,4 @@
+import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useThemeStore } from '@/store/themeStore'
 import { useAuthStore } from '@/store/authStore'
@@ -39,7 +40,7 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 function NavRow({ to, Icon, label, badge, collapsed }: {
-  to: string; Icon: () => JSX.Element; label: string; badge?: number; collapsed: boolean
+  to: string; Icon: () => React.ReactElement; label: string; badge?: number; collapsed: boolean
 }) {
   return (
     <NavLink to={to} end={to === '/dashboard'} title={collapsed ? label : undefined}
@@ -129,7 +130,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 1 }} className="no-scrollbar">
-        {PRIMARY_NAV.map(n => <NavRow key={n.path} {...n} collapsed={sidebarCollapsed} />)}
+        {PRIMARY_NAV.map(n => <NavRow key={n.path} to={n.path} Icon={n.Icon} label={n.label} badge={(n as any).badge} collapsed={sidebarCollapsed} />)}
 
         {isAdmin && (
           <>
@@ -140,7 +141,7 @@ export function Sidebar() {
                 color: 'var(--text-tertiary)', padding: '2px 6px 4px', display: 'block',
               }}>Administration</span>
             )}
-            {ADMIN_NAV.map(n => <NavRow key={n.path} {...n} collapsed={sidebarCollapsed} />)}
+            {ADMIN_NAV.map(n => <NavRow key={n.path} to={n.path} Icon={n.Icon} label={n.label} badge={(n as any).badge} collapsed={sidebarCollapsed} />)}
           </>
         )}
       </nav>

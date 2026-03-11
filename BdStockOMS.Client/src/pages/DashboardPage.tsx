@@ -174,7 +174,7 @@ function IndexCard({ label, value, change, pct }: { label:string; value:number; 
 /* ─── Dashboard Page ────────────────────────────────────────────────────── */
 export function DashboardPage() {
   const user = useAuthStore(s => s.user)
-  const [tick, setTick] = useState(0)
+  const [_tick, setTick] = useState(0)
   const sparks = useRef({
     portfolio: generateSpark(2481500, 20),
     pnl:       generateSpark(56820, 20),

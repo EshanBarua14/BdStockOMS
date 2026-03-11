@@ -1,191 +1,181 @@
-# Day 49 — React Frontend Scaffold
+# Day 49 - React Frontend Scaffold & Design System
 
-**Branch:** `day-49-react-frontend`  
-**Date:** 2025 (Day 49 of BD Stock OMS development)
+**Branch:** `day-49-react-frontend`
+**Tests:** 776 (start) -> 800 (end) | +24 frontend tests
+**All tests:** 776 backend passing, 24 frontend passing, 0 failures
 
 ---
 
-## Goals Achieved
+## Summary
 
-| Goal | Status |
-|------|--------|
-| Vite + React 18 + TypeScript scaffold in `/BdStockOMS.Client` | ✅ |
-| Tailwind CSS with custom dark theme | ✅ |
-| Axios API client with JWT interceptors + auto-refresh | ✅ |
-| Zustand auth store with persistence | ✅ |
-| Login page → `/api/auth/login` | ✅ |
-| Dashboard layout (collapsible sidebar + topbar) | ✅ |
-| Dashboard page with KPI cards + recent orders | ✅ |
-| Protected routes (redirect to `/login` if unauthenticated) | ✅ |
-| Role-based route guards | ✅ |
-| SignalR hook for real-time streaming | ✅ |
-| Frontend tests (22 tests) | ✅ |
-| Backend: 776 tests still passing | ✅ |
+| # | Goal | Status |
+|---|------|--------|
+| 1 | Vite 5 + React 18 + TypeScript strict + Tailwind 4 scaffold | Done |
+| 2 | Axios API client with JWT interceptors + proactive/reactive refresh | Done |
+| 3 | Zustand auth store + theme store with localStorage persistence | Done |
+| 4 | Login page → /api/auth/login with animated canvas background | Done |
+| 5 | SignUp page → 3-step flow with role selection + password strength | Done |
+| 6 | Dashboard layout: collapsible Sidebar + Topbar + MarketTickerBar | Done |
+| 7 | Dashboard page: KPI cards, recent orders table, top movers | Done |
+| 8 | Design System v2: 5 themes, 6 accents, 3 densities, ThemePanel | Done |
+| 9 | Protected routes with role-based access guards | Done |
+| 10 | SignalR hook for real-time hub connections | Done |
+| 11 | Logo component (crystalline hexagon SVG) | Done |
+| 12 | 24 frontend tests in src/test/Day49/ | Done |
+| 13 | Build passing: tsc + vite build, 0 errors, 112 modules | Done |
+| 14 | Vite proxy: /api → https://localhost:7001, /hubs → ws | Done |
+
+---
+
+## Frontend Analysis (Pre-Day 49)
+
+| Check | Result |
+|-------|--------|
+| React + Vite scaffold | Added Day 49 |
+| JWT interceptor chain | Added Day 49 — proactive + reactive, no double-refresh |
+| Zustand stores | Added Day 49 — auth + theme with persist middleware |
+| Design system | Added Day 49 — CSS custom properties, 5 themes, 6 accents |
+| Protected routes | Added Day 49 — role-based guards |
+| SignalR hook | Added Day 49 — auto-reconnect, event map |
+| Backend connectivity | Vite proxy configured → https://localhost:7001 |
+| Frontend tests | Added Day 49 — 24 tests, 4 files |
 
 ---
 
 ## Project Structure
 
-```
-BdStockOMS.Client/
-├── index.html
-├── vite.config.ts              # Proxy: /api → :7001, /hubs → ws
-├── tailwind.config.js          # Custom brand palette + animations
-├── tsconfig.json               # Strict mode
-├── package.json                # React 18, Vite 5, Axios, Zustand, MSW
-└── src/
-    ├── main.tsx
-    ├── App.tsx                 # Router with protected/admin routes
-    ├── index.css               # Tailwind + global component classes
-    ├── api/
-    │   ├── client.ts           # Axios instance + JWT interceptors + refresh
-    │   ├── auth.ts             # authApi (login/refresh/logout/me)
-    │   └── orders.ts           # ordersApi (list/get/place/cancel)
-    ├── store/
-    │   └── authStore.ts        # Zustand store with localStorage persist
-    ├── hooks/
-    │   ├── useAuth.ts          # login/logout/hasRole/hasPermission
-    │   └── useSignalR.ts       # SignalR hub connection hook
-    ├── types/
-    │   └── index.ts            # All shared TypeScript types
-    ├── components/
-    │   ├── auth/
-    │   │   └── ProtectedRoute.tsx   # JWT-gated + role-gated route wrapper
-    │   ├── layout/
-    │   │   ├── DashboardLayout.tsx  # Sidebar + Topbar + <Outlet>
-    │   │   ├── Sidebar.tsx          # Collapsible nav + user info + logout
-    │   │   └── Topbar.tsx           # Breadcrumbs + market status + bell
-    │   └── ui/
-    │       ├── Spinner.tsx     # Spinner + PageSpinner
-    │       └── Alert.tsx       # Error/success/warning/info alerts
-    ├── pages/
-    │   ├── LoginPage.tsx       # Full login UI → /api/auth/login
-    │   ├── DashboardPage.tsx   # KPI cards, recent orders, quick actions
-    │   └── PlaceholderPages.tsx # Orders, Portfolio, Market, 403, 404
-    └── test/
-        ├── setup.ts
-        ├── authStore.test.ts      # 6 tests
-        ├── ProtectedRoute.test.tsx # 5 tests
-        ├── LoginPage.test.tsx     # 7 tests
-        ├── Alert.test.tsx         # 7 tests
-        └── types.test.ts          # 6 tests (type shape tests)
-```
+**File:** `BdStockOMS.Client/src/`
+
+### API Layer
+- `api/client.ts` — Axios instance + JWT interceptors + refresh queue
+- `api/auth.ts` — authApi: login / refresh / logout / me
+- `api/orders.ts` — ordersApi: list / getById / place / cancel
+
+### Stores
+- `store/authStore.ts` — user, isAuthenticated, setUser, logout (persisted)
+- `store/themeStore.ts` — theme, accent, density, sidebar, ticker (persisted)
+
+### Hooks
+- `hooks/useAuth.ts` — login / logout / hasRole / hasPermission
+- `hooks/useSignalR.ts` — hub connection with auto-reconnect + invoke
+
+### Components
+- `components/auth/ProtectedRoute.tsx` — JWT-gated + role-gated route wrapper
+- `components/layout/DashboardLayout.tsx` — Sidebar + Topbar + Outlet
+- `components/layout/Sidebar.tsx` — collapsible nav, role badge, logout
+- `components/layout/Topbar.tsx` — breadcrumbs, market status, clock, notifications
+- `components/ui/Logo.tsx` — crystalline hexagon SVG logo
+- `components/ui/Alert.tsx` — error / success / warning / info variants
+- `components/ui/Spinner.tsx` — Spinner + PageSpinner
+- `components/ui/ThemePanel.tsx` — visual theme/accent/density switcher
+- `components/widgets/MarketTickerBar.tsx` — live scrolling price bar
+
+### Pages
+- `pages/LoginPage.tsx` — animated canvas, floating chips, glass card
+- `pages/SignUpPage.tsx` — 3-step flow, role selector, password strength
+- `pages/DashboardPage.tsx` — KPI cards, orders table, top movers
+- `pages/PlaceholderPages.tsx` — Orders, Portfolio, Market, 403, 404
 
 ---
 
 ## JWT Interceptor Design
 
+**File:** `BdStockOMS.Client/src/api/client.ts`
+
 ### Proactive Refresh (Request Interceptor)
-- If `expiresAt - now < 60s` → refresh **before** sending request
-- All concurrent requests queue behind a single refresh promise
-- No duplicate refresh calls via `isRefreshing` flag
+- If expiresAt - now < 60s → refresh before sending request
+- All concurrent requests queue behind single refresh promise
+- isRefreshing flag prevents duplicate refresh calls
 
 ### Reactive Refresh (Response Interceptor)
-- 401 response → refresh once (`_retry` flag prevents loops)
+- 401 response → refresh once (_retry flag prevents loops)
 - Queued requests resolved with new token after refresh
-- On refresh failure → `logout()` + redirect to `/login`
+- On refresh failure → logout() + redirect to /login
 
 ---
 
-## Auth Store
+## Design System v2
 
-```typescript
-// Zustand slice
-{
-  user: AuthUser | null      // null = unauthenticated
-  isAuthenticated: boolean
-  setUser(user: AuthUser): void
-  logout(): void
-}
+**Files:** `src/styles/themes.css`, `src/store/themeStore.ts`
 
-// Persisted to localStorage key: "bd_oms_auth"
-// (In production, use httpOnly cookies for tokens)
-```
-
----
-
-## Protected Route Logic
-
-```
-/any-protected-path
-  → ProtectedRoute
-      ├── !isAuthenticated → <Navigate to="/login" />
-      ├── role not in allowedRoles → <Navigate to="/forbidden" />
-      └── ✅ render <Outlet />
-```
-
----
-
-## Tailwind Design System
-
-| Token | Value |
-|-------|-------|
-| `surface.DEFAULT` | `#0f1117` — page background |
-| `surface.card` | `#161b27` — card/sidebar background |
-| `surface.border` | `#1e2535` — borders |
-| `brand.600` | `#1464f5` — primary CTA |
-| `success` | `#22c55e` — buy / profit |
-| `danger` | `#ef4444` — sell / loss |
-| Font | DM Sans (UI) + JetBrains Mono (numbers) |
+| Token | Description |
+|-------|-------------|
+| 5 themes | Obsidian, Midnight, Slate, Aurora, Arctic |
+| 6 accents | Azure, Cyan, Emerald, Violet, Rose, Amber |
+| 3 densities | Compact, Comfortable, Spacious |
+| Bull color | #00D4AA — buy / profit |
+| Bear color | #FF6B6B — sell / loss |
+| Fonts | Outfit (UI) + Space Grotesk (display) + Space Mono (data) |
 
 ---
 
 ## Vite Proxy Config
 
-```typescript
-proxy: {
-  '/api':  { target: 'https://localhost:7001', secure: false },
-  '/hubs': { target: 'https://localhost:7001', secure: false, ws: true },
-}
-```
+**File:** `BdStockOMS.Client/vite.config.ts`
+
+    proxy: {
+      '/api':  { target: 'https://localhost:7001', secure: false },
+      '/hubs': { target: 'https://localhost:7001', secure: false, ws: true },
+    }
+
+Both frontend and backend must run simultaneously:
+- Backend: https://localhost:7001 (dotnet run)
+- Frontend: http://localhost:5173 (npm run dev)
 
 ---
 
-## Frontend Tests (22 total)
+## New Tests (+24)
 
-```
-src/test/authStore.test.ts         6 tests  — store init, setUser, logout, idempotency
-src/test/ProtectedRoute.test.tsx   5 tests  — unauth redirect, role guard, SuperAdmin
-src/test/LoginPage.test.tsx        7 tests  — render, disabled state, API call, error
-src/test/Alert.test.tsx            7 tests  — variants, dismiss, title, role
-src/test/types.test.ts             6 tests  — runtime type shape assertions
-```
+### authStore.test.ts (6 tests)
+Initialises null, setUser sets authenticated, logout clears user, stores correct role, stores permissions array, logout is idempotent
 
-Run: `cd BdStockOMS.Client && npm test`
+### ProtectedRoute.test.tsx (5 tests)
+Redirects unauthenticated to /login, renders protected content, redirects wrong role to /forbidden, allows Admin, allows SuperAdmin
+
+### Alert.test.tsx (7 tests)
+Renders children, renders title, alert role, success variant, warning variant, onDismiss called, no button without onDismiss
+
+### types.test.ts (6 tests)
+AuthUser shape, Order status union, MarketTicker fields, PortfolioSummary P&L fields, Holding unrealizedPnl, ApiResponse wrapper
+
+---
+
+## Test Count Progression
+
+| Day | Backend | Frontend | Total | Notes |
+|-----|---------|----------|-------|-------|
+| 48 | 776 | 0 | 776 | Start of Day 49 |
+| 49 | 776 | 24 | 800 | +24 frontend tests |
 
 ---
 
 ## Dev Commands
 
-```bash
-cd BdStockOMS.Client
+    cd BdStockOMS.Client
 
-# Install dependencies
-npm install
+    # Install
+    npm install
 
-# Dev server (proxies API to :7001)
-npm run dev
+    # Dev server (proxies /api and /hubs to :7001)
+    npm run dev
 
-# Type check
-npx tsc --noEmit
+    # Run Day 49 tests
+    npx vitest run src/test/Day49
 
-# Lint
-npm run lint
+    # Run all frontend tests
+    npx vitest run
 
-# Run frontend tests
-npm test
-
-# Build for production
-npm run build
-```
+    # Build
+    npm run build
 
 ---
 
-## Day 50 Plan
+## Next: Day 50 - Orders, Portfolio & Component Library
 
-- Orders page: place/cancel order form with validation
-- Portfolio page: holdings table + P&L breakdown
-- Market watch: SignalR streaming ticker
-- React Query / SWR for server state caching
-- MSW mocks for all API endpoints
-- E2E test setup (Playwright)
+- OrdersPage: place/cancel order form wired to /api/orders
+- PortfolioPage: holdings table + P&L breakdown
+- MarketPage: SignalR streaming ticker from /hubs/stockprice
+- React Query: server state caching + background refresh
+- Modal, Drawer, Toast, DataTable reusable components
+- MSW mock handlers for dev without backend
+- Target: 800 backend + 50+ frontend tests

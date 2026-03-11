@@ -9,7 +9,7 @@ import type { ApiResponse, RefreshTokenRequest, LoginResponse } from '@/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
+const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api'
 const TOKEN_REFRESH_THRESHOLD_MS = 60 * 1000 // refresh if < 60 s remaining
 
 // ─── Create Instance ──────────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ function FormField({
   error?: string; hint?: string; required?: boolean; autoComplete?: string
   children?: React.ReactNode
 }) {
-  const [focused, setFocused] = useState(false)
+  const [_focused, setFocused] = useState(false)
   return (
     <div>
       <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>

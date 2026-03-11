@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { clsx } from 'clsx'
 
 interface TickerItem {
   symbol: string
