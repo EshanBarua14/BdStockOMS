@@ -16,15 +16,20 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+
       setUser: (user: AuthUser) => {
         set({ user, isAuthenticated: true })
       },
+
       logout: () => {
         set({ user: null, isAuthenticated: false })
+        // Clear any other stores / caches here
       },
     }),
     {
       name: STORAGE_KEY,
+      // Only persist necessary fields; never persist raw tokens in prod
+      // (use httpOnly cookies in a real deployment)
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
@@ -33,8 +38,9 @@ export const useAuthStore = create<AuthState>()(
   ),
 )
 
-// Selector helpers
-export const selectUser            = (s: AuthState) => s.user
+// ─── Selector helpers ─────────────────────────────────────────────────────────
+
+export const selectUser = (s: AuthState) => s.user
 export const selectIsAuthenticated = (s: AuthState) => s.isAuthenticated
-export const selectRole            = (s: AuthState) => s.user?.role
-export const selectPermissions     = (s: AuthState) => s.user?.permissions ?? []
+export const selectRole = (s: AuthState) => s.user?.role
+export const selectPermissions = (s: AuthState) => s.user?.permissions ?? []

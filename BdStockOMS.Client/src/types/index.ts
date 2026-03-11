@@ -1,4 +1,5 @@
-// ─── API Response Envelope ────────────────────────────────────────────────────
+// ─── API Response Envelope ───────────────────────────────────────────────────
+
 export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
@@ -16,6 +17,7 @@ export interface PaginatedResponse<T> {
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
+
 export interface LoginRequest {
   email: string
   password: string
@@ -44,6 +46,7 @@ export type UserRole =
   | 'Investor'
 
 // ─── User ─────────────────────────────────────────────────────────────────────
+
 export interface AuthUser {
   userId: string
   email: string
@@ -51,15 +54,21 @@ export interface AuthUser {
   permissions: string[]
   accessToken: string
   refreshToken: string
-  expiresAt: number   // unix ms
+  expiresAt: number // unix ms
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
-export type OrderSide   = 'Buy' | 'Sell'
-export type OrderType   = 'Market' | 'Limit' | 'StopLoss' | 'StopLimit'
+
+export type OrderSide = 'Buy' | 'Sell'
+export type OrderType = 'Market' | 'Limit' | 'StopLoss' | 'StopLimit'
 export type OrderStatus =
-  | 'Pending' | 'Open' | 'PartiallyFilled'
-  | 'Filled'  | 'Cancelled' | 'Rejected' | 'Expired'
+  | 'Pending'
+  | 'Open'
+  | 'PartiallyFilled'
+  | 'Filled'
+  | 'Cancelled'
+  | 'Rejected'
+  | 'Expired'
 
 export interface Order {
   orderId: string
@@ -92,6 +101,7 @@ export interface CancelOrderRequest {
 }
 
 // ─── Portfolio ────────────────────────────────────────────────────────────────
+
 export interface PortfolioSummary {
   totalValue: number
   cashBalance: number
@@ -114,6 +124,7 @@ export interface Holding {
 }
 
 // ─── Market Data ──────────────────────────────────────────────────────────────
+
 export interface MarketTicker {
   symbol: string
   name: string
@@ -128,6 +139,7 @@ export interface MarketTicker {
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
+
 export interface NavItem {
   label: string
   path: string
