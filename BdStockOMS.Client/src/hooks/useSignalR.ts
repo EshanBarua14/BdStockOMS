@@ -1,75 +1,45 @@
-import { useEffect, useRef, useCallback } from 'react';
-import * as signalR from '@microsoft/signalr';
-import type { PriceUpdate } from '../types/trading';
+import { useEffect, useRef, useCallback } from 'react'
+import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import { useAuthStore } from '@/store/authStore'
 
 interface UseSignalROptions {
-  onPriceUpdate?: (update: PriceUpdate) => void;
-  onMarketUpdate?: (data: any) => void;
-  subscribeTo?: string[];
+  hubUrl: string
+  events: Record<string, (...args: unknown[]) => void>
+  enabled?: boolean
 }
 
-export function useSignalR(options: UseSignalROptions) {
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
-  const { onPriceUpdate, onMarketUpdate, subscribeTo } = options;
-
-  const connect = useCallback(async () => {
-    if (connectionRef.current?.state === signalR.HubConnectionState.Connected) return;
-
-    const token = (window as any).__authToken;
-
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/stockprice', {
-        accessTokenFactory: () => token ?? '',
-      })
-      .withAutomaticReconnect([0, 2000, 5000, 10000])
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
-
-    if (onPriceUpdate) {
-      connection.on('PriceUpdate', (data: PriceUpdate) => {
-        onPriceUpdate(data);
-      });
-    }
-
-    if (onMarketUpdate) {
-      connection.on('MarketUpdate', (data: any) => {
-        onMarketUpdate(data);
-      });
-    }
-
-    try {
-      await connection.start();
-      connectionRef.current = connection;
-
-      if (subscribeTo?.length) {
-        for (const code of subscribeTo) {
-          await connection.invoke('SubscribeToStock', code);
-        }
-      }
-    } catch (err) {
-      console.warn('SignalR connection failed:', err);
-    }
-  }, [onPriceUpdate, onMarketUpdate, subscribeTo]);
+export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions) {
+  const connectionRef = useRef<HubConnection | null>(null)
+  const { user } = useAuthStore()
 
   useEffect(() => {
-    connect();
+    if (!enabled || !user?.accessToken) return
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(hubUrl, { accessTokenFactory: () => user.accessToken })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(LogLevel.Warning)
+      .build()
+
+    connectionRef.current = connection
+
+    Object.entries(events).forEach(([event, handler]) => {
+      connection.on(event, handler)
+    })
+
+    connection.start().catch(console.error)
+
     return () => {
-      connectionRef.current?.stop();
-      connectionRef.current = null;
-    };
-  }, [connect]);
-
-  const subscribeToStock = useCallback(async (tradingCode: string) => {
-    if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-      await connectionRef.current.invoke('SubscribeToStock', tradingCode);
+      Object.keys(events).forEach(event => connection.off(event))
+      connection.stop()
     }
-  }, []);
+  }, [hubUrl, enabled, user?.accessToken])
 
-  const unsubscribeFromStock = useCallback(async (tradingCode: string) => {
-    if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-      await connectionRef.current.invoke('UnsubscribeFromStock', tradingCode);
+  const invoke = useCallback(async (method: string, ...args: unknown[]) => {
+    if (connectionRef.current?.state === 'Connected') {
+      return connectionRef.current.invoke(method, ...args)
     }
-  }, []);
+  }, [])
 
-  return { subscribeToStock, unsubscribeFromStock };
+  return { invoke }
 }

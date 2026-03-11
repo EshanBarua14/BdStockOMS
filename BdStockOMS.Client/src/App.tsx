@@ -1,71 +1,49 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import ChangePasswordPage from './pages/ChangePasswordPage';
-import ProfilePage from './pages/ProfilePage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ProtectedRoute }  from '@/components/auth/ProtectedRoute'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { LoginPage }       from '@/pages/LoginPage'
+import { SignUpPage }      from '@/pages/SignUpPage'
+import { DashboardPage }   from '@/pages/DashboardPage'
+import {
+  OrdersPage, PortfolioPage, MarketPage,
+  WatchlistPage, ReportsPage,
+  ForbiddenPage, NotFoundPage,
+} from '@/pages/PlaceholderPages'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
+    <BrowserRouter>
+      <Routes>
+        {/* ── Public ─────────────────────────────────────── */}
+        <Route path="/login"     element={<LoginPage />} />
+        <Route path="/signup"    element={<SignUpPage />} />
+        <Route path="/register"  element={<Navigate to="/signup" replace />} />
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/"          element={<Navigate to="/dashboard" replace />} />
 
-          {/* Protected routes — any authenticated user */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
+        {/* ── Authenticated (any role) ────────────────────── */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/orders"    element={<OrdersPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/market"    element={<MarketPage />} />
+            <Route path="/watchlist" element={<WatchlistPage />} />
+            <Route path="/reports"   element={<ReportsPage />} />
+          </Route>
+        </Route>
 
-          <Route path="/change-password" element={
-            <ProtectedRoute>
-              <ChangePasswordPage />
-            </ProtectedRoute>
-          } />
+        {/* ── Admin-only ──────────────────────────────────── */}
+        <Route element={<ProtectedRoute allowedRoles={['Admin', 'SuperAdmin']} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/admin/users"      element={<div style={{ padding: 24, color: 'var(--text-secondary)' }}>Admin: Users — Day 51</div>} />
+            <Route path="/admin/compliance" element={<div style={{ padding: 24, color: 'var(--text-secondary)' }}>Compliance — Day 51</div>} />
+            <Route path="/admin/settings"   element={<div style={{ padding: 24, color: 'var(--text-secondary)' }}>Settings — Day 51</div>} />
+          </Route>
+        </Route>
 
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
-
-          {/* Admin routes */}
-          <Route path="/admin/dashboard" element={
-            <ProtectedRoute allowedRoles={['SuperAdmin', 'Admin']}>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-
-          {/* Trader routes */}
-          <Route path="/trader/dashboard" element={
-            <ProtectedRoute allowedRoles={['Trader']}>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-
-          {/* CCD routes */}
-          <Route path="/ccd/dashboard" element={
-            <ProtectedRoute allowedRoles={['CCD']}>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-
-          {/* IT Support routes */}
-          <Route path="/it/dashboard" element={
-            <ProtectedRoute allowedRoles={['ITSupport']}>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-
-          {/* Default redirects */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
