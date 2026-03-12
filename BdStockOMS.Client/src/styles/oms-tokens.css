@@ -1,0 +1,118 @@
+/* ═══════════════════════════════════════════════════════════════
+   BD Stock OMS — Premium Design Tokens
+   Glass · Neon · 3D Depth — International OMS Grade
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Core Backgrounds ─────────────────────────────────────── */
+  --oms-bg-deep:       #060a12;
+  --oms-bg-base:       #080c14;
+  --oms-bg-panel:      #0d1320;
+  --oms-bg-surface:    #111827;
+  --oms-bg-elevated:   #162032;
+
+  /* ── Glass Surfaces ───────────────────────────────────────── */
+  --oms-glass:         rgba(13, 19, 32, 0.75);
+  --oms-glass-hover:   rgba(17, 24, 39, 0.85);
+  --oms-glass-border:  rgba(255, 255, 255, 0.06);
+  --oms-glass-border-h:rgba(255, 255, 255, 0.12);
+  --oms-glass-blur:    16px;
+
+  /* ── Neon Accents ─────────────────────────────────────────── */
+  --oms-neon-primary:  #00d4aa;
+  --oms-neon-glow:     rgba(0, 212, 170, 0.30);
+  --oms-neon-glow-lg:  rgba(0, 212, 170, 0.12);
+  --oms-neon-cyan:     #00e5ff;
+  --oms-neon-blue:     #448aff;
+  --oms-neon-purple:   #7c4dff;
+
+  /* ── Trading Colors ───────────────────────────────────────── */
+  --oms-buy:           #00e676;
+  --oms-buy-bg:        rgba(0, 230, 118, 0.08);
+  --oms-buy-glow:      rgba(0, 230, 118, 0.25);
+  --oms-sell:          #ff1744;
+  --oms-sell-bg:       rgba(255, 23, 68, 0.08);
+  --oms-sell-glow:     rgba(255, 23, 68, 0.25);
+  --oms-warn:          #ff9100;
+  --oms-warn-bg:       rgba(255, 145, 0, 0.08);
+  --oms-neutral:       #ffd740;
+
+  /* ── Text Hierarchy ───────────────────────────────────────── */
+  --oms-text-1:        #e8ecf4;
+  --oms-text-2:        rgba(255, 255, 255, 0.55);
+  --oms-text-3:        rgba(255, 255, 255, 0.30);
+  --oms-text-4:        rgba(255, 255, 255, 0.15);
+
+  /* ── 3D Depth Shadows ─────────────────────────────────────── */
+  --oms-shadow-sm:     0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --oms-shadow-md:     0 4px 16px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.35);
+  --oms-shadow-lg:     0 8px 32px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+  --oms-shadow-neon:   0 0 20px var(--oms-neon-glow), 0 0 40px var(--oms-neon-glow-lg);
+
+  /* ── Transitions ──────────────────────────────────────────── */
+  --oms-ease:          cubic-bezier(0.16, 1, 0.3, 1);
+  --oms-dur-fast:      120ms;
+  --oms-dur:           200ms;
+  --oms-dur-slow:      350ms;
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --oms-sidebar-w:     56px;
+  --oms-sidebar-exp:   240px;
+  --oms-topbar-h:      48px;
+  --oms-ticker-h:      34px;
+  --oms-radius:        10px;
+  --oms-radius-sm:     6px;
+}
+
+/* ── Global scrollbar upgrade ──────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Glass panel utility ───────────────────────────────────── */
+.oms-glass {
+  background: var(--oms-glass);
+  backdrop-filter: blur(var(--oms-glass-blur));
+  -webkit-backdrop-filter: blur(var(--oms-glass-blur));
+  border: 1px solid var(--oms-glass-border);
+}
+.oms-glass:hover {
+  border-color: var(--oms-glass-border-h);
+}
+
+/* ── Neon glow line ────────────────────────────────────────── */
+.oms-neon-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--oms-neon-primary), transparent);
+  opacity: 0.3;
+}
+
+/* ── Price flash animations ────────────────────────────────── */
+@keyframes oms-flash-green {
+  0%   { background-color: var(--oms-buy-bg); }
+  100% { background-color: transparent; }
+}
+@keyframes oms-flash-red {
+  0%   { background-color: var(--oms-sell-bg); }
+  100% { background-color: transparent; }
+}
+@keyframes oms-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+@keyframes oms-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--oms-neon-glow); }
+  50%      { box-shadow: 0 0 20px var(--oms-neon-glow), 0 0 40px var(--oms-neon-glow-lg); }
+}
+@keyframes oms-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes oms-slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

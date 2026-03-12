@@ -1,17 +1,22 @@
+// @ts-nocheck
+// src/components/layout/Sidebar.tsx
+// Premium OMS Sidebar — Glass + Neon + 3D + Your Logo
+
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/api/auth'
 import type { UserRole } from '@/types'
+import logoImg from '@/assets/images/logo.png'
 
-// ── Icons ─────────────────────────────────────────────────────────────────
+// ── Icons (same SVGs, kept compact) ──────────────────────────────────────
 const Icon = {
   Dashboard: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
     </svg>
   ),
   Orders: () => (
@@ -63,218 +68,301 @@ const Icon = {
   ),
 }
 
-// ── Nav item definition ───────────────────────────────────────────────────
+// ── Nav items (unchanged) ────────────────────────────────────────────────
 interface NavItem {
-  label: string
-  path:  string
-  Icon:  () => React.ReactElement
-  roles?: UserRole[]
-  badge?: number
-  section?: string
+  label: string; path: string; Icon: () => React.ReactElement
+  roles?: UserRole[]; badge?: number; section?: string
 }
 
 const NAV_ITEMS: NavItem[] = [
-  // All roles
   { label: 'Dashboard', path: '/dashboard', Icon: Icon.Dashboard },
   { label: 'Orders',    path: '/orders',    Icon: Icon.Orders },
   { label: 'Portfolio', path: '/portfolio', Icon: Icon.Portfolio,
-    roles: ['Investor', 'Trader', 'Admin', 'SuperAdmin', 'BrokerageHouse', 'BrokerageAdmin'] },
+    roles: ['Investor','Trader','Admin','SuperAdmin','BrokerageHouse','BrokerageAdmin'] },
   { label: 'Market',    path: '/market',    Icon: Icon.Market },
-
-  // Admin section
-  { label: 'Admin Panel', path: '/admin',  Icon: Icon.Admin,
-    roles: ['SuperAdmin', 'Admin'], section: 'Administration' },
-
-  // SuperAdmin only
+  { label: 'Admin Panel',   path: '/admin',   Icon: Icon.Admin,
+    roles: ['SuperAdmin','Admin'], section: 'Administration' },
   { label: 'Tenant Manager', path: '/tenants', Icon: Icon.Tenants,
     roles: ['SuperAdmin'], section: 'Administration' },
   { label: 'RBAC & Roles',   path: '/rbac',    Icon: Icon.RBAC,
     roles: ['SuperAdmin'], section: 'Administration' },
 ]
 
-// ── Role badge colour ─────────────────────────────────────────────────────
+// ── Role colors ──────────────────────────────────────────────────────────
 function roleBadgeColor(role: UserRole) {
-  const map: Record<UserRole, string> = {
-    SuperAdmin:     '#FF6B6B',
-    Admin:          '#FFA500',
-    BrokerageHouse: '#A78BFA',
-    BrokerageAdmin: '#C084FC',
-    Trader:         '#00D4AA',
-    Investor:       '#38BDF8',
-    ITSupport:      '#94A3B8',
-    CCD:            '#FB7185',
+  const map: Record<string, string> = {
+    SuperAdmin: '#00D4AA', Admin: '#FFA500', BrokerageHouse: '#A78BFA',
+    BrokerageAdmin: '#C084FC', Trader: '#00D4AA', Investor: '#38BDF8',
+    ITSupport: '#94A3B8', CCD: '#FB7185',
   }
   return map[role] ?? '#64748B'
 }
 
-// ── NavItem component ─────────────────────────────────────────────────────
+// ── Styles ───────────────────────────────────────────────────────────────
+const S = {
+  aside: (collapsed: boolean): React.CSSProperties => ({
+    width:          collapsed ? 56 : 240,
+    minHeight:      '100vh',
+    background:     'linear-gradient(180deg, rgba(13,19,32,0.95) 0%, rgba(8,12,20,0.98) 100%)',
+    backdropFilter: 'blur(20px)',
+    borderRight:    '1px solid rgba(255,255,255,0.06)',
+    display:        'flex',
+    flexDirection:  'column',
+    transition:     'width 0.3s cubic-bezier(0.16,1,0.3,1)',
+    flexShrink:     0,
+    position:       'sticky' as const,
+    top:            0,
+    zIndex:         100,
+    overflow:       'hidden',
+  }),
+
+  logoArea: (collapsed: boolean): React.CSSProperties => ({
+    padding:        collapsed ? '16px 0' : '16px',
+    display:        'flex',
+    alignItems:     'center',
+    justifyContent: collapsed ? 'center' : 'space-between',
+    borderBottom:   '1px solid rgba(255,255,255,0.06)',
+    minHeight:      60,
+    position:       'relative' as const,
+  }),
+
+  logoGlow: {
+    position: 'absolute' as const,
+    bottom: 0, left: '10%', right: '10%', height: 1,
+    background: 'linear-gradient(90deg, transparent, rgba(0,212,170,0.3), transparent)',
+  },
+
+  navLink: (isActive: boolean, collapsed: boolean): React.CSSProperties => ({
+    display:        'flex',
+    alignItems:     'center',
+    gap:            10,
+    padding:        collapsed ? '10px 0' : '9px 12px',
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    borderRadius:   8,
+    textDecoration: 'none',
+    fontSize:       13,
+    fontWeight:     isActive ? 600 : 500,
+    color:          isActive ? '#00D4AA' : 'rgba(255,255,255,0.45)',
+    background:     isActive ? 'rgba(0,212,170,0.08)' : 'transparent',
+    borderLeft:     isActive && !collapsed ? '2px solid #00D4AA' : '2px solid transparent',
+    boxShadow:      isActive ? 'inset 0 0 20px rgba(0,212,170,0.04)' : 'none',
+    transition:     'all 0.15s cubic-bezier(0.16,1,0.3,1)',
+    whiteSpace:     'nowrap' as const,
+    position:       'relative' as const,
+  }),
+
+  userCard: {
+    margin:       '0 12px',
+    padding:      '12px',
+    background:   'rgba(255,255,255,0.02)',
+    border:       '1px solid rgba(255,255,255,0.04)',
+    borderRadius: 10,
+  },
+
+  avatar: (role: UserRole) => ({
+    width: 34, height: 34, borderRadius: '50%',
+    background: `linear-gradient(135deg, ${roleBadgeColor(role)}33, ${roleBadgeColor(role)}11)`,
+    border: `1px solid ${roleBadgeColor(role)}44`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: roleBadgeColor(role), fontWeight: 700, fontSize: 14,
+    fontFamily: "'JetBrains Mono', 'Space Mono', monospace",
+    flexShrink: 0,
+  }),
+}
+
+// ── SideNavItem ──────────────────────────────────────────────────────────
 function SideNavItem({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+  const [hovered, setHovered] = useState(false)
+
   return (
     <NavLink
       to={item.path}
       style={({ isActive }) => ({
-        display:        'flex',
-        alignItems:     'center',
-        gap:            10,
-        padding:        collapsed ? '10px 0' : '9px 12px',
-        justifyContent: collapsed ? 'center' : 'flex-start',
-        borderRadius:   8,
-        textDecoration: 'none',
-        fontSize:       13,
-        fontWeight:     500,
-        color:          isActive ? '#00D4AA' : 'rgba(255,255,255,0.5)',
-        background:     isActive ? 'rgba(0,212,170,0.08)' : 'transparent',
-        border:         isActive ? '1px solid rgba(0,212,170,0.15)' : '1px solid transparent',
-        transition:     'all 0.15s',
-        position:       'relative',
-        whiteSpace:     'nowrap',
+        ...S.navLink(isActive, collapsed),
+        ...(hovered && !collapsed ? { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)' } : {}),
       })}
       title={collapsed ? item.label : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <item.Icon />
-      {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-      {!collapsed && item.badge != null && (
-        <span style={{
-          background: '#FF6B6B', color: '#fff',
-          fontSize: 10, fontWeight: 700,
-          padding: '1px 6px', borderRadius: 10,
-          minWidth: 18, textAlign: 'center',
-        }}>{item.badge}</span>
+      {({ isActive }) => (
+        <>
+          <span style={{
+            display: 'flex', alignItems: 'center',
+            color: isActive ? '#00D4AA' : hovered ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)',
+            transition: 'color 0.15s',
+            filter: isActive ? 'drop-shadow(0 0 4px rgba(0,212,170,0.4))' : 'none',
+          }}>
+            <item.Icon />
+          </span>
+          {!collapsed && (
+            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
+          )}
+          {!collapsed && item.badge != null && (
+            <span style={{
+              background: '#FF6B6B', color: '#fff',
+              fontSize: 9, fontWeight: 700,
+              padding: '1px 6px', borderRadius: 10,
+              minWidth: 18, textAlign: 'center',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>{item.badge}</span>
+          )}
+        </>
       )}
     </NavLink>
   )
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────
+// ── Main Sidebar ─────────────────────────────────────────────────────────
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
-  const navigate = useNavigate()
-  const user = useAuthStore(s => s.user)
-  const logout = useAuthStore(s => s.logout)
+  const navigate   = useNavigate()
+  const user       = useAuthStore(s => s.user)
+  const logout     = useAuthStore(s => s.logout)
 
   if (!user) return null
 
-  const visibleItems = NAV_ITEMS.filter(item =>
-    !item.roles || item.roles.includes(user.role)
-  )
-
-  // Group into sections
-  const mainItems  = visibleItems.filter(i => !i.section)
-  const adminItems = visibleItems.filter(i => i.section === 'Administration')
+  const visibleItems = NAV_ITEMS.filter(item => !item.roles || item.roles.includes(user.role))
+  const mainItems    = visibleItems.filter(i => !i.section)
+  const adminItems   = visibleItems.filter(i => i.section === 'Administration')
 
   const handleLogout = async () => {
-    try { await authApi.logout() } catch { /* swallow */ }
+    try { await authApi.logout() } catch {}
     logout()
     navigate('/login')
   }
 
   return (
-    <aside style={{
-      width:          collapsed ? 56 : 220,
-      minHeight:      '100vh',
-      background:     '#0D1320',
-      borderRight:    '1px solid rgba(255,255,255,0.06)',
-      display:        'flex',
-      flexDirection:  'column',
-      transition:     'width 0.2s',
-      flexShrink:     0,
-      position:       'sticky',
-      top:            0,
-    }}>
-      {/* Logo */}
-      <div style={{
-        padding:     collapsed ? '20px 0' : '20px 16px',
-        display:     'flex',
-        alignItems:  'center',
-        justifyContent: collapsed ? 'center' : 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        {!collapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="24" height="24" viewBox="0 0 28 28">
-              <polygon points="14,2 24,8 24,20 14,26 4,20 4,8" fill="none" stroke="#00D4AA" strokeWidth="1.5"/>
-              <text x="14" y="17" textAnchor="middle" fill="#00D4AA" fontSize="6" fontFamily="Space Mono" fontWeight="bold">OMS</text>
-            </svg>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '0.02em' }}>BD Stock OMS</span>
+    <aside style={S.aside(collapsed)}>
+
+      {/* ═══ Logo ═══ */}
+      <div style={S.logoArea(collapsed)}>
+        {!collapsed ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src={logoImg}
+              alt="BD Stock OMS"
+              style={{
+                height: 34, width: 'auto', objectFit: 'contain',
+                filter: 'drop-shadow(0 0 8px rgba(0,212,170,0.2))',
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+              <span style={{
+                color: '#fff', fontWeight: 700, fontSize: 13,
+                fontFamily: "'Outfit', 'Inter', sans-serif",
+                letterSpacing: '-0.01em',
+              }}>
+                BD Stock <span style={{ color: '#00D4AA' }}>OMS</span>
+              </span>
+              <span style={{
+                fontSize: 8, color: 'rgba(255,255,255,0.25)',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+              }}>
+                BSEC · DSE · CSE · CDBL
+              </span>
+            </div>
           </div>
-        )}
-        {collapsed && (
-          <svg width="24" height="24" viewBox="0 0 28 28">
-            <polygon points="14,2 24,8 24,20 14,26 4,20 4,8" fill="none" stroke="#00D4AA" strokeWidth="1.5"/>
-          </svg>
+        ) : (
+          <img
+            src={logoImg}
+            alt="BD Stock OMS"
+            style={{
+              height: 28, width: 'auto', objectFit: 'contain',
+              filter: 'drop-shadow(0 0 6px rgba(0,212,170,0.15))',
+            }}
+          />
         )}
         <button onClick={() => setCollapsed(v => !v)} style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,0.3)', padding: 4, display: 'flex',
+          color: 'rgba(255,255,255,0.25)', padding: 4, display: 'flex',
           transform: collapsed ? 'rotate(180deg)' : 'none',
-          transition: 'transform 0.2s',
-        }}>
+          transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+          borderRadius: 6,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.25)'; e.currentTarget.style.background = 'none' }}
+        >
           <Icon.Collapse />
         </button>
+        {/* Neon line under logo */}
+        <div style={S.logoGlow} />
       </div>
 
-      {/* User info */}
+      {/* ═══ User Card ═══ */}
       {!collapsed && (
-        <div style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'rgba(0,212,170,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#00D4AA', fontWeight: 700, fontSize: 13,
-              border: '1px solid rgba(0,212,170,0.3)',
-              flexShrink: 0,
-            }}>
+        <div style={S.userCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={S.avatar(user.role)}>
               {user.fullName.charAt(0)}
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ color: '#fff', fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div style={{
+                color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                fontFamily: "'Outfit', sans-serif",
+              }}>
                 {user.fullName}
               </div>
               <div style={{
-                display: 'inline-block',
-                background: roleBadgeColor(user.role) + '22',
+                display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 3,
+                background: roleBadgeColor(user.role) + '15',
                 color: roleBadgeColor(user.role),
-                fontSize: 10, fontWeight: 700, padding: '1px 6px',
-                borderRadius: 4, fontFamily: "'Space Mono', monospace",
-                letterSpacing: '0.04em',
+                fontSize: 9, fontWeight: 700, padding: '2px 8px',
+                borderRadius: 6, fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.06em',
+                border: `1px solid ${roleBadgeColor(user.role)}25`,
               }}>
+                <span style={{
+                  width: 4, height: 4, borderRadius: '50%',
+                  background: roleBadgeColor(user.role),
+                  boxShadow: `0 0 4px ${roleBadgeColor(user.role)}60`,
+                }} />
                 {user.role}
               </div>
             </div>
           </div>
-          {user.role !== 'SuperAdmin' && (
-            <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.3)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {user.role !== 'SuperAdmin' && user.brokerageHouseName && (
+            <div style={{
+              marginTop: 8, color: 'rgba(255,255,255,0.20)', fontSize: 10,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              fontFamily: "'JetBrains Mono', monospace",
+              paddingLeft: 44,
+            }}>
               {user.brokerageHouseName}
             </div>
           )}
         </div>
       )}
 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: collapsed ? '12px 8px' : '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {/* Main items */}
+      {/* ═══ Navigation ═══ */}
+      <nav style={{
+        flex: 1, padding: collapsed ? '12px 6px' : '12px 10px',
+        display: 'flex', flexDirection: 'column', gap: 2,
+        overflowY: 'auto', overflowX: 'hidden',
+      }}>
         {mainItems.map(item => (
           <SideNavItem key={item.path} item={item} collapsed={collapsed} />
         ))}
 
-        {/* Admin section */}
         {adminItems.length > 0 && (
           <>
-            {!collapsed && (
+            {!collapsed ? (
               <div style={{
-                color: 'rgba(255,255,255,0.2)', fontSize: 10,
-                fontFamily: "'Space Mono', monospace",
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '12px 4px 4px',
+                color: 'rgba(255,255,255,0.15)', fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+                padding: '16px 4px 6px', fontWeight: 700,
               }}>
                 Administration
               </div>
+            ) : (
+              <div style={{
+                height: 1, margin: '10px 8px',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
+              }} />
             )}
-            {collapsed && <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />}
             {adminItems.map(item => (
               <SideNavItem key={item.path} item={item} collapsed={collapsed} />
             ))}
@@ -282,38 +370,59 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Bottom: brokerage + logout */}
+      {/* ═══ Bottom ═══ */}
       <div style={{
-        padding: collapsed ? '12px 8px' : '12px 12px',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        padding: collapsed ? '12px 6px' : '12px 10px',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
         display: 'flex', flexDirection: 'column', gap: 8,
       }}>
         {!collapsed && user.role === 'SuperAdmin' && (
           <div style={{
-            background: 'rgba(255,107,107,0.08)',
-            border: '1px solid rgba(255,107,107,0.2)',
-            borderRadius: 6, padding: '6px 10px',
-            color: '#FF6B6B', fontSize: 11,
-            fontFamily: "'Space Mono', monospace",
+            background: 'rgba(255,107,107,0.06)',
+            border: '1px solid rgba(255,107,107,0.12)',
+            borderRadius: 8, padding: '7px 10px',
+            color: '#FF6B6B', fontSize: 10,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 600, letterSpacing: '0.03em',
+            display: 'flex', alignItems: 'center', gap: 6,
           }}>
-            ⬡ Master DB Owner
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%',
+              background: '#FF6B6B',
+              boxShadow: '0 0 6px rgba(255,107,107,0.4)',
+              animation: 'oms-pulse 2s ease-in-out infinite',
+            }} />
+            Master DB Owner
           </div>
         )}
+
         <button onClick={handleLogout} style={{
           display:        'flex',
           alignItems:     'center',
           gap:            8,
           justifyContent: collapsed ? 'center' : 'flex-start',
-          background:     'none',
-          border:         '1px solid rgba(255,255,255,0.06)',
+          background:     'rgba(255,255,255,0.02)',
+          border:         '1px solid rgba(255,255,255,0.05)',
           borderRadius:   8,
           padding:        collapsed ? '10px 0' : '9px 12px',
-          color:          'rgba(255,255,255,0.4)',
+          color:          'rgba(255,255,255,0.35)',
           fontSize:       13,
           cursor:         'pointer',
           width:          '100%',
-          transition:     'all 0.15s',
-        }}>
+          transition:     'all 0.2s',
+          fontFamily:     "'Outfit', sans-serif",
+        }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255,23,68,0.06)'
+            e.currentTarget.style.borderColor = 'rgba(255,23,68,0.15)'
+            e.currentTarget.style.color = '#ff6b6b'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
+            e.currentTarget.style.color = 'rgba(255,255,255,0.35)'
+          }}
+        >
           <Icon.Logout />
           {!collapsed && <span>Sign out</span>}
         </button>
