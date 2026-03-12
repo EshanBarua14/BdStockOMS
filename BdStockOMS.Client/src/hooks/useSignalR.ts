@@ -1,69 +1,121 @@
-import { useEffect, useRef, useCallback } from 'react'
-import * as signalR from '@microsoft/signalr'
-import { useAuthStore } from '@/store/authStore'
+// @ts-nocheck
+import { useEffect, useRef, useCallback } from "react"
+import * as signalR from "@microsoft/signalr"
+import { useAuthStore } from "@/store/authStore"
 
-type HubEventMap = Record<string, (...args: unknown[]) => void>
+const RETRY_DELAYS = [0, 1000, 3000, 5000, 10000]
 
 interface UseSignalROptions {
-  hubUrl: string
-  events: HubEventMap
-  enabled?: boolean
+  hub:    "stockprice" | "notification"
+  events: Record<string, (...args: any[]) => void>
+  groups?: string[]   // stock codes to subscribe to
 }
 
-export function useSignalR({ hubUrl, events, enabled = true }: UseSignalROptions) {
-  const connectionRef = useRef<signalR.HubConnection | null>(null)
-  const { user } = useAuthStore()
+const connections: Record<string, signalR.HubConnection> = {}
 
-  const buildConnection = useCallback(() => {
-    return new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => user?.token ?? '',
+export function useSignalR({ hub, events, groups = [] }: UseSignalROptions) {
+  const user    = useAuthStore(s => s.user)
+  const connRef = useRef<signalR.HubConnection | null>(null)
+
+  const getOrCreate = useCallback(() => {
+    const url = `${import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7219"}/hubs/${hub}`
+    if (connections[hub]) return connections[hub]
+
+    const conn = new signalR.HubConnectionBuilder()
+      .withUrl(url, {
+        accessTokenFactory: () => user?.token ?? "",
+        skipNegotiation: false,
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .configureLogging(
-        (import.meta as any).env.DEV
-          ? signalR.LogLevel.Information
-          : signalR.LogLevel.Warning,
-      )
+      .withAutomaticReconnect(RETRY_DELAYS)
+      .configureLogging(signalR.LogLevel.Warning)
       .build()
-  }, [hubUrl, user?.token])
+
+    connections[hub] = conn
+    return conn
+  }, [hub, user?.token])
 
   useEffect(() => {
-    if (!enabled || !user?.token) return
-
-    const connection = buildConnection()
-    connectionRef.current = connection
+    if (!user?.token) return
+    const conn = getOrCreate()
+    connRef.current = conn
 
     // Register all event handlers
-    for (const [event, handler] of Object.entries(events)) {
-      connection.on(event, handler)
+    Object.entries(events).forEach(([event, handler]) => {
+      conn.off(event)
+      conn.on(event, handler)
+    })
+
+    const start = async () => {
+      if (conn.state === signalR.HubConnectionState.Disconnected) {
+        try {
+          await conn.start()
+          // Subscribe to stock groups
+          for (const code of groups) {
+            await conn.invoke("SubscribeToStock", code).catch(() => {})
+          }
+        } catch (e) {
+          console.warn(`SignalR [${hub}] connect failed:`, e)
+        }
+      }
     }
 
-    connection
-      .start()
-      .catch((err) => console.error('[SignalR] Connection error:', err))
+    start()
 
     return () => {
-      for (const event of Object.keys(events)) {
-        connection.off(event)
-      }
-      connection.stop().catch(() => undefined)
-      connectionRef.current = null
+      Object.keys(events).forEach(event => conn.off(event))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, user?.token, hubUrl])
+  }, [user?.token, hub, JSON.stringify(groups)])
 
-  const invoke = useCallback(
-    async (method: string, ...args: unknown[]) => {
-      if (!connectionRef.current) return
-      try {
-        return await connectionRef.current.invoke(method, ...args)
-      } catch (err) {
-        console.error(`[SignalR] Invoke error (${method}):`, err)
-      }
-    },
-    [],
-  )
+  return connRef
+}
 
-  return { invoke }
+// Shared global SignalR state — single connection, multiple consumers
+type MarketEventMap = {
+  BulkPriceUpdate:  (updates: any[]) => void
+  PriceUpdate:      (update: any)    => void
+  DepthUpdate:      (depth: any)     => void
+  PressureUpdate:   (list: any[])    => void
+  IndexUpdate:      (indices: any)   => void
+  NewsUpdate:       (item: any)      => void
+}
+
+const _listeners: Partial<Record<keyof MarketEventMap, Set<Function>>> = {}
+let   _globalConn: signalR.HubConnection | null = null
+let   _starting = false
+
+export function subscribeMarket<K extends keyof MarketEventMap>(
+  event: K, cb: MarketEventMap[K]
+): () => void {
+  if (!_listeners[event]) _listeners[event] = new Set()
+  _listeners[event]!.add(cb)
+  return () => _listeners[event]?.delete(cb)
+}
+
+export async function startGlobalMarketHub(token: string) {
+  if (_globalConn || _starting) return
+  _starting = true
+  const url = `${import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7219"}/hubs/stockprice`
+
+  _globalConn = new signalR.HubConnectionBuilder()
+    .withUrl(url, { accessTokenFactory: () => token })
+    .withAutomaticReconnect(RETRY_DELAYS)
+    .configureLogging(signalR.LogLevel.Warning)
+    .build()
+
+  const events: (keyof MarketEventMap)[] = [
+    "BulkPriceUpdate","PriceUpdate","DepthUpdate","PressureUpdate","IndexUpdate","NewsUpdate"
+  ]
+  events.forEach(ev => {
+    _globalConn!.on(ev, (...args) => {
+      _listeners[ev]?.forEach(cb => cb(...args))
+    })
+  })
+
+  try {
+    await _globalConn.start()
+    console.log("Global market hub connected.")
+  } catch(e) {
+    console.warn("Global market hub failed:", e)
+  }
+  _starting = false
 }

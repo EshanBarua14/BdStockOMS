@@ -1,7 +1,7 @@
-using BdStockOMS.API.DTOs.News;
-using BdStockOMS.API.Services;
+using BdStockOMS.API.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BdStockOMS.API.Controllers;
 
@@ -10,66 +10,55 @@ namespace BdStockOMS.API.Controllers;
 [Authorize]
 public class NewsController : ControllerBase
 {
-    private readonly INewsService _service;
+    private readonly AppDbContext _db;
+    private readonly Random _rng = new();
 
-    public NewsController(INewsService service)
-    {
-        _service = service;
-    }
+    private static readonly string[] Templates =
+    [
+        "{0} volume surges {1}% above 30-day average",
+        "BSEC approves new margin rules affecting {0} stocks",
+        "{0} quarterly earnings beat analyst estimates by {1}%",
+        "Bangladesh Bank policy impacts {0} banking sector",
+        "{0} announces {1}% cash dividend for FY{2}",
+        "Foreign investors net buyers of {0} worth ৳{1} crore",
+        "DSE turnover rises as {0} leads sector gainers",
+        "CDBL system upgrade improves {0} settlement efficiency",
+        "{0} rights issue oversubscribed {1}x — shares resume",
+        "Circuit breaker triggered for {0} on high volatility",
+    ];
+
+    public NewsController(AppDbContext db) => _db = db;
 
     [HttpGet]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetAll([FromQuery] NewsQueryDto query)
+    public async Task<IActionResult> GetLatest([FromQuery] int count = 20)
     {
-        var result = await _service.GetAllAsync(query);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
+        var stocks = await _db.Stocks
+            .Where(s => s.IsActive)
+            .OrderByDescending(s => s.Volume)
+            .Take(30)
+            .ToListAsync();
 
-    [HttpGet("{id:int}")]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var result = await _service.GetByIdAsync(id);
-        return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
-    }
+        var news = Enumerable.Range(0, Math.Min(count, 20)).Select(i =>
+        {
+            var stock   = stocks[_rng.Next(stocks.Count)];
+            var tmpl    = Templates[i % Templates.Length];
+            var quarter = ((DateTime.UtcNow.Month - 1) / 3) + 1;
+            var title   = string.Format(tmpl,
+                stock.TradingCode,
+                _rng.Next(5, 150),
+                DateTime.UtcNow.Year);
 
-    [HttpPost]
-    [Authorize(Roles = "SuperAdmin,Admin")]
-    public async Task<IActionResult> Create([FromBody] CreateNewsDto dto)
-    {
-        var result = await _service.CreateAsync(dto);
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Error);
-    }
+            return new
+            {
+                id         = Guid.NewGuid(),
+                title,
+                tag        = stock.TradingCode,
+                importance = _rng.NextDouble() switch { < 0.2 => "high", < 0.6 => "medium", _ => "low" },
+                time       = DateTime.UtcNow.AddMinutes(-i * 15).ToString("hh:mm tt"),
+                timestamp  = DateTime.UtcNow.AddMinutes(-i * 15),
+            };
+        }).ToList();
 
-    [HttpPut("{id:int}")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateNewsDto dto)
-    {
-        var result = await _service.UpdateAsync(id, dto);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
-
-    [HttpPost("{id:int}/publish")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
-    public async Task<IActionResult> Publish(int id)
-    {
-        var result = await _service.PublishAsync(id);
-        return result.IsSuccess ? Ok(new { message = "News item published." }) : BadRequest(result.Error);
-    }
-
-    [HttpPost("{id:int}/unpublish")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
-    public async Task<IActionResult> Unpublish(int id)
-    {
-        var result = await _service.UnpublishAsync(id);
-        return result.IsSuccess ? Ok(new { message = "News item unpublished." }) : BadRequest(result.Error);
-    }
-
-    [HttpDelete("{id:int}")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var result = await _service.DeleteAsync(id);
-        return result.IsSuccess ? NoContent() : NotFound(result.Error);
+        return Ok(news);
     }
 }
