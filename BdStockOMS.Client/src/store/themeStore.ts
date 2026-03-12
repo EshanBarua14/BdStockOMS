@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 export type ThemeId =
   | 'obsidian' | 'midnight' | 'slate' | 'aurora' | 'arctic'
   | 'dhaka'    | 'crimson'  | 'forest' | 'carbon' | 'navy'
-  | 'sand'     | 'eclipse'
+  | 'sand'     | 'eclipse'  | 'plasma' | 'glacier'
 
 export type AccentId  = 'teal' | 'azure' | 'emerald' | 'amber' | 'rose' | 'violet' | 'cyan' | 'gold'
 export type DensityId = 'compact' | 'comfortable' | 'spacious'
@@ -14,7 +14,7 @@ export interface ThemeOption {
   label:   string
   emoji:   string
   dark:    boolean
-  bg:      string   // preview swatch
+  bg:      string
   surface: string
   text:    string
   desc:    string
@@ -35,45 +35,53 @@ export interface DensityOption {
 }
 
 export const THEMES: ThemeOption[] = [
-  // ── Dark ──
+  // ── Dark (6) ──
   { id: 'obsidian', label: 'Obsidian',   emoji: '⬛', dark: true,  category: 'Dark',
     bg: '#080C14', surface: '#0D1320', text: '#E2E8F0',
-    desc: 'Deep black — maximum contrast' },
+    desc: 'Deep black — maximum contrast, pro trader default' },
   { id: 'midnight', label: 'Midnight',   emoji: '🌑', dark: true,  category: 'Dark',
     bg: '#0A0F1E', surface: '#111827', text: '#CBD5E1',
-    desc: 'Classic dark blue-black' },
+    desc: 'Classic dark blue-black, easy on the eyes' },
   { id: 'carbon',   label: 'Carbon',     emoji: '🖤', dark: true,  category: 'Dark',
     bg: '#111111', surface: '#1A1A1A', text: '#D4D4D4',
-    desc: 'Pure neutral dark' },
-  { id: 'eclipse',  label: 'Eclipse',    emoji: '🌘', dark: true,  category: 'Dark',
-    bg: '#0E0A1A', surface: '#150F2A', text: '#DDD6FE',
-    desc: 'Deep purple-black' },
+    desc: 'Pure neutral dark — zero color distraction' },
   { id: 'slate',    label: 'Slate',      emoji: '🌫',  dark: true,  category: 'Dark',
     bg: '#0F172A', surface: '#1E293B', text: '#CBD5E1',
-    desc: 'Blue-grey tones' },
+    desc: 'Cool blue-grey professional tones' },
   { id: 'navy',     label: 'Navy',       emoji: '🌊', dark: true,  category: 'Dark',
     bg: '#030D1C', surface: '#071428', text: '#BAE6FD',
-    desc: 'Deep ocean blue' },
-  // ── Special ──
+    desc: 'Deep ocean blue — Bloomberg inspired' },
+  { id: 'eclipse',  label: 'Eclipse',    emoji: '🌘', dark: true,  category: 'Dark',
+    bg: '#0E0A1A', surface: '#150F2A', text: '#DDD6FE',
+    desc: 'Deep purple-black with violet undertones' },
+
+  // ── Special (6) ──
   { id: 'dhaka',    label: 'Dhaka Night',emoji: '🏙', dark: true,  category: 'Special',
     bg: '#0A1A0A', surface: '#0D200D', text: '#BBF7D0',
-    desc: 'Green-tinted — DSE inspired' },
+    desc: 'Green-tinted — DSE inspired, Bangladesh pride' },
   { id: 'crimson',  label: 'Crimson',    emoji: '🔴', dark: true,  category: 'Special',
     bg: '#1A0505', surface: '#200A0A', text: '#FCA5A5',
-    desc: 'Bold red-dark theme' },
+    desc: 'Bold red-dark — aggressive trading mode' },
   { id: 'forest',   label: 'Forest',     emoji: '🌲', dark: true,  category: 'Special',
     bg: '#0A1208', surface: '#0F1A0C', text: '#A7F3D0',
-    desc: 'Deep forest green' },
+    desc: 'Deep forest green — calming natural tones' },
   { id: 'aurora',   label: 'Aurora',     emoji: '🌌', dark: true,  category: 'Special',
     bg: '#070D1A', surface: '#0C1428', text: '#A5F3FC',
-    desc: 'Northern lights gradient' },
-  // ── Light ──
+    desc: 'Northern lights — cyan & purple glow' },
+  { id: 'plasma',   label: 'Plasma',     emoji: '⚡', dark: true,  category: 'Special',
+    bg: '#0D0815', surface: '#150E22', text: '#E9D5FF',
+    desc: 'Electric violet — high energy neon mode' },
+  { id: 'glacier',  label: 'Glacier',    emoji: '🧊', dark: true,  category: 'Special',
+    bg: '#071318', surface: '#0C1C24', text: '#B8E8F5',
+    desc: 'Icy blue-teal — cold precision trading' },
+
+  // ── Light (2) ──
   { id: 'arctic',   label: 'Arctic',     emoji: '☀️', dark: false, category: 'Light',
     bg: '#F0F4F8', surface: '#FFFFFF', text: '#1E293B',
-    desc: 'Clean professional light' },
+    desc: 'Clean professional light — daytime mode' },
   { id: 'sand',     label: 'Sand',       emoji: '🏖', dark: false, category: 'Light',
     bg: '#FAF7F0', surface: '#FFFFFF', text: '#292524',
-    desc: 'Warm off-white' },
+    desc: 'Warm off-white — gentle on eyes' },
 ]
 
 export const ACCENTS: AccentOption[] = [
@@ -101,6 +109,8 @@ interface ThemeState {
   tickerEnabled:    boolean
   pendingTheme:     ThemeId   | null
   pendingAccent:    AccentId  | null
+  buyColor:         string
+  sellColor:        string
   setTheme:         (t: ThemeId)   => void
   setAccent:        (a: AccentId)  => void
   setDensity:       (d: DensityId) => void
@@ -111,9 +121,11 @@ interface ThemeState {
   toggleSidebar:    () => void
   setSidebarCollapsed: (v: boolean) => void
   toggleTicker:     () => void
+  setBuyColor:      (c: string) => void
+  setSellColor:     (c: string) => void
 }
 
-export function applyTheme(theme: ThemeId, accent: AccentId, density: DensityId) {
+export function applyTheme(theme: ThemeId, accent: AccentId, density: DensityId, buyColor?: string, sellColor?: string) {
   const t = THEMES.find(x => x.id === theme)!
   const a = ACCENTS.find(x => x.id === accent)!
   const root = document.documentElement
@@ -126,6 +138,9 @@ export function applyTheme(theme: ThemeId, accent: AccentId, density: DensityId)
   root.style.setProperty('--accent',   a.color)
   root.style.setProperty('--accent-glow', a.glow)
   root.style.setProperty('--color-scheme', t.dark ? 'dark' : 'light')
+  // Buy/sell customization
+  if (buyColor)  root.style.setProperty('--oms-buy',  buyColor)
+  if (sellColor) root.style.setProperty('--oms-sell', sellColor)
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -138,38 +153,42 @@ export const useThemeStore = create<ThemeState>()(
       tickerEnabled:    true,
       pendingTheme:     null,
       pendingAccent:    null,
+      buyColor:         '#00e676',
+      sellColor:        '#ff1744',
 
-      setTheme:  (theme)   => { set({ theme,  pendingTheme: null  }); applyTheme(theme,        get().accent,  get().density) },
-      setAccent: (accent)  => { set({ accent, pendingAccent: null }); applyTheme(get().theme,  accent,        get().density) },
-      setDensity:(density) => { set({ density }); applyTheme(get().theme, get().accent, density) },
+      setTheme:  (theme)   => { set({ theme,  pendingTheme: null  }); applyTheme(theme,        get().accent,  get().density, get().buyColor, get().sellColor) },
+      setAccent: (accent)  => { set({ accent, pendingAccent: null }); applyTheme(get().theme,  accent,        get().density, get().buyColor, get().sellColor) },
+      setDensity:(density) => { set({ density }); applyTheme(get().theme, get().accent, density, get().buyColor, get().sellColor) },
 
       previewTheme:  (t) => { set({ pendingTheme: t  }); applyTheme(t,            get().accent,        get().density) },
       previewAccent: (a) => { set({ pendingAccent: a }); applyTheme(get().theme,  a,                   get().density) },
 
       confirmTheme: () => {
-        const { pendingTheme, pendingAccent, theme, accent, density } = get()
+        const { pendingTheme, pendingAccent, theme, accent, density, buyColor, sellColor } = get()
         const newTheme  = pendingTheme  ?? theme
         const newAccent = pendingAccent ?? accent
         set({ theme: newTheme, accent: newAccent, pendingTheme: null, pendingAccent: null })
-        applyTheme(newTheme, newAccent, density)
+        applyTheme(newTheme, newAccent, density, buyColor, sellColor)
       },
       cancelPreview: () => {
-        const { theme, accent, density } = get()
+        const { theme, accent, density, buyColor, sellColor } = get()
         set({ pendingTheme: null, pendingAccent: null })
-        applyTheme(theme, accent, density)
+        applyTheme(theme, accent, density, buyColor, sellColor)
       },
 
       toggleSidebar:       () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
       toggleTicker:        () => set(s => ({ tickerEnabled: !s.tickerEnabled })),
+      setBuyColor:  (c) => { set({ buyColor: c });  document.documentElement.style.setProperty('--oms-buy', c) },
+      setSellColor: (c) => { set({ sellColor: c }); document.documentElement.style.setProperty('--oms-sell', c) },
     }),
     {
-      name: 'bd_oms_theme_v2',
+      name: 'bd_oms_theme_v3',
       onRehydrateStorage: () => (state) => {
-        if (state) applyTheme(state.theme, state.accent, state.density)
+        if (state) applyTheme(state.theme, state.accent, state.density, state.buyColor, state.sellColor)
       },
     }
   )
 )
 
-applyTheme('obsidian', 'teal', 'comfortable')
+applyTheme('obsidian', 'teal', 'comfortable', '#00e676', '#ff1744')
