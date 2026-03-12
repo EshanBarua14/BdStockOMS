@@ -3,7 +3,6 @@ import { MarketTickerStrip }    from "./MarketTickerStrip"
 import { WatchlistWidget }      from "./WatchlistWidget"
 import { OrderEntryWidget }     from "./OrderEntryWidget"
 import { OrderBookWidget }      from "./OrderBookWidget"
-import { ExecutionListWidget }  from "./ExecutionListWidget"
 import { TopMoversWidget }      from "./TopMoversWidget"
 import { MarketMapWidget }      from "./MarketMapWidget"
 import { MarketDepthWidget }    from "./MarketDepthWidget"
@@ -15,9 +14,11 @@ import { AIPredictionWidget }   from "./AIPredictionWidget"
 import { IndexSummaryWidget }   from "./IndexSummaryWidget"
 import { NewsFeedWidget }       from "./NewsFeedWidget"
 import { RMSLimitsWidget }      from "./RMSLimitsWidget"
+import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
 
 export interface WidgetDef {
   id:         string
+  title:      string
   label:      string
   icon:       string
   minW:       number
@@ -28,23 +29,28 @@ export interface WidgetDef {
   component:  React.ComponentType<any>
 }
 
-export const WIDGET_REGISTRY: WidgetDef[] = [
-  { id:"ticker",    label:"Market Ticker",     icon:"📈", minW:4, minH:1, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
-  { id:"watchlist", label:"Watchlist",         icon:"👁",  minW:2, minH:3, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
-  { id:"order",     label:"Order Entry",       icon:"⚡", minW:2, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: OrderEntryWidget },
-  { id:"orderbook", label:"Order Book",        icon:"📋", minW:3, minH:3, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
-  { id:"executions",label:"Executions",        icon:"✅", minW:3, minH:3, defaultW:6,  defaultH:4,  category:"Trading",   component: ExecutionListWidget },
-  { id:"movers",    label:"Top Movers",        icon:"🚀", minW:2, minH:3, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
-  { id:"heatmap",   label:"Market Map",        icon:"🗺", minW:3, minH:3, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
-  { id:"depth",     label:"Market Depth",      icon:"📊", minW:2, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
-  { id:"pressure",  label:"Buy/Sell Pressure", icon:"⚖️", minW:2, minH:3, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
-  { id:"portfolio", label:"Portfolio",         icon:"💼", minW:2, minH:3, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
-  { id:"chart",     label:"Price Chart",       icon:"📉", minW:3, minH:3, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
-  { id:"notif",     label:"Notifications",     icon:"🔔", minW:2, minH:3, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
-  { id:"ai",        label:"AI Prediction",     icon:"🤖", minW:2, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
-  { id:"index",     label:"Index Summary",     icon:"🏦", minW:2, minH:3, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
-  { id:"news",      label:"News Feed",         icon:"📰", minW:2, minH:3, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
-  { id:"rms",       label:"RMS Limits",        icon:"🛡️", minW:2, minH:3, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
+export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
+  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
+  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
+  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
+  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
+  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:1, minH:4, defaultW:6,  defaultH:4,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
+  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
+  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
+  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
+  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
+  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
+  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
+  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
+  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
+  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
+  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
+  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
 ]
 
-export const CATEGORIES = [...new Set(WIDGET_REGISTRY.map(w => w.category))]
+// Object map keyed by id — used by DashboardPage
+export const WIDGET_REGISTRY: Record<string, WidgetDef> = Object.fromEntries(
+  WIDGET_REGISTRY_LIST.map(w => [w.id, w])
+)
+
+export const CATEGORIES = [...new Set(WIDGET_REGISTRY_LIST.map(w => w.category))]

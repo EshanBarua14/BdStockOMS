@@ -3,7 +3,8 @@ import { useMemo, useState } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function TopMoversWidget({ onSymbolClick }) {
-  const { stocks, connected } = useMarketData()
+  const { stocks: _s, connected } = useMarketData()
+  const stocks = _s ?? []
   const [tab, setTab]   = useState("gainers")
   const [count, setCount] = useState(10)
   const [exch, setExch]   = useState("All")

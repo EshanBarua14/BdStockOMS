@@ -15,8 +15,8 @@ export function PortfolioWidget() {
     const load = async () => {
       try {
         const [snap, roiData] = await Promise.all([
-          apiClient.get(`/PortfolioSnapshot/latest/${user.userId}`).then(r => r.data),
-          apiClient.get(`/PortfolioSnapshot/roi/${user.userId}`).then(r => r.data),
+          apiClient.get(`/portfoliosnapshot/latest/${user.userId}`).then(r => r.data),
+          apiClient.get(`/portfoliosnapshot/roi/${user.userId}`).then(r => r.data),
         ])
         setData(snap); setRoi(roiData)
       } catch {}

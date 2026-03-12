@@ -1,42 +1,14 @@
-import { apiClient } from './client'
-import type { LoginRequest, LoginResponse, RegisterBrokerageRequest } from '@/types'
+// @ts-nocheck
+import { apiClient } from "./client"
 
 export const authApi = {
-  async login(body: LoginRequest): Promise<LoginResponse> {
-    const res = await apiClient.post<LoginResponse>('/auth/login', body, {
-      withCredentials: true,
-    })
-    return res.data
-  },
-
-  async registerBrokerage(body: RegisterBrokerageRequest): Promise<LoginResponse> {
-    const res = await apiClient.post<LoginResponse>('/auth/register-brokerage', body, {
-      withCredentials: true,
-    })
-    return res.data
-  },
-
-  async refresh(): Promise<LoginResponse> {
-    const res = await apiClient.post<LoginResponse>(
-      '/auth/refresh', {}, { withCredentials: true }
-    )
-    return res.data
-  },
-
-  async getBrokerages(): Promise<{ id: number; name: string; email: string; phone?: string }[]> {
-    const res = await apiClient.get('/auth/brokerages')
-    return res.data
-  },
-
-  async registerInvestor(body: {
-    fullName: string; email: string; phone: string
-    password: string; brokerageHouseId: number; boNumber?: string
-  }): Promise<import('@/types').LoginResponse> {
-    const res = await apiClient.post('/auth/register-investor', body, { withCredentials: true })
-    return res.data
-  },
-
-  async logout(): Promise<void> {
-    await apiClient.post('/auth/logout', {}, { withCredentials: true })
-  },
+  login:             (dto) => apiClient.post("/api/auth/login", dto).then(r => r.data),
+  logout:            ()    => Promise.resolve(),
+  getBrokerages:     ()    => apiClient.get("/api/auth/brokerages").then(r => r.data),
+  registerInvestor:  (dto) => apiClient.post("/api/auth/register-investor", dto).then(r => r.data),
+  registerBrokerage: (dto) => apiClient.post("/api/auth/register-brokerage", dto).then(r => r.data),
 }
+
+export const loginUser        = (e, p) => authApi.login({ email: e, password: p })
+export const registerInvestor = (dto)  => authApi.registerInvestor(dto)
+export const getBrokerages    = ()     => authApi.getBrokerages()

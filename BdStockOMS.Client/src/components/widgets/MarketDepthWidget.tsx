@@ -5,7 +5,8 @@ import { subscribeMarket } from "@/hooks/useSignalR"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function MarketDepthWidget({ linkedSymbol, onSymbolClick }) {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [symbol, setSymbol] = useState(linkedSymbol ?? "")
   const [depth,  setDepth]  = useState(null)
   const [loading, setLoading] = useState(false)
@@ -17,7 +18,7 @@ export function MarketDepthWidget({ linkedSymbol, onSymbolClick }) {
     if (!sym) return
     setLoading(true)
     try {
-      const r = await apiClient.get(`/MarketDepth/${sym}`)
+      const r = await apiClient.get(`/marketdepth/${sym}`)
       setDepth(r.data)
     } catch {
       // Fallback: generate from last price

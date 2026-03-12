@@ -90,14 +90,14 @@ export function useOrders() {
 
   // SignalR OrderUpdate — immediate merge
   useEffect(() => {
-    return (subscribeMarket as any)("OrderUpdate", (updated: Order) => {
+    return subscribeMarket("OrderUpdate", (updated: Order) => {
       if (!mountedRef.current) return
       setOrders(prev => {
         const idx = prev.findIndex(o => o.id === updated.id)
         const next = idx >= 0
           ? prev.map(o => o.id === updated.id ? { ...o, ...updated } : o)
           : [updated, ...prev]
-        return next.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        return next.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       })
     })
   }, [])
@@ -113,10 +113,10 @@ export function useOrders() {
     }
     setOrders(prev => [optimistic, ...prev])
     try {
-      const result = await placeOrder(dto) as Order
+      const result = await placeOrder(dto)
       setOrders(prev =>
         [result, ...prev.filter(o => o.id !== tempId)]
-          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       )
       setTimeout(() => fetchOrders(true), 400)
       setTimeout(() => fetchOrders(true), 2000)

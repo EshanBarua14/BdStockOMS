@@ -3,7 +3,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LoginPage }      from '@/pages/LoginPage'
 import { SignUpPage }     from '@/pages/SignUpPage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { DashboardPage }  from '@/pages/DashboardPage'
+import DashboardPage from "@/pages/DashboardPage"
 import {
   OrdersPage, PortfolioPage, MarketPage,
   SuperAdminPage, RbacPage, TenantPage,

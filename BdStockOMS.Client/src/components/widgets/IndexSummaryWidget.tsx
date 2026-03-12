@@ -14,7 +14,8 @@ const INDEX_DEFS = [
 ]
 
 export function IndexSummaryWidget() {
-  const { stocks, connected } = useMarketData()
+  const { stocks: _s, connected } = useMarketData()
+  const stocks = _s ?? []
   const [indices, setIndices] = useState(
     INDEX_DEFS.map(d => ({ ...d, value:BASE[d.key], base:BASE[d.key], change:0, changePct:0, up:true }))
   )

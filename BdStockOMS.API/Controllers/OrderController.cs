@@ -23,7 +23,7 @@ public class OrderController : ControllerBase
     // POST /api/orders — Investor or Trader places an order
     // ─────────────────────────────────────────────────────────────────
     [HttpPost]
-    [Authorize(Roles = "Investor,Trader")]
+    [Authorize(Roles = "Investor,Trader,SuperAdmin,Admin")]
     public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);

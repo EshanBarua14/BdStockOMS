@@ -63,7 +63,17 @@ export function useMarketData() {
   const mountedRef = useRef(true)
 
   const fetchStatus = useCallback(async () => {
-    if (mountedRef.current) setMarketStatus(inferMarketStatus())
+    try {
+      const token = localStorage.getItem("token") ?? ""
+      const res = await fetch("/api/helth", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store",
+      })
+      const data = res.ok ? await res.json() : null
+      if (mountedRef.current) setMarketStatus(inferMarketStatus(data))
+    } catch {
+      if (mountedRef.current) setMarketStatus(inferMarketStatus())
+    }
   }, [])
 
   const seed = useCallback(async () => {

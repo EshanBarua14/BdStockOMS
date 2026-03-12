@@ -1,10 +1,8 @@
-// @ts-nocheck
 // src/pages/DashboardPage.tsx
 // Complete dashboard: top-bar live ticker, persist hook, save toast, presets, widget picker
 
 import React, { useCallback, useState, useEffect } from "react"
-import GridLayout from "react-grid-layout"
-type Layout = { i: string; x: number; y: number; w: number; h: number }
+import GridLayout, { Layout } from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
 
@@ -16,21 +14,6 @@ import { SaveConfirmToast } from "../components/ui/SaveConfirmToast"
 import { TopBarTicker } from "../components/ui/TopBarTicker"
 import { WIDGET_REGISTRY } from "../components/widgets/registry"
 
-
-class WidgetErrorBoundary extends React.Component {
-  state = { hasError: false, error: null }
-  static getDerivedStateFromError(error) { return { hasError: true, error } }
-  componentDidCatch(error, info) { console.error("Widget crash:", error, info) }
-  render() {
-    if (this.state.hasError) return (
-      <div style={{ padding: 12, color: "#FF6B6B", fontSize: 11, fontFamily: "monospace", background: "#0D1320", height: "100%" }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>Widget Error</div>
-        <div style={{ color: "rgba(255,255,255,0.4)", wordBreak: "break-all" }}>{String(this.state.error)}</div>
-      </div>
-    )
-    return this.props.children
-  }
-}
 const USER_ID = 163
 
 const PRESETS: PresetName[] = ["Trading", "Research", "Portfolio", "Full"]
@@ -178,11 +161,9 @@ export default function DashboardPage() {
       )}
 
       {/* ══ GRID ════════════════════════════════════════════════════════════ */}
-      {console.log("[Dashboard] layout:", dash.layout?.length, "gridWidth:", gridWidth, "widgets:", dash.widgets?.length)}
-      {console.log("[Dashboard] layout:", dash.layout?.length, "gridWidth:", gridWidth, "widgets:", dash.widgets?.length)}
       <div id="grid-container" className="flex-1 overflow-auto">
         <GridLayout
-          layout={dash.layout as any}
+          layout={dash.layout}
           cols={48}
           rowHeight={10}
           width={gridWidth}
@@ -190,7 +171,7 @@ export default function DashboardPage() {
           preventCollision={false}
           isDraggable
           isResizable
-          onLayoutChange={handleLayoutChange as any}
+          onLayoutChange={handleLayoutChange}
           draggableHandle=".widget-drag-handle"
           margin={[3, 3]}
           containerPadding={[3, 3]}
@@ -200,7 +181,7 @@ export default function DashboardPage() {
             if (!reg) return null
             return (
               <div key={l.i}>
-                <WidgetErrorBoundary><WidgetPanel
+                <WidgetPanel
                   id={l.i}
                   title={reg.title}
                   colorGroup={dash.getColorGroup(l.i)}
@@ -211,7 +192,7 @@ export default function DashboardPage() {
                   onMenuToggle={() => setMenuOpen(p => p === l.i ? null : l.i)}
                 >
                   <reg.component {...sharedProps} colorGroup={dash.getColorGroup(l.i)} />
-                </WidgetPanel></WidgetErrorBoundary>
+                </WidgetPanel>
               </div>
             )
           })}

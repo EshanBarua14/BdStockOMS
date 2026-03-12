@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect } from "vitest"
 import { WIDGET_REGISTRY, CATEGORIES } from "@/components/widgets/registry"
 

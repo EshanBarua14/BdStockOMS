@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function MarketTickerStrip() {
-  const { stocks, connected } = useMarketData()
+  const { stocks: _stocks, connected } = useMarketData()
+  const stocks = _stocks ?? []
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

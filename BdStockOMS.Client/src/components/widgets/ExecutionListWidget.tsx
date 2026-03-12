@@ -3,7 +3,8 @@ import { useMemo, useState } from "react"
 import { useOrders } from "@/hooks/useOrders"
 
 export function ExecutionListWidget({ linkedSymbol, onSymbolClick }) {
-  const { orders } = useOrders()
+  const { orders: _o } = useOrders()
+  const orders = _o ?? []
   const [search, setSearch] = useState("")
   const [dateF, setDateF]   = useState("Today")
 

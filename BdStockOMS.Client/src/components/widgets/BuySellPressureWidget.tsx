@@ -4,7 +4,8 @@ import { useMarketData } from "@/hooks/useMarketData"
 import { subscribeMarket } from "@/hooks/useSignalR"
 
 export function BuySellPressureWidget({ linkedSymbol }) {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [symbol, setSymbol] = useState(linkedSymbol ?? "")
   const [history, setHistory] = useState([])
   const [live, setLive] = useState(null)  // { buyPressure, sellPressure }

@@ -18,7 +18,7 @@ export function useSignalR({ hub, events, groups = [] }: UseSignalROptions) {
   const connRef = useRef<signalR.HubConnection | null>(null)
 
   const getOrCreate = useCallback(() => {
-    const url = `${import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7219"}/hubs/${hub}`
+    const url = `/hubs/${hub}`
     if (connections[hub]) return connections[hub]
 
     const conn = new signalR.HubConnectionBuilder()
@@ -94,7 +94,7 @@ export function subscribeMarket<K extends keyof MarketEventMap>(
 export async function startGlobalMarketHub(token: string) {
   if (_globalConn || _starting) return
   _starting = true
-  const url = `${import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7219"}/hubs/stockprice`
+  const url = `/hubs/stockprice`
 
   _globalConn = new signalR.HubConnectionBuilder()
     .withUrl(url, { accessTokenFactory: () => token })

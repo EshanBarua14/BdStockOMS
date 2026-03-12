@@ -5,7 +5,8 @@ import { marketApi } from "@/api/market"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function WatchlistWidget() {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [lists, setLists]       = useState([])
   const [active, setActive]     = useState(0)
   const [search, setSearch]     = useState("")

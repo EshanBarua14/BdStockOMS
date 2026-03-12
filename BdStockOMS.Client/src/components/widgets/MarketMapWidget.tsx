@@ -3,7 +3,8 @@ import { useMemo, useState } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function MarketMapWidget({ onSymbolClick }) {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [colorBy, setColorBy] = useState("change")
   const [sizeBy,  setSizeBy]  = useState("volume")
   const [sector,  setSector]  = useState("All")

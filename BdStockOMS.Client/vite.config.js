@@ -4,24 +4,17 @@ import path from 'path';
 export default defineConfig({
     plugins: [react()],
     resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './src'),
-        },
+        alias: { '@': path.resolve(__dirname, './src') },
     },
     server: {
         port: 5173,
+        headers: {
+            'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; connect-src 'self' http://localhost:5289 ws://localhost:5173 ws://localhost:5289; default-src 'self' 'unsafe-inline' data: blob: https:;",
+        },
         proxy: {
-            '/api': {
-                target: 'https://localhost:7219',
-                changeOrigin: true,
-                secure: false,
-            },
-            '/hubs': {
-                target: 'https://localhost:7219',
-                changeOrigin: true,
-                secure: false,
-                ws: true,
-            },
+            '/api': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
+            '/auth': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
+            '/hubs': { target: 'http://localhost:5289', changeOrigin: true, secure: false, ws: true },
         },
     },
     test: {

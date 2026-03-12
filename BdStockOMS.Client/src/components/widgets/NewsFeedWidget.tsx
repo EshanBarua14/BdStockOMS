@@ -12,7 +12,7 @@ export function NewsFeedWidget({ onSymbolClick }) {
 
   // Load initial news from REST
   useEffect(() => {
-    apiClient.get("/News?count=20").then(r => {
+    apiClient.get("/news?count=20").then(r => {
       setNews(r.data ?? [])
     }).catch(() => {})
   }, [])

@@ -6,7 +6,8 @@ import { useMarketData } from "@/hooks/useMarketData"
 
 export function OrderEntryWidget() {
   const { placeOrder, placing } = useOrders()
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [side, setSide]       = useState("Buy")
   const [symbol, setSymbol]   = useState("")
   const [type, setType]       = useState("Limit")

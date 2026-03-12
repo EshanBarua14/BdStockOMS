@@ -38,7 +38,8 @@ function momentumSignal(stocks, symbol) {
 const SIG_COLORS = { BUY: "#00D4AA", SELL: "#FF6B6B", HOLD: "#F59E0B" }
 
 export function AIPredictionWidget() {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [symbol, setSymbol] = useState("")
   const [pred, setPred]     = useState(null)
   const [scanning, setScanning] = useState(false)

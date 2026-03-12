@@ -4,7 +4,8 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function PriceChartWidget({ linkedSymbol, onSymbolClick }) {
-  const { stocks } = useMarketData()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
   const [symbol, setSymbol]   = useState(linkedSymbol ?? "")
   const [chartType, setChartType] = useState("line")
   const [period, setPeriod]   = useState("1D")
