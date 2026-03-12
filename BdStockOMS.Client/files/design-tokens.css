@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════════
+   BdStockOMS — Global Design Tokens
+   Bloomberg/Refinitiv-grade Dark Glassmorphism Theme
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Core Palette ─────────────────────────────────────────── */
+  --bg-primary:        #0a0e17;
+  --bg-secondary:      #0f1520;
+  --bg-tertiary:       #141c2b;
+  --bg-elevated:       #1a2235;
+  --bg-surface:        #1e2a3f;
+
+  /* ── Glass Surfaces ───────────────────────────────────────── */
+  --glass-bg:          rgba(15, 21, 35, 0.72);
+  --glass-bg-hover:    rgba(20, 28, 45, 0.82);
+  --glass-border:      rgba(255, 255, 255, 0.06);
+  --glass-border-hover:rgba(255, 255, 255, 0.12);
+  --glass-blur:        16px;
+  --glass-blur-heavy:  24px;
+
+  /* ── Neon Accents ─────────────────────────────────────────── */
+  --neon-cyan:         #00e5ff;
+  --neon-cyan-glow:    rgba(0, 229, 255, 0.35);
+  --neon-blue:         #448aff;
+  --neon-blue-glow:    rgba(68, 138, 255, 0.30);
+  --neon-purple:       #7c4dff;
+  --neon-purple-glow:  rgba(124, 77, 255, 0.25);
+  --neon-magenta:      #e040fb;
+
+  /* ── Semantic Colors ──────────────────────────────────────── */
+  --color-buy:         #00e676;
+  --color-buy-bg:      rgba(0, 230, 118, 0.08);
+  --color-buy-glow:    rgba(0, 230, 118, 0.30);
+  --color-sell:        #ff1744;
+  --color-sell-bg:     rgba(255, 23, 68, 0.08);
+  --color-sell-glow:   rgba(255, 23, 68, 0.30);
+  --color-neutral:     #ffd740;
+  --color-neutral-bg:  rgba(255, 215, 64, 0.08);
+  --color-warning:     #ff9100;
+  --color-warning-bg:  rgba(255, 145, 0, 0.08);
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --text-primary:      #e8ecf4;
+  --text-secondary:    #8b99b0;
+  --text-tertiary:     #5a6a82;
+  --text-disabled:     #3a4a62;
+  --text-accent:       var(--neon-cyan);
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-display:      'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-body:         'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:         'JetBrains Mono', 'SF Mono', monospace;
+  --font-size-xs:      0.6875rem;  /* 11px */
+  --font-size-sm:      0.75rem;    /* 12px */
+  --font-size-base:    0.8125rem;  /* 13px */
+  --font-size-md:      0.875rem;   /* 14px */
+  --font-size-lg:      1rem;       /* 16px */
+  --font-size-xl:      1.25rem;    /* 20px */
+  --font-size-2xl:     1.5rem;     /* 24px */
+  --font-size-3xl:     2rem;       /* 32px */
+
+  /* ── Spacing ──────────────────────────────────────────────── */
+  --space-1:           4px;
+  --space-2:           8px;
+  --space-3:           12px;
+  --space-4:           16px;
+  --space-5:           20px;
+  --space-6:           24px;
+  --space-8:           32px;
+  --space-10:          40px;
+  --space-12:          48px;
+
+  /* ── Borders & Radius ─────────────────────────────────────── */
+  --radius-sm:         4px;
+  --radius-md:         8px;
+  --radius-lg:         12px;
+  --radius-xl:         16px;
+  --radius-2xl:        20px;
+  --radius-full:       9999px;
+  --border-subtle:     1px solid var(--glass-border);
+  --border-glow:       1px solid rgba(0, 229, 255, 0.15);
+
+  /* ── 3D Depth System ──────────────────────────────────────── */
+  --shadow-sm:         0 1px 3px rgba(0, 0, 0, 0.4),
+                       0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:         0 4px 12px rgba(0, 0, 0, 0.5),
+                       0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg:         0 8px 32px rgba(0, 0, 0, 0.6),
+                       0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-xl:         0 16px 48px rgba(0, 0, 0, 0.7),
+                       0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-neon-cyan:  0 0 20px var(--neon-cyan-glow),
+                       0 0 40px rgba(0, 229, 255, 0.10);
+  --shadow-neon-buy:   0 0 12px var(--color-buy-glow);
+  --shadow-neon-sell:  0 0 12px var(--color-sell-glow);
+
+  /* ── 3D Transform Tokens ──────────────────────────────────── */
+  --perspective:       1200px;
+  --depth-1:           translateZ(2px);
+  --depth-2:           translateZ(6px);
+  --depth-3:           translateZ(12px);
+  --tilt-hover:        rotateX(1deg) rotateY(-1deg);
+
+  /* ── Transitions ──────────────────────────────────────────── */
+  --ease-out-expo:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring:       cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --duration-fast:     120ms;
+  --duration-normal:   200ms;
+  --duration-slow:     350ms;
+  --duration-glacial:  600ms;
+
+  /* ── Z-Index Scale ────────────────────────────────────────── */
+  --z-base:            1;
+  --z-dropdown:        100;
+  --z-sticky:          200;
+  --z-sidebar:         300;
+  --z-modal-backdrop:  400;
+  --z-modal:           500;
+  --z-popover:         600;
+  --z-tooltip:         700;
+  --z-notification:    800;
+  --z-ticker:          900;
+  --z-max:             9999;
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  --ticker-height:     36px;
+  --topbar-height:     48px;
+  --sidebar-width:     56px;
+  --sidebar-expanded:  220px;
+  --bottombar-height:  32px;
+  --widget-header:     34px;
+  --widget-gap:        6px;
+
+  /* ── Scrollbar ────────────────────────────────────────────── */
+  --scrollbar-size:    5px;
+  --scrollbar-track:   transparent;
+  --scrollbar-thumb:   rgba(255, 255, 255, 0.10);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.18);
+}

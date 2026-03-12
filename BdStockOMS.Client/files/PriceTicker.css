@@ -1,0 +1,121 @@
+/* ═══════════════════════════════════════════════════════════════
+   PriceTicker — Scrolling top ribbon
+   ═══════════════════════════════════════════════════════════════ */
+
+.price-ticker {
+  height: var(--ticker-height);
+  background: linear-gradient(180deg, rgba(10, 14, 23, 0.95), rgba(15, 21, 35, 0.90));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+  z-index: var(--z-ticker);
+  display: flex;
+  align-items: center;
+}
+
+/* Fade edges */
+.price-ticker::before,
+.price-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.price-ticker::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-primary), transparent);
+}
+.price-ticker::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--bg-primary), transparent);
+}
+
+.price-ticker__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+  height: 100%;
+}
+.price-ticker__track::-webkit-scrollbar {
+  display: none;
+}
+
+.price-ticker__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background var(--duration-fast) ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.price-ticker__item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.price-ticker__symbol {
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+
+.price-ticker__exchange {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+
+.price-ticker__price {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.price-ticker__change {
+  font-weight: 600;
+  font-size: 10px;
+}
+.price-ticker__change.up {
+  color: var(--color-buy);
+}
+.price-ticker__change.down {
+  color: var(--color-sell);
+}
+.price-ticker__change.flat {
+  color: var(--text-tertiary);
+}
+
+/* Empty/connecting state */
+.price-ticker__empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  animation: fade-in 0.5s ease;
+}
+
+.price-ticker__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}

@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════════════
+   BottomBar — Status strip
+   ═══════════════════════════════════════════════════════════════ */
+
+.bottombar {
+  height: var(--bottombar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  background: linear-gradient(180deg, rgba(10, 14, 23, 0.88), rgba(10, 14, 23, 0.95));
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.bottombar__left,
+.bottombar__center,
+.bottombar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottombar__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bottombar__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bottombar__divider {
+  color: rgba(255, 255, 255, 0.08);
+}
+
+.bottombar__clock {
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+}
