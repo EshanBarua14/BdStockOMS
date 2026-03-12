@@ -45,10 +45,10 @@ function Input({ label, type = 'text', value, onChange, placeholder, required = 
           placeholder={placeholder}
           style={{
             width: '100%', boxSizing: 'border-box',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--t-hover)',
             border: `1px solid ${borderColor}`,
             borderRadius: 7, padding: icon ? '8px 12px 8px 34px' : '8px 12px',
-            color: '#fff', fontSize: 13, outline: 'none',
+            color: 'var(--t-text1)', fontSize: 13, outline: 'none',
             fontFamily: "'Outfit', sans-serif",
             transition: 'all 0.2s',
             boxShadow: focused ? '0 0 12px rgba(0,212,170,0.04)' : 'none',
@@ -179,13 +179,13 @@ export function SignUpPage() {
   if (success) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#080C14',
+        minHeight: '100vh', background: 'var(--t-bg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Outfit', sans-serif",
       }}>
         <div style={{
           width: 400, textAlign: 'center',
-          background: 'rgba(13,19,32,0.82)', backdropFilter: 'blur(24px)',
+          background: 'var(--t-surface)', backdropFilter: 'blur(24px)',
           border: '1px solid rgba(0,212,170,0.15)', borderRadius: 14,
           padding: '36px 28px', position: 'relative', overflow: 'hidden',
           boxShadow: '0 0 60px rgba(0,212,170,0.04), 0 24px 48px rgba(0,0,0,0.5)',
@@ -200,8 +200,8 @@ export function SignUpPage() {
               <path d="M20 6L9 17l-5-5" stroke="#00D4AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '0 0 6px' }}>Registration Submitted!</h2>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, margin: '0 0 16px', lineHeight: 1.5 }}>
+          <h2 style={{ color: 'var(--t-text1)', fontSize: 18, fontWeight: 700, margin: '0 0 6px' }}>Registration Submitted!</h2>
+          <p style={{ color: 'var(--t-text3)', fontSize: 12, margin: '0 0 16px', lineHeight: 1.5 }}>
             Your brokerage house admin will review and approve your registration.
           </p>
           <div style={{
@@ -212,7 +212,7 @@ export function SignUpPage() {
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ffd740', animation: 'oms-pulse 2s ease-in-out infinite' }} />
               <span style={{ color: '#ffd740', fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>PENDING APPROVAL</span>
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, lineHeight: 1.5 }}>
+            <div style={{ color: 'var(--t-text3)', fontSize: 10, lineHeight: 1.5 }}>
               1. Brokerage admin reviews your application<br/>
               2. You'll receive email confirmation<br/>
               3. Then sign in and start trading
@@ -232,7 +232,7 @@ export function SignUpPage() {
   // ── Form ───────────────────────────────────────────────
   return (
     <div style={{
-      minHeight: '100vh', background: '#080C14',
+      minHeight: '100vh', background: 'var(--t-bg)',
       display: 'flex', flexDirection: 'column',
       fontFamily: "'Outfit', sans-serif",
     }}>
@@ -243,11 +243,11 @@ export function SignUpPage() {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 24px', flexShrink: 0,
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        borderBottom: '1px solid var(--t-border)',
       }}>
         <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <img src={logoImg} alt="OMS" style={{ height: 28, filter: 'drop-shadow(0 0 6px rgba(0,212,170,0.12))' }} />
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>BD Stock <span style={{ color: '#00D4AA' }}>OMS</span></span>
+          <span style={{ color: 'var(--t-text1)', fontWeight: 700, fontSize: 13 }}>BD Stock <span style={{ color: '#00D4AA' }}>OMS</span></span>
         </Link>
         <ThemeMenu variant="compact" />
       </div>
@@ -261,7 +261,7 @@ export function SignUpPage() {
 
           {step > 0 && (
             <button onClick={() => { setStep(0); setError(null) }} style={{
-              background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)',
+              background: 'none', border: 'none', color: 'var(--t-text3)',
               cursor: 'pointer', fontSize: 12, marginBottom: 8, padding: 0,
               display: 'flex', alignItems: 'center', gap: 5, fontFamily: "'Outfit', sans-serif",
             }}>
@@ -271,8 +271,8 @@ export function SignUpPage() {
           )}
 
           <div style={{
-            background: 'rgba(13,19,32,0.82)', backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(0,212,170,0.10)', borderRadius: 14,
+            background: 'var(--t-surface)', backdropFilter: 'blur(24px)',
+            border: '1px solid var(--t-border)', borderRadius: 14,
             padding: '24px 24px 20px', position: 'relative', overflow: 'hidden',
             boxShadow: '0 0 60px rgba(0,212,170,0.03), 0 24px 48px rgba(0,0,0,0.4)',
           }}>
@@ -283,13 +283,13 @@ export function SignUpPage() {
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 8,
                 padding: '3px 10px', borderRadius: 16,
-                background: 'rgba(0,212,170,0.06)', border: '1px solid rgba(0,212,170,0.10)',
+                background: 'rgba(0,212,170,0.06)', border: '1px solid var(--t-border)',
               }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M3 17l4-8 4 5 3-3 4 6" stroke="#00D4AA" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 <span style={{ color: '#00D4AA', fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>INVESTOR REGISTRATION</span>
               </div>
-              <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '0 0 3px' }}>Create your account</h2>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: 0 }}>Register under a BSEC-licensed brokerage</p>
+              <h2 style={{ color: 'var(--t-text1)', fontSize: 18, fontWeight: 700, margin: '0 0 3px' }}>Create your account</h2>
+              <p style={{ color: 'var(--t-text3)', fontSize: 11, margin: 0 }}>Register under a BSEC-licensed brokerage</p>
             </div>
 
             <Steps current={step} />
@@ -309,7 +309,7 @@ export function SignUpPage() {
               {/* ── Step 0 ── */}
               {step === 0 && (
                 <div>
-                  <div style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>PERSONAL DETAILS</div>
+                  <div style={{ color: 'var(--t-text3)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>PERSONAL DETAILS</div>
 
                   <Input label="Full Name" value={fullName} error={errors.fullName}
                     onChange={v => { setFullName(v); touch('fullName') }} placeholder="e.g. Rahim Uddin"
@@ -346,25 +346,25 @@ export function SignUpPage() {
               {/* ── Step 1 ── */}
               {step === 1 && (
                 <div>
-                  <div style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>BROKERAGE & SECURITY</div>
+                  <div style={{ color: 'var(--t-text3)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>BROKERAGE & SECURITY</div>
 
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
+                    <label style={{ display: 'block', color: 'var(--t-text3)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
                       Brokerage House <span style={{ color: '#FF6B6B' }}>*</span>
                     </label>
                     <select value={brokerage} onChange={e => { setBrokerage(Number(e.target.value)); touch('brokerage') }}
                       required style={{
                         width: '100%', boxSizing: 'border-box',
-                        background: 'rgba(255,255,255,0.03)',
+                        background: 'var(--t-hover)',
                         border: `1px solid ${errors.brokerage ? 'rgba(255,107,107,0.5)' : 'rgba(255,255,255,0.07)'}`,
                         borderRadius: 7, padding: '8px 12px',
-                        color: brokerage ? '#fff' : 'rgba(255,255,255,0.25)',
+                        color: brokerage ? 'var(--t-text1)' : 'var(--t-text3)',
                         fontSize: 13, outline: 'none', cursor: 'pointer',
                         fontFamily: "'Outfit', sans-serif",
                       }}>
                       <option value={0} disabled>Select brokerage house…</option>
                       {brokerages.map(b => (
-                        <option key={b.id} value={b.id} style={{ background: '#0D1320', color: '#fff' }}>{b.name}</option>
+                        <option key={b.id} value={b.id} style={{ background: 'var(--t-panel)', color: 'var(--t-text1)' }}>{b.name}</option>
                       ))}
                     </select>
                     {errors.brokerage && <div style={{ color: '#FF6B6B', fontSize: 10, marginTop: 3, fontFamily: "'JetBrains Mono', monospace" }}>{errors.brokerage}</div>}
@@ -380,12 +380,12 @@ export function SignUpPage() {
                   <label style={{
                     display: 'flex', alignItems: 'flex-start', gap: 8,
                     marginBottom: 12, padding: '10px 12px', borderRadius: 7,
-                    background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)',
+                    background: 'var(--t-hover)', border: '1px solid var(--t-border)',
                     cursor: 'pointer',
                   }}>
                     <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
                       style={{ marginTop: 1, accentColor: '#00D4AA', cursor: 'pointer' }} />
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, lineHeight: 1.5 }}>
+                    <span style={{ color: 'var(--t-text3)', fontSize: 10, lineHeight: 1.5 }}>
                       I agree to the <span style={{ color: '#00D4AA' }}>Terms</span> &{' '}
                       <span style={{ color: '#00D4AA' }}>Privacy Policy</span>.
                       Account requires brokerage approval.
@@ -401,7 +401,7 @@ export function SignUpPage() {
                       <circle cx="12" cy="12" r="10" stroke="#448aff" strokeWidth="1.5"/>
                       <path d="M12 8v4M12 16h.01" stroke="#448aff" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, lineHeight: 1.4 }}>
+                    <span style={{ color: 'var(--t-text3)', fontSize: 10, lineHeight: 1.4 }}>
                       Registration reviewed by brokerage admin per RBAC approval.
                     </span>
                   </div>
@@ -422,7 +422,7 @@ export function SignUpPage() {
             </form>
 
             <div style={{ textAlign: 'center', marginTop: 14 }}>
-              <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+              <span style={{ color: 'var(--t-text3)', fontSize: 11 }}>
                 Already registered?{' '}
                 <Link to="/login" style={{ color: '#00D4AA', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
               </span>
@@ -432,13 +432,13 @@ export function SignUpPage() {
           {/* Info + credit */}
           <div style={{
             marginTop: 10, padding: '8px 14px', borderRadius: 8,
-            background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.03)',
-            textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 10,
+            background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+            textAlign: 'center', color: 'var(--t-text3)', fontSize: 10,
           }}>
-            <strong style={{ color: 'rgba(255,255,255,0.3)' }}>Trader / CCD / Admin?</strong> — Created by brokerage admin via Admin Panel.
+            <strong style={{ color: 'var(--t-text3)' }}>Trader / CCD / Admin?</strong> — Created by brokerage admin via Admin Panel.
           </div>
           <div style={{ textAlign: 'center', marginTop: 10 }}>
-            <span style={{ color: 'rgba(255,255,255,0.10)', fontSize: 9 }}>
+            <span style={{ color: 'var(--t-text3)', fontSize: 9 }}>
               Developed by{' '}
               <a href="https://www.linkedin.com/in/eshan01/" target="_blank" rel="noopener noreferrer"
                 style={{ color: 'rgba(0,212,170,0.4)', textDecoration: 'none', fontWeight: 600 }}>Eshan Barua</a>

@@ -1,43 +1,46 @@
 // @ts-nocheck
+// src/components/ui/ThemeMenu.tsx
+// Preview on click · Apply/Cancel buttons · Persists after refresh
+
 import { useState, useRef, useEffect } from 'react'
 import {
   useThemeStore, THEMES, ACCENTS, DENSITIES,
-  type ThemeId, type AccentId, type DensityOption,
+  type ThemeId, type AccentId,
 } from '@/store/themeStore'
 
-interface ThemeMenuProps {
-  variant?: 'compact' | 'full'
-}
+const BUY_PRESETS  = ['#00e676', '#00D4AA', '#10B981', '#22C55E', '#4ADE80']
+const SELL_PRESETS = ['#ff1744', '#EF4444', '#F43F5E', '#E11D48', '#FF6B6B']
 
-const BUY_COLORS = ['#00e676', '#00D4AA', '#10B981', '#22C55E', '#4ADE80']
-const SELL_COLORS = ['#ff1744', '#EF4444', '#F43F5E', '#E11D48', '#FF6B6B']
+export function ThemeMenu({ variant = 'compact' }: { variant?: 'compact' | 'full' }) {
+  const [open, setOpen] = useState(false)
+  const [tab, setTab]   = useState<'theme' | 'accent' | 'density' | 'colors'>('theme')
+  const ref = useRef<HTMLDivElement>(null)
 
-export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
-  const [open, setOpen]       = useState(false)
-  const [tab, setTab]         = useState<'theme' | 'accent' | 'density' | 'colors'>('theme')
-  const ref                   = useRef<HTMLDivElement>(null)
-
+  const store = useThemeStore()
   const {
     theme, accent, density, buyColor, sellColor,
     pendingTheme, pendingAccent,
     previewTheme, previewAccent,
     confirmTheme, cancelPreview,
     setDensity, setBuyColor, setSellColor,
-  } = useThemeStore()
+  } = store
 
-  const hasPending = pendingTheme !== null || pendingAccent !== null
-  const activeTheme  = pendingTheme  ?? theme
+  const hasPending   = pendingTheme !== null || pendingAccent !== null
+  const activeTheme  = pendingTheme ?? theme
   const activeAccent = pendingAccent ?? accent
+  const tObj = THEMES.find(t => t.id === activeTheme)!
+  const aObj = ACCENTS.find(a => a.id === activeAccent)!
 
+  // Close on outside click — cancel preview if pending
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         if (hasPending) cancelPreview()
         setOpen(false)
       }
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [hasPending, cancelPreview])
 
   const grouped = {
@@ -46,33 +49,26 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
     Light:   THEMES.filter(t => t.category === 'Light'),
   }
 
-  const currentThemeObj  = THEMES.find(t => t.id === activeTheme)!
-  const currentAccentObj = ACCENTS.find(a => a.id === activeAccent)!
-
   const TABS = [
     { id: 'theme',   label: 'Themes',  icon: '🎨' },
     { id: 'accent',  label: 'Accent',  icon: '◉' },
-    { id: 'density', label: 'Density', icon: '▤' },
+    { id: 'density', label: 'Layout',  icon: '▤' },
     { id: 'colors',  label: 'Colors',  icon: '⬤' },
   ] as const
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
-      {/* Trigger */}
-      <button onClick={() => setOpen(v => !v)} title="Theme Settings"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 5,
-          background: open ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.025)',
-          border: `1px solid ${open ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)'}`,
-          borderRadius: 20, padding: '4px 10px',
-          cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
-          transition: 'all 0.15s',
-        }}>
+      {/* ── Trigger Button ── */}
+      <button onClick={() => setOpen(v => !v)} title="Theme Studio" style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        background: open ? 'var(--t-elevated)' : 'var(--t-hover)',
+        border: `1px solid ${open ? aObj.color + '40' : 'var(--t-border)'}`,
+        borderRadius: 20, padding: '4px 10px', cursor: 'pointer',
+        color: 'var(--t-text2)', transition: 'all 0.15s',
+      }}>
         <span style={{
           width: 10, height: 10, borderRadius: '50%',
-          background: currentAccentObj.color,
-          boxShadow: `0 0 5px ${currentAccentObj.glow}`,
-          flexShrink: 0,
+          background: aObj.color, boxShadow: `0 0 5px ${aObj.glow}`, flexShrink: 0,
         }} />
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
@@ -83,114 +79,137 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
         </svg>
       </button>
 
-      {/* Drawer */}
+      {/* ── Dropdown Panel ── */}
       {open && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-          width: 330, maxHeight: 'calc(100vh - 80px)',
-          background: 'rgba(13,19,32,0.95)',
-          backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
-          zIndex: 9999, display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
+          width: 340, maxHeight: 'calc(100vh - 80px)',
+          background: 'var(--t-surface)', border: '1px solid var(--t-border)',
+          borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          zIndex: 9999, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
+
           {/* Header */}
           <div style={{
-            padding: '12px 16px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            padding: '12px 16px 10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            borderBottom: '1px solid var(--t-border)',
           }}>
             <div>
-              <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-                Theme Studio
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em', marginTop: 2 }}>
-                {currentThemeObj.label} · {currentAccentObj.label} · {density}
+              <div style={{ color: 'var(--t-text1)', fontSize: 13, fontWeight: 700 }}>Theme Studio</div>
+              <div style={{
+                color: 'var(--t-text3)', fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace", marginTop: 2,
+              }}>
+                {tObj.label} · {aObj.label} · {density}
+                {hasPending && <span style={{ color: aObj.color, marginLeft: 4 }}>● previewing</span>}
               </div>
             </div>
-            <button onClick={() => { if (hasPending) cancelPreview(); setOpen(false) }}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 14, padding: 4 }}>✕</button>
+            <button onClick={() => { if (hasPending) cancelPreview(); setOpen(false) }} style={{
+              background: 'none', border: 'none', color: 'var(--t-text3)',
+              cursor: 'pointer', fontSize: 14, padding: 4,
+            }}>✕</button>
           </div>
 
-          {/* Tab bar */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0 4px' }}>
+          {/* Tab Bar */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--t-border)', padding: '0 4px' }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id as any)} style={{
-                flex: 1, padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                flex: 1, padding: '8px 0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 background: 'none', border: 'none',
-                borderBottom: `2px solid ${tab === t.id ? currentAccentObj.color : 'transparent'}`,
-                color: tab === t.id ? '#fff' : 'rgba(255,255,255,0.3)',
+                borderBottom: `2px solid ${tab === t.id ? aObj.color : 'transparent'}`,
+                color: tab === t.id ? 'var(--t-text1)' : 'var(--t-text3)',
                 fontSize: 10, cursor: 'pointer', fontWeight: 600,
-                letterSpacing: '0.04em', fontFamily: "'JetBrains Mono', monospace",
-                transition: 'all 0.15s',
+                fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s',
               }}>
-                <span style={{ fontSize: 11 }}>{t.icon}</span>
-                {t.label}
+                <span style={{ fontSize: 11 }}>{t.icon}</span>{t.label}
               </button>
             ))}
           </div>
 
-          {/* Content */}
+          {/* ── Scrollable Content ── */}
           <div style={{ flex: 1, overflowY: 'auto', padding: 12, minHeight: 0 }}>
 
-            {/* ── THEMES ── */}
+            {/* THEMES TAB */}
             {tab === 'theme' && Object.entries(grouped).map(([cat, items]) => (
               <div key={cat} style={{ marginBottom: 10 }}>
                 <div style={{
-                  color: 'rgba(255,255,255,0.2)', fontSize: 9,
+                  color: 'var(--t-text3)', fontSize: 9,
                   fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: '0.1em', textTransform: 'uppercase',
-                  marginBottom: 5, paddingLeft: 2, fontWeight: 700,
-                }}>{cat} ({items.length})</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {items.map(t => {
-                    const isActive = activeTheme === t.id
-                    return (
-                      <button key={t.id} onClick={() => previewTheme(t.id as ThemeId)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '7px 10px', width: '100%', textAlign: 'left',
-                          background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                          border: `1px solid ${isActive ? currentAccentObj.color + '30' : 'transparent'}`,
-                          borderRadius: 8, cursor: 'pointer', transition: 'all 0.12s',
-                        }}>
-                        {/* Swatch */}
+                  letterSpacing: '0.1em', marginBottom: 5, fontWeight: 700,
+                }}>{cat.toUpperCase()} ({items.length})</div>
+
+                {items.map(t => {
+                  const isActive = activeTheme === t.id
+                  return (
+                    <button key={t.id} onClick={() => previewTheme(t.id as ThemeId)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 10px', width: '100%', textAlign: 'left', marginBottom: 2,
+                      background: isActive ? 'var(--t-hover)' : 'transparent',
+                      border: `1px solid ${isActive ? aObj.color + '30' : 'transparent'}`,
+                      borderRadius: 8, cursor: 'pointer', transition: 'all 0.12s',
+                    }}>
+                      {/* Swatch */}
+                      <div style={{
+                        width: 34, height: 22, borderRadius: 5, flexShrink: 0,
+                        position: 'relative', overflow: 'hidden',
+                        background: `linear-gradient(135deg, ${t.bg} 40%, ${t.surface} 60%)`,
+                        border: `1px solid ${isActive ? aObj.color + '40' : 'var(--t-border)'}`,
+                      }}>
                         <div style={{
-                          width: 32, height: 22, borderRadius: 5, flexShrink: 0,
-                          background: `linear-gradient(135deg, ${t.bg} 45%, ${t.surface} 55%)`,
-                          border: `1px solid ${isActive ? currentAccentObj.color + '40' : 'rgba(255,255,255,0.08)'}`,
-                          position: 'relative', overflow: 'hidden',
-                        }}>
-                          {/* Accent dot inside swatch */}
+                          position: 'absolute', bottom: 2, right: 2,
+                          width: 5, height: 5, borderRadius: '50%',
+                          background: aObj.color, opacity: 0.5,
+                        }} />
+                        {!t.dark && (
                           <div style={{
-                            position: 'absolute', bottom: 2, right: 2,
-                            width: 5, height: 5, borderRadius: '50%',
-                            background: currentAccentObj.color, opacity: 0.6,
+                            position: 'absolute', top: 2, left: 2,
+                            width: 4, height: 4, borderRadius: '50%',
+                            background: '#FFD700', opacity: 0.6,
                           }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            {t.emoji} {t.label}
-                            {!t.dark && <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.1)', padding: '1px 4px', borderRadius: 3, color: 'rgba(255,255,255,0.4)' }}>LIGHT</span>}
-                          </div>
-                          <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.desc}</div>
-                        </div>
-                        {isActive && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                            <path d="M20 6L9 17l-5-5" stroke={currentAccentObj.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
                         )}
-                      </button>
-                    )
-                  })}
-                </div>
+                      </div>
+                      {/* Label */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          color: isActive ? 'var(--t-text1)' : 'var(--t-text2)',
+                          fontSize: 12, fontWeight: 600,
+                        }}>
+                          {t.emoji} {t.label}
+                          {!t.dark && (
+                            <span style={{
+                              fontSize: 8, background: 'var(--t-hover)',
+                              padding: '1px 4px', borderRadius: 3,
+                              color: 'var(--t-text3)', marginLeft: 4,
+                            }}>LIGHT</span>
+                          )}
+                        </div>
+                        <div style={{
+                          color: 'var(--t-text3)', fontSize: 9,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{t.desc}</div>
+                      </div>
+                      {/* Checkmark */}
+                      {isActive && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                          <path d="M20 6L9 17l-5-5" stroke={aObj.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             ))}
 
-            {/* ── ACCENTS ── */}
+            {/* ACCENT TAB */}
             {tab === 'accent' && (
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>ACCENT COLOR</div>
+                <div style={{
+                  color: 'var(--t-text3)', fontSize: 9,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700,
+                }}>ACCENT COLOR</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                   {ACCENTS.map(a => {
                     const isActive = activeAccent === a.id
@@ -198,61 +217,61 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
                       <button key={a.id} onClick={() => previewAccent(a.id as AccentId)} style={{
                         display: 'flex', alignItems: 'center', gap: 8,
                         padding: '8px 10px',
-                        background: isActive ? `${a.color}12` : 'rgba(255,255,255,0.02)',
-                        border: `1px solid ${isActive ? a.color + '40' : 'rgba(255,255,255,0.05)'}`,
+                        background: isActive ? 'var(--t-hover)' : 'transparent',
+                        border: `1px solid ${isActive ? a.color + '40' : 'var(--t-border)'}`,
                         borderRadius: 7, cursor: 'pointer', transition: 'all 0.12s',
                       }}>
                         <span style={{
                           width: 18, height: 18, borderRadius: '50%',
-                          background: a.color,
+                          background: a.color, flexShrink: 0,
                           boxShadow: isActive ? `0 0 10px ${a.glow}` : 'none',
-                          flexShrink: 0, transition: 'box-shadow 0.15s',
-                          border: isActive ? `2px solid ${a.color}` : '2px solid transparent',
                         }} />
                         <span style={{
-                          color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                          color: isActive ? 'var(--t-text1)' : 'var(--t-text2)',
                           fontSize: 11, fontWeight: isActive ? 600 : 400,
                         }}>{a.label}</span>
                       </button>
                     )
                   })}
                 </div>
-
-                {/* Preview bar */}
+                {/* Preview strip */}
                 <div style={{
                   marginTop: 12, padding: 10, borderRadius: 8,
-                  background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+                  background: 'var(--t-hover)', border: '1px solid var(--t-border)',
                 }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, letterSpacing: '0.06em' }}>PREVIEW</div>
+                  <div style={{ fontSize: 9, color: 'var(--t-text3)', marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>PREVIEW</div>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: currentAccentObj.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#000' }}>Button</div>
-                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: `${currentAccentObj.color}15`, border: `1px solid ${currentAccentObj.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: currentAccentObj.color }}>Outline</div>
-                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Ghost</div>
+                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: aObj.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#000' }}>Button</div>
+                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: `${aObj.color}15`, border: `1px solid ${aObj.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: aObj.color }}>Outline</div>
+                    <div style={{ flex: 1, height: 24, borderRadius: 5, background: 'var(--t-hover)', border: '1px solid var(--t-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--t-text3)' }}>Ghost</div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ── DENSITY ── */}
+            {/* DENSITY TAB */}
             {tab === 'density' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>UI DENSITY</div>
-                {DENSITIES.map((d: DensityOption) => (
+              <div>
+                <div style={{
+                  color: 'var(--t-text3)', fontSize: 9,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700,
+                }}>UI DENSITY</div>
+                {DENSITIES.map(d => (
                   <button key={d.id} onClick={() => setDensity(d.id)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 12px',
-                    background: density === d.id ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    border: `1px solid ${density === d.id ? currentAccentObj.color + '25' : 'transparent'}`,
-                    borderRadius: 7, cursor: 'pointer', textAlign: 'left', width: '100%',
-                    transition: 'all 0.12s',
+                    padding: '10px 12px', width: '100%', textAlign: 'left', marginBottom: 3,
+                    background: density === d.id ? 'var(--t-hover)' : 'transparent',
+                    border: `1px solid ${density === d.id ? aObj.color + '25' : 'transparent'}`,
+                    borderRadius: 7, cursor: 'pointer', transition: 'all 0.12s',
                   }}>
                     <div>
-                      <div style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{d.label}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{d.desc}</div>
+                      <div style={{ color: 'var(--t-text1)', fontSize: 12, fontWeight: 600 }}>{d.label}</div>
+                      <div style={{ color: 'var(--t-text3)', fontSize: 10 }}>{d.desc}</div>
                     </div>
                     {density === d.id && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 6L9 17l-5-5" stroke={currentAccentObj.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M20 6L9 17l-5-5" stroke={aObj.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
                   </button>
@@ -260,28 +279,32 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
               </div>
             )}
 
-            {/* ── COLORS (Buy/Sell) ── */}
+            {/* COLORS TAB */}
             {tab === 'colors' && (
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, fontWeight: 700 }}>TRADING COLORS</div>
+                <div style={{
+                  color: 'var(--t-text3)', fontSize: 9,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '0.1em', marginBottom: 10, fontWeight: 700,
+                }}>TRADING COLORS</div>
 
-                {/* Buy color */}
+                {/* Buy */}
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>Buy / Gain Color</div>
+                  <div style={{ color: 'var(--t-text2)', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>Buy / Gain</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {BUY_COLORS.map(c => (
+                    {BUY_PRESETS.map(c => (
                       <button key={c} onClick={() => setBuyColor(c)} style={{
-                        width: 32, height: 32, borderRadius: 8, background: c, border: 'none', cursor: 'pointer',
-                        outline: buyColor === c ? `2px solid #fff` : 'none',
-                        outlineOffset: 2, transition: 'all 0.15s',
-                        boxShadow: buyColor === c ? `0 0 12px ${c}60` : 'none',
+                        width: 30, height: 30, borderRadius: 7, background: c,
+                        border: 'none', cursor: 'pointer',
+                        outline: buyColor === c ? '2px solid var(--t-text1)' : 'none',
+                        outlineOffset: 2,
                       }} />
                     ))}
                     <label style={{
-                      width: 32, height: 32, borderRadius: 8, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)',
+                      width: 30, height: 30, borderRadius: 7, cursor: 'pointer',
+                      background: 'var(--t-hover)', border: '1px dashed var(--t-border)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, color: 'rgba(255,255,255,0.3)',
+                      fontSize: 12, color: 'var(--t-text3)',
                     }}>
                       +
                       <input type="color" value={buyColor} onChange={e => setBuyColor(e.target.value)}
@@ -290,23 +313,23 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
                   </div>
                 </div>
 
-                {/* Sell color */}
+                {/* Sell */}
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>Sell / Loss Color</div>
+                  <div style={{ color: 'var(--t-text2)', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>Sell / Loss</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {SELL_COLORS.map(c => (
+                    {SELL_PRESETS.map(c => (
                       <button key={c} onClick={() => setSellColor(c)} style={{
-                        width: 32, height: 32, borderRadius: 8, background: c, border: 'none', cursor: 'pointer',
-                        outline: sellColor === c ? `2px solid #fff` : 'none',
-                        outlineOffset: 2, transition: 'all 0.15s',
-                        boxShadow: sellColor === c ? `0 0 12px ${c}60` : 'none',
+                        width: 30, height: 30, borderRadius: 7, background: c,
+                        border: 'none', cursor: 'pointer',
+                        outline: sellColor === c ? '2px solid var(--t-text1)' : 'none',
+                        outlineOffset: 2,
                       }} />
                     ))}
                     <label style={{
-                      width: 32, height: 32, borderRadius: 8, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)',
+                      width: 30, height: 30, borderRadius: 7, cursor: 'pointer',
+                      background: 'var(--t-hover)', border: '1px dashed var(--t-border)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, color: 'rgba(255,255,255,0.3)',
+                      fontSize: 12, color: 'var(--t-text3)',
                     }}>
                       +
                       <input type="color" value={sellColor} onChange={e => setSellColor(e.target.value)}
@@ -318,18 +341,18 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
                 {/* Preview */}
                 <div style={{
                   padding: 10, borderRadius: 8,
-                  background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+                  background: 'var(--t-hover)', border: '1px solid var(--t-border)',
                 }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>PREVIEW</div>
+                  <div style={{ fontSize: 9, color: 'var(--t-text3)', marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>PREVIEW</div>
                   <div style={{ display: 'flex', gap: 8, fontFamily: "'JetBrains Mono', monospace" }}>
                     <div style={{ flex: 1, textAlign: 'center' }}>
                       <div style={{ color: buyColor, fontSize: 14, fontWeight: 700 }}>▲ +2.45%</div>
-                      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>Buy / Gain</div>
+                      <div style={{ color: 'var(--t-text3)', fontSize: 9 }}>Buy</div>
                     </div>
-                    <div style={{ width: 1, background: 'rgba(255,255,255,0.06)' }} />
+                    <div style={{ width: 1, background: 'var(--t-border)' }} />
                     <div style={{ flex: 1, textAlign: 'center' }}>
                       <div style={{ color: sellColor, fontSize: 14, fontWeight: 700 }}>▼ -1.82%</div>
-                      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>Sell / Loss</div>
+                      <div style={{ color: 'var(--t-text3)', fontSize: 9 }}>Sell</div>
                     </div>
                   </div>
                 </div>
@@ -337,31 +360,38 @@ export function ThemeMenu({ variant = 'compact' }: ThemeMenuProps) {
             )}
           </div>
 
-          {/* Footer bar */}
+          {/* ── Footer: Apply/Cancel (only when previewing) OR status ── */}
           {hasPending ? (
             <div style={{
-              borderTop: '1px solid rgba(255,255,255,0.06)',
+              borderTop: '1px solid var(--t-border)',
               padding: '10px 12px', display: 'flex', gap: 6,
-              background: 'rgba(0,0,0,0.2)',
+              background: 'var(--t-panel)',
             }}>
               <button onClick={() => { confirmTheme(); setOpen(false) }} style={{
                 flex: 1, padding: '8px 0',
-                background: `linear-gradient(135deg, ${currentAccentObj.color}, ${currentAccentObj.color}cc)`,
-                border: 'none', borderRadius: 7, color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                boxShadow: `0 4px 12px ${currentAccentObj.glow}`,
-              }}>Apply Theme</button>
+                background: aObj.color, border: 'none', borderRadius: 7,
+                color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                boxShadow: `0 4px 12px ${aObj.glow}`,
+              }}>
+                Apply Theme
+              </button>
               <button onClick={cancelPreview} style={{
                 flex: 1, padding: '8px 0',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 7, color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer',
-              }}>Cancel</button>
+                background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+                borderRadius: 7, color: 'var(--t-text2)', fontSize: 11, cursor: 'pointer',
+              }}>
+                Cancel
+              </button>
             </div>
           ) : (
             <div style={{
-              borderTop: '1px solid rgba(255,255,255,0.04)',
-              padding: '7px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderTop: '1px solid var(--t-border)',
+              padding: '7px 12px', textAlign: 'center',
             }}>
-              <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
+              <span style={{
+                color: 'var(--t-text3)', fontSize: 9,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>
                 Click to preview · Apply to save
               </span>
             </div>

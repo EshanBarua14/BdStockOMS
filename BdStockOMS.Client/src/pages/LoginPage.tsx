@@ -200,7 +200,7 @@ export function LoginPage() {
     <div style={{
       position: 'relative', minHeight: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Outfit', sans-serif", overflow: 'hidden', background: '#080C14',
+      fontFamily: "'Outfit', sans-serif", overflow: 'hidden', background: 'var(--t-bg)',
     }}>
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
 
@@ -217,11 +217,11 @@ export function LoginPage() {
             filter: 'drop-shadow(0 0 10px rgba(0,212,170,0.2))',
           }} />
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>
+            <span style={{ color: 'var(--t-text1)', fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>
               BD Stock <span style={{ color: '#00D4AA' }}>OMS</span>
             </span>
             <span style={{
-              fontSize: 8, color: 'rgba(255,255,255,0.25)',
+              fontSize: 8, color: 'var(--t-text3)',
               fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: '0.08em',
             }}>PROFESSIONAL TRADING PLATFORM</span>
@@ -231,7 +231,7 @@ export function LoginPage() {
           <ThemeMenu variant="compact" />
           {['BSEC', 'DSE', 'CSE', 'CDBL'].map(inst => (
             <span key={inst} style={{
-              color: 'rgba(255,255,255,0.2)', fontSize: 10,
+              color: 'var(--t-text3)', fontSize: 10,
               fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: '0.1em', fontWeight: 600,
             }}>{inst}</span>
@@ -242,9 +242,9 @@ export function LoginPage() {
       {/* ═══ Login Card ═══ */}
       <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, margin: '0 16px' }}>
         <div style={{
-          background: 'rgba(13,19,32,0.82)',
+          background: 'var(--t-surface)',
           backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-          border: '1px solid rgba(0,212,170,0.15)',
+          border: '1px solid var(--t-border)',
           borderRadius: 16, padding: '40px 36px',
           boxShadow: '0 0 80px rgba(0,212,170,0.05), 0 32px 64px rgba(0,0,0,0.5)',
           position: 'relative', overflow: 'hidden',
@@ -262,10 +262,10 @@ export function LoginPage() {
               filter: 'drop-shadow(0 0 16px rgba(0,212,170,0.15))',
             }} />
             <h1 style={{
-              color: '#fff', fontSize: 22, fontWeight: 700,
+              color: 'var(--t-text1)', fontSize: 22, fontWeight: 700,
               margin: '0 0 6px', letterSpacing: '-0.02em',
             }}>Welcome back</h1>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+            <p style={{ color: 'var(--t-text3)', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
               Sign in to your trading workstation
             </p>
           </div>
@@ -289,7 +289,7 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} autoComplete="off">
             <div style={{ marginBottom: 16 }}>
               <label style={{
-                display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 10,
+                display: 'block', color: 'var(--t-text3)', fontSize: 10,
                 marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase',
                 fontFamily: "'JetBrains Mono', monospace", fontWeight: 600,
               }}>Email</label>
@@ -299,10 +299,10 @@ export function LoginPage() {
                 placeholder="your@email.com" required
                 style={{
                   width: '100%', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.03)',
+                  background: 'var(--t-hover)',
                   border: `1px solid ${focused === 'email' ? 'rgba(0,212,170,0.5)' : 'rgba(255,255,255,0.07)'}`,
                   borderRadius: 8, padding: '11px 14px',
-                  color: '#fff', fontSize: 13, outline: 'none',
+                  color: 'var(--t-text1)', fontSize: 13, outline: 'none',
                   fontFamily: "'Outfit', sans-serif",
                   transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
                   boxShadow: focused === 'email' ? '0 0 16px rgba(0,212,170,0.06)' : 'none',
@@ -312,7 +312,7 @@ export function LoginPage() {
 
             <div style={{ marginBottom: 24 }}>
               <label style={{
-                display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 10,
+                display: 'block', color: 'var(--t-text3)', fontSize: 10,
                 marginBottom: 6, letterSpacing: '0.08em', textTransform: 'uppercase',
                 fontFamily: "'JetBrains Mono', monospace", fontWeight: 600,
               }}>Password</label>
@@ -324,10 +324,10 @@ export function LoginPage() {
                   placeholder="••••••••" required
                   style={{
                     width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.03)',
+                    background: 'var(--t-hover)',
                     border: `1px solid ${focused === 'password' ? 'rgba(0,212,170,0.5)' : 'rgba(255,255,255,0.07)'}`,
                     borderRadius: 8, padding: '11px 40px 11px 14px',
-                    color: '#fff', fontSize: 13, outline: 'none',
+                    color: 'var(--t-text1)', fontSize: 13, outline: 'none',
                     fontFamily: "'Outfit', sans-serif",
                     transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
                     boxShadow: focused === 'password' ? '0 0 16px rgba(0,212,170,0.06)' : 'none',
@@ -336,7 +336,7 @@ export function LoginPage() {
                 <button type="button" onClick={() => setShowPass(v => !v)} style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.25)', padding: 0,
+                  color: 'var(--t-text3)', padding: 0,
                 }}>
                   {showPass
                     ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -362,7 +362,7 @@ export function LoginPage() {
 
           {/* Footer */}
           <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, margin: '0 0 12px' }}>
+            <p style={{ color: 'var(--t-text3)', fontSize: 12, margin: '0 0 12px' }}>
               Investor?{' '}
               <Link to="/signup" style={{ color: '#00D4AA', textDecoration: 'none', fontWeight: 600 }}>
                 Register your account
@@ -372,7 +372,7 @@ export function LoginPage() {
               height: 1, margin: '16px 40px',
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
             }} />
-            <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10, margin: 0, lineHeight: 1.7 }}>
+            <p style={{ color: 'var(--t-text3)', fontSize: 10, margin: 0, lineHeight: 1.7 }}>
               {'Developed by '}
               <a href="https://www.linkedin.com/in/eshan01/" target="_blank" rel="noopener noreferrer"
                 style={{ color: 'rgba(0,212,170,0.5)', textDecoration: 'none', fontWeight: 600 }}>
@@ -381,7 +381,7 @@ export function LoginPage() {
               {' · BD Stock OMS v2'}
             </p>
             <p style={{
-              color: 'rgba(255,255,255,0.10)', fontSize: 9, margin: '4px 0 0',
+              color: 'var(--t-text3)', fontSize: 9, margin: '4px 0 0',
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
             }}>
               REGULATED & COMPLIED BY BSEC · DSE · CSE · CDBL
@@ -393,8 +393,8 @@ export function LoginPage() {
         <div style={{
           marginTop: 14, display: 'flex', justifyContent: 'center', gap: 24,
           padding: '10px 20px', borderRadius: 10,
-          background: 'rgba(13,19,32,0.5)', backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.04)',
+          background: 'var(--t-panel)', backdropFilter: 'blur(8px)',
+          border: '1px solid var(--t-border)',
         }}>
           {[
             { label: 'DSEX', value: '6,248.30', chg: '+42.50 (+0.68%)' },
@@ -404,12 +404,12 @@ export function LoginPage() {
           ].map(item => (
             <div key={item.label} style={{ textAlign: 'center' }}>
               <div style={{
-                color: 'rgba(255,255,255,0.25)', fontSize: 9,
+                color: 'var(--t-text3)', fontSize: 9,
                 fontFamily: "'JetBrains Mono', monospace",
                 letterSpacing: '0.08em', fontWeight: 600,
               }}>{item.label}</div>
               <div style={{
-                color: 'rgba(255,255,255,0.6)', fontSize: 12,
+                color: 'var(--t-text2)', fontSize: 12,
                 fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
               }}>{item.value}</div>
               <div style={{
