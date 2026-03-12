@@ -1,0 +1,1609 @@
+==== FILE: file_list.txt ====
+src/api/admin.ts
+src/api/auth.ts
+src/api/client.ts
+src/api/market.ts
+src/api/orders.ts
+src/api/portfolio.ts
+src/api/rms.ts
+src/api/watchlist.ts
+src/App.tsx
+src/components/auth/ProtectedRoute.tsx
+src/components/layout/DashboardLayout.tsx
+src/components/layout/Sidebar.tsx
+src/components/layout/Topbar.tsx
+src/components/ui/Alert.tsx
+src/components/ui/DataTable.tsx
+src/components/ui/Logo.tsx
+src/components/ui/SaveConfirmToast.tsx
+src/components/ui/Spinner.tsx
+src/components/ui/ThemeMenu.tsx
+src/components/ui/ThemePanel.tsx
+src/components/ui/TopBarTicker.tsx
+src/components/widgets/AIPredictionWidget.tsx
+src/components/widgets/BuySellPressureWidget.tsx
+src/components/widgets/ExecutionListWidget.tsx
+src/components/widgets/IndexSummaryWidget.tsx
+src/components/widgets/MarketDepthWidget.tsx
+src/components/widgets/MarketMapWidget.tsx
+src/components/widgets/MarketTickerBar.tsx
+src/components/widgets/MarketTickerStrip.tsx
+src/components/widgets/NewsFeedWidget.tsx
+src/components/widgets/NotificationsWidget.tsx
+src/components/widgets/OrderBookWidget.tsx
+src/components/widgets/OrderEntryWidget.tsx
+src/components/widgets/OrdersWidget.tsx
+src/components/widgets/PortfolioWidget.tsx
+src/components/widgets/PriceChartWidget.tsx
+src/components/widgets/registry.tsx
+src/components/widgets/RMSLimitsWidget.tsx
+src/components/widgets/TopMoversWidget.tsx
+src/components/widgets/WatchlistWidget.tsx
+src/components/widgets/WidgetPanel.tsx
+src/components/widgets/WidgetToolbar.tsx
+src/hooks/useAdminDashboard.ts
+src/hooks/useAuth.ts
+src/hooks/useDashboardPersistence.ts
+src/hooks/useMarketData.ts
+src/hooks/useOrders.ts
+src/hooks/useSignalR.ts
+src/hooks/useTableState.ts
+src/main.tsx
+src/pages/DashboardPage.tsx
+src/pages/LoginPage.tsx
+src/pages/PlaceholderPages.tsx
+src/pages/SignUpPage.tsx
+src/store/authStore.ts
+src/store/tenantStore.ts
+src/store/themeStore.ts
+src/test/setup.ts
+src/test/Unit/Day49/Alert.test.tsx
+src/test/Unit/Day49/authStore.test.ts
+src/test/Unit/Day49/ProtectedRoute.test.tsx
+src/test/Unit/Day49/types.test.ts
+src/test/Unit/Day50/aiSignal.test.ts
+src/test/Unit/Day50/marketData.test.ts
+src/test/Unit/Day50/marketDepth.test.ts
+src/test/Unit/Day50/orders.test.ts
+src/test/Unit/Day50/registry.test.ts
+src/test/Unit/Day50/themeStore.test.ts
+src/types/index.ts
+
+==== FILE: src/store/useDashboardPersistence.ts ====
+NOT FOUND
+
+==== FILE: src/pages/DashboardPage.tsx ====
+// @ts-nocheck
+// src/pages/DashboardPage.tsx
+// Premium Dashboard — glass top bar, theme CSS vars, presets, widget picker
+
+import React, { useCallback, useState, useEffect } from "react"
+import GridLayout from "react-grid-layout"
+type Layout = { i: string; x: number; y: number; w: number; h: number }
+import "react-grid-layout/css/styles.css"
+import "react-resizable/css/styles.css"
+
+import { useDashboardPersistence, ALL_WIDGET_IDS, PresetName } from "../hooks/useDashboardPersistence"
+import { useMarketData } from "../hooks/useMarketData"
+import { useOrders } from "../hooks/useOrders"
+import { WidgetPanel } from "../components/widgets/WidgetPanel"
+import { SaveConfirmToast } from "../components/ui/SaveConfirmToast"
+import { TopBarTicker } from "../components/ui/TopBarTicker"
+import { WIDGET_REGISTRY } from "../components/widgets/registry"
+
+class WidgetErrorBoundary extends React.Component {
+  state = { hasError: false, error: null }
+  static getDerivedStateFromError(error) { return { hasError: true, error } }
+  componentDidCatch(error, info) { console.error("Widget crash:", error, info) }
+  render() {
+    if (this.state.hasError) return (
+      <div style={{
+        padding: 12, color: 'var(--t-sell)', fontSize: 11,
+        fontFamily: "'JetBrains Mono', monospace",
+        background: 'var(--t-surface)', height: '100%',
+      }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>Widget Error</div>
+        <div style={{ color: 'var(--t-text3)', wordBreak: 'break-all' }}>{String(this.state.error)}</div>
+      </div>
+    )
+    return this.props.children
+  }
+}
+
+const USER_ID = 163
+const PRESETS: PresetName[] = ["Trading", "Research", "Portfolio", "Full"]
+
+export default function DashboardPage() {
+  const dash = useDashboardPersistence(USER_ID)
+  const market = useMarketData()
+  const orders = useOrders()
+
+  const [fullscreen, setFullscreen] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState<string | null>(null)
+  const [showPicker, setShowPicker] = useState(false)
+  const [gridWidth, setGridWidth] = useState(window.innerWidth)
+
+  useEffect(() => {
+    const obs = new ResizeObserver(entries => {
+      for (const e of entries) setGridWidth(e.contentRect.width)
+    })
+    const el = document.getElementById("grid-container")
+    if (el) obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(null) }
+    window.addEventListener("keydown", h)
+    return () => window.removeEventListener("keydown", h)
+  }, [])
+
+  const handleLayoutChange = useCallback((layout: Layout[]) => {
+    dash.setLayout(layout)
+  }, [dash.setLayout])
+
+  const sharedProps = { marketData: market, ordersData: orders }
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: 'var(--t-bg)', color: 'var(--t-text1)',
+      overflow: 'hidden', userSelect: 'none',
+    }}>
+
+      {/* ══ TOP CONTROL BAR ══════════════════════════════════════════════ */}
+      <div style={{
+        display: 'flex', alignItems: 'stretch', height: 34, flexShrink: 0,
+        background: 'var(--t-surface)', borderBottom: '1px solid var(--t-border)',
+        overflow: 'hidden',
+      }}>
+        {/* Market status */}
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 10px',
+          borderRight: '1px solid var(--t-border)', flexShrink: 0,
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '3px 8px', borderRadius: 12,
+            background: market.marketStatus.isOpen ? 'rgba(0,230,118,0.06)' : 'var(--t-hover)',
+            border: `1px solid ${market.marketStatus.isOpen ? 'rgba(0,230,118,0.15)' : 'var(--t-border)'}`,
+          }}>
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+              background: market.marketStatus.isOpen ? 'var(--t-buy)' : 'var(--t-text3)',
+              animation: market.marketStatus.isOpen ? 'oms-pulse 2s ease-in-out infinite' : 'none',
+            }} />
+            <span style={{
+              fontSize: 9, fontWeight: 700, color: market.marketStatus.isOpen ? 'var(--t-buy)' : 'var(--t-text3)',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em',
+            }}>{market.marketStatus.label}</span>
+            {market.marketStatus.activeStocks > 0 && (
+              <span style={{ fontSize: 9, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace" }}>
+                · {market.marketStatus.activeStocks}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Live ticker */}
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <TopBarTicker ticks={market.ticksArray} isMarketOpen={market.marketStatus.isOpen} />
+        </div>
+
+        {/* Presets */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 3,
+          padding: '0 8px', borderLeft: '1px solid var(--t-border)', flexShrink: 0,
+        }}>
+          {PRESETS.map(p => (
+            <button key={p} onClick={() => dash.applyPreset(p)} style={{
+              padding: '3px 8px', fontSize: 10, borderRadius: 6, fontWeight: 600,
+              border: 'none', cursor: 'pointer', transition: 'all 0.12s',
+              fontFamily: "'JetBrains Mono', monospace",
+              background: dash.activePreset === p ? 'var(--t-accent)' : 'var(--t-hover)',
+              color: dash.activePreset === p ? '#000' : 'var(--t-text3)',
+              boxShadow: dash.activePreset === p ? `0 0 8px var(--t-accent-glow)` : 'none',
+            }}>{p}</button>
+          ))}
+        </div>
+
+        {/* Widget picker toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 8px',
+          borderLeft: '1px solid var(--t-border)', flexShrink: 0,
+        }}>
+          <button onClick={() => setShowPicker(p => !p)} style={{
+            padding: '3px 8px', fontSize: 10, borderRadius: 6, fontWeight: 600,
+            border: `1px solid ${showPicker ? 'var(--t-accent)' : 'var(--t-border)'}`,
+            cursor: 'pointer', transition: 'all 0.12s',
+            fontFamily: "'JetBrains Mono', monospace",
+            background: showPicker ? 'var(--t-hover)' : 'transparent',
+            color: showPicker ? 'var(--t-accent)' : 'var(--t-text3)',
+          }}>⊞ Widgets</button>
+        </div>
+
+        {/* Save status */}
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 8px',
+          borderLeft: '1px solid var(--t-border)', flexShrink: 0,
+        }}>
+          <SaveConfirmToast show={dash.showToast} saveStatus={dash.saveStatus} onSave={dash.save} />
+        </div>
+
+        {/* Reset */}
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 8px',
+          borderLeft: '1px solid var(--t-border)', flexShrink: 0,
+        }}>
+          <button onClick={dash.reset} title="Reset to defaults" style={{
+            padding: '3px 6px', fontSize: 10, borderRadius: 6,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: 'var(--t-text3)', transition: 'all 0.12s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--t-text1)'; e.currentTarget.style.background = 'var(--t-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--t-text3)'; e.currentTarget.style.background = 'transparent' }}
+          >↺</button>
+        </div>
+      </div>
+
+      {/* ══ WIDGET PICKER DROPDOWN ══════════════════════════════════════ */}
+      {showPicker && (
+        <div style={{
+          position: 'absolute', top: 82, right: 12, zIndex: 50,
+          background: 'var(--t-elevated)', border: '1px solid var(--t-border)',
+          borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+          padding: 10, width: 240, maxHeight: '80vh', overflowY: 'auto',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8,
+          }}>
+            <span style={{
+              fontSize: 9, fontWeight: 700, color: 'var(--t-text3)',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+            }}>WIDGETS</span>
+            <button onClick={() => setShowPicker(false)} style={{
+              background: 'none', border: 'none', color: 'var(--t-text3)',
+              cursor: 'pointer', fontSize: 12,
+            }}>✕</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+            {ALL_WIDGET_IDS.map(id => {
+              const reg = WIDGET_REGISTRY[id]
+              const visible = dash.isVisible(id)
+              return (
+                <button key={id} onClick={() => dash.setWidgetVisible(id, !visible)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '5px 8px', borderRadius: 6, fontSize: 11,
+                  textAlign: 'left', cursor: 'pointer', transition: 'all 0.12s',
+                  background: visible ? 'var(--t-hover)' : 'transparent',
+                  border: `1px solid ${visible ? 'var(--t-accent)' + '30' : 'transparent'}`,
+                  color: visible ? 'var(--t-accent)' : 'var(--t-text3)',
+                }}>
+                  <span style={{
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                    background: visible ? 'var(--t-accent)' : 'var(--t-text3)',
+                    opacity: visible ? 1 : 0.3,
+                  }} />
+                  {reg?.title ?? id}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ══ GRID ════════════════════════════════════════════════════════ */}
+      <div id="grid-container" style={{ flex: 1, overflow: 'auto' }}>
+        <GridLayout
+          layout={dash.layout as any}
+          cols={48}
+          rowHeight={10}
+          width={gridWidth}
+          compactType={null}
+          preventCollision={false}
+          isDraggable
+          isResizable
+          onLayoutChange={handleLayoutChange as any}
+          draggableHandle=".widget-drag-handle"
+          margin={[4, 4]}
+          containerPadding={[4, 4]}
+        >
+          {dash.layout.map(l => {
+            const reg = WIDGET_REGISTRY[l.i]
+            if (!reg) return null
+            return (
+              <div key={l.i}>
+                <WidgetErrorBoundary>
+                  <WidgetPanel
+                    id={l.i}
+                    title={reg.title}
+                    colorGroup={dash.getColorGroup(l.i)}
+                    onColorChange={c => dash.setColorGroup(l.i, c)}
+                    onFullscreen={() => setFullscreen(l.i)}
+                    onClose={() => dash.setWidgetVisible(l.i, false)}
+                    menuOpen={menuOpen === l.i}
+                    onMenuToggle={() => setMenuOpen(p => p === l.i ? null : l.i)}
+                  >
+                    <reg.component {...sharedProps} colorGroup={dash.getColorGroup(l.i)} />
+                  </WidgetPanel>
+                </WidgetErrorBoundary>
+              </div>
+            )
+          })}
+        </GridLayout>
+      </div>
+
+      {/* ══ FULLSCREEN OVERLAY ══════════════════════════════════════════ */}
+      {fullscreen && (() => {
+        const reg = WIDGET_REGISTRY[fullscreen]
+        if (!reg) return null
+        return (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9998,
+              background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+            }}
+            onClick={e => { if (e.target === e.currentTarget) setFullscreen(null) }}
+          >
+            <div style={{
+              width: '100%', height: '100%', maxWidth: '96vw', maxHeight: '96vh',
+              background: 'var(--t-surface)', border: '1px solid var(--t-border)',
+              borderRadius: 14, overflow: 'hidden',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0 16px', height: 36, flexShrink: 0,
+                borderBottom: '1px solid var(--t-border)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: 'var(--t-text1)',
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>{reg.title}</span>
+                  <span style={{ fontSize: 10, color: 'var(--t-text3)' }}>Fullscreen · ESC to exit</span>
+                </div>
+                <button onClick={() => setFullscreen(null)} style={{
+                  padding: '4px 8px', fontSize: 11, borderRadius: 6,
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--t-text3)', transition: 'all 0.12s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--t-hover)'; e.currentTarget.style.color = 'var(--t-text1)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t-text3)' }}
+                >✕</button>
+              </div>
+              <div style={{ flex: 1, overflow: 'auto', padding: 4 }}>
+                <reg.component {...sharedProps} colorGroup={dash.getColorGroup(fullscreen)} />
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+==== FILE: src/hooks/useMarketData.ts ====
+// src/hooks/useMarketData.ts
+// Fixed: live BulkPriceUpdate merge, market status from /api/helth, BST fallback
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { getMarketData } from "../api/market"
+import { subscribeMarket } from "./useSignalR"
+
+export interface StockTick {
+  stockId: number
+  tradingCode: string
+  stockName?: string
+  lastPrice: number
+  change: number
+  changePercent: number
+  volume: number
+  turnover?: number
+  openPrice?: number
+  highPrice?: number
+  lowPrice?: number
+  closePrice?: number
+  ycp?: number
+  category?: string
+  marketCap?: number
+  pe?: number
+}
+
+export interface MarketStatus {
+  isOpen: boolean
+  label: string
+  activeStocks: number
+}
+
+export function normaliseMarketData(raw: any): StockTick[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (raw.items && Array.isArray(raw.items)) return raw.items
+  if (raw.data && Array.isArray(raw.data)) return raw.data
+  if (typeof raw === "object") return Object.values(raw)
+  return []
+}
+
+function inferMarketStatus(raw?: any): MarketStatus {
+  if (raw?.marketStatus !== undefined) {
+    const s = String(raw.marketStatus).toLowerCase()
+    const isOpen = s === "open" || s === "1" || s === "true"
+    return { isOpen, label: isOpen ? "Market Open" : "Market Closed", activeStocks: raw.activeStocks ?? 0 }
+  }
+  // Fallback: DSE hours Sun–Thu 10:00–14:30 BST (UTC+6)
+  const now = new Date()
+  const bst = (now.getUTCHours() + 6) % 24
+  const min = now.getUTCMinutes()
+  const t = bst * 60 + min
+  const isWeekday = now.getUTCDay() !== 5 && now.getUTCDay() !== 6  // not Fri/Sat
+  const isOpen = isWeekday && t >= 600 && t <= 870
+  return { isOpen, label: isOpen ? "Market Open" : "Market Closed", activeStocks: 0 }
+}
+
+export function useMarketData() {
+  const [ticks, setTicks] = useState<Map<string, StockTick>>(new Map())
+  const [marketStatus, setMarketStatus] = useState<MarketStatus>({ isOpen: false, label: "Checking…", activeStocks: 0 })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const mountedRef = useRef(true)
+
+  const fetchStatus = useCallback(async () => {
+    if (mountedRef.current) setMarketStatus(inferMarketStatus())
+  }, [])
+
+  const seed = useCallback(async () => {
+    try {
+      const raw = await getMarketData()
+      if (!mountedRef.current) return
+      const items = normaliseMarketData(raw)
+      const map = new Map<string, StockTick>()
+      items.forEach((t: StockTick) => { if (t.tradingCode) map.set(t.tradingCode, t) })
+      setTicks(map)
+      setError(null)
+    } catch (e: any) {
+      if (mountedRef.current) setError(e?.message ?? "Market data unavailable")
+    } finally {
+      if (mountedRef.current) setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    mountedRef.current = true
+    seed()
+    fetchStatus()
+    const si = setInterval(fetchStatus, 60_000)
+    return () => { mountedRef.current = false; clearInterval(si) }
+  }, [seed, fetchStatus])
+
+  // BulkPriceUpdate — incremental merge
+  useEffect(() => {
+    return subscribeMarket("BulkPriceUpdate", (raw: any) => {
+      if (!mountedRef.current) return
+      const items = normaliseMarketData(raw)
+      if (!items.length) return
+      setTicks(prev => {
+        const next = new Map(prev)
+        items.forEach((t: StockTick) => {
+          if (t.tradingCode) next.set(t.tradingCode, { ...(next.get(t.tradingCode) ?? {}), ...t })
+        })
+        return next
+      })
+    })
+  }, [])
+
+  useEffect(() => {
+    return subscribeMarket("IndexUpdate", (data: any) => {
+      if (mountedRef.current && data?.marketStatus !== undefined)
+        setMarketStatus(inferMarketStatus(data))
+    })
+  }, [])
+
+  const ticksArray = Array.from(ticks.values())
+  return {
+    ticks, ticksArray, marketStatus, loading, error,
+    getStock: (code: string) => ticks.get(code),
+    refresh: seed,
+  }
+}
+
+==== FILE: src/hooks/useSignalR.ts ====
+// @ts-nocheck
+import { useEffect, useRef, useCallback } from "react"
+import * as signalR from "@microsoft/signalr"
+import { useAuthStore } from "@/store/authStore"
+
+const RETRY_DELAYS = [0, 1000, 3000, 5000, 10000]
+
+interface UseSignalROptions {
+  hub:    "stockprice" | "notification"
+  events: Record<string, (...args: any[]) => void>
+  groups?: string[]   // stock codes to subscribe to
+}
+
+const connections: Record<string, signalR.HubConnection> = {}
+
+export function useSignalR({ hub, events, groups = [] }: UseSignalROptions) {
+  const user    = useAuthStore(s => s.user)
+  const connRef = useRef<signalR.HubConnection | null>(null)
+
+  const getOrCreate = useCallback(() => {
+    const url = `/hubs/${hub}`
+    if (connections[hub]) return connections[hub]
+
+    const conn = new signalR.HubConnectionBuilder()
+      .withUrl(url, {
+        accessTokenFactory: () => user?.token ?? "",
+        skipNegotiation: false,
+      })
+      .withAutomaticReconnect(RETRY_DELAYS)
+      .configureLogging(signalR.LogLevel.Warning)
+      .build()
+
+    connections[hub] = conn
+    return conn
+  }, [hub, user?.token])
+
+  useEffect(() => {
+    if (!user?.token) return
+    const conn = getOrCreate()
+    connRef.current = conn
+
+    // Register all event handlers
+    Object.entries(events).forEach(([event, handler]) => {
+      conn.off(event)
+      conn.on(event, handler)
+    })
+
+    const start = async () => {
+      if (conn.state === signalR.HubConnectionState.Disconnected) {
+        try {
+          await conn.start()
+          // Subscribe to stock groups
+          for (const code of groups) {
+            await conn.invoke("SubscribeToStock", code).catch(() => {})
+          }
+        } catch (e) {
+          console.warn(`SignalR [${hub}] connect failed:`, e)
+        }
+      }
+    }
+
+    start()
+
+    return () => {
+      Object.keys(events).forEach(event => conn.off(event))
+    }
+  }, [user?.token, hub, JSON.stringify(groups)])
+
+  return connRef
+}
+
+// Shared global SignalR state — single connection, multiple consumers
+type MarketEventMap = {
+  BulkPriceUpdate:  (updates: any[]) => void
+  PriceUpdate:      (update: any)    => void
+  DepthUpdate:      (depth: any)     => void
+  PressureUpdate:   (list: any[])    => void
+  IndexUpdate:      (indices: any)   => void
+  NewsUpdate:       (item: any)      => void
+}
+
+const _listeners: Partial<Record<keyof MarketEventMap, Set<Function>>> = {}
+let   _globalConn: signalR.HubConnection | null = null
+let   _starting = false
+
+export function subscribeMarket<K extends keyof MarketEventMap>(
+  event: K, cb: MarketEventMap[K]
+): () => void {
+  if (!_listeners[event]) _listeners[event] = new Set()
+  _listeners[event]!.add(cb)
+  return () => _listeners[event]?.delete(cb)
+}
+
+export async function startGlobalMarketHub(token: string) {
+  if (_globalConn || _starting) return
+  _starting = true
+  const url = `/hubs/stockprice`
+
+  _globalConn = new signalR.HubConnectionBuilder()
+    .withUrl(url, { accessTokenFactory: () => token })
+    .withAutomaticReconnect(RETRY_DELAYS)
+    .configureLogging(signalR.LogLevel.Warning)
+    .build()
+
+  const events: (keyof MarketEventMap)[] = [
+    "BulkPriceUpdate","PriceUpdate","DepthUpdate","PressureUpdate","IndexUpdate","NewsUpdate"
+  ]
+  events.forEach(ev => {
+    _globalConn!.on(ev, (...args) => {
+      _listeners[ev]?.forEach(cb => cb(...args))
+    })
+  })
+
+  try {
+    await _globalConn.start()
+    console.log("Global market hub connected.")
+  } catch(e) {
+    console.warn("Global market hub failed:", e)
+  }
+  _starting = false
+}
+
+==== FILE: src/store/themeStore.ts ====
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export type ThemeId =
+  | 'obsidian' | 'midnight' | 'slate' | 'aurora' | 'arctic'
+  | 'dhaka'    | 'crimson'  | 'forest' | 'carbon' | 'navy'
+  | 'sand'     | 'eclipse'  | 'plasma' | 'glacier'
+
+export type AccentId  = 'teal' | 'azure' | 'emerald' | 'amber' | 'rose' | 'violet' | 'cyan' | 'gold'
+export type DensityId = 'compact' | 'comfortable' | 'spacious'
+
+export interface ThemeOption {
+  id: ThemeId; label: string; emoji: string; dark: boolean
+  category: 'Dark' | 'Light' | 'Special'; desc: string
+  bg: string; surface: string; panel: string; elevated: string
+  text1: string; text2: string; text3: string
+  border: string; hoverBg: string
+}
+
+export interface AccentOption { id: AccentId; label: string; color: string; glow: string }
+export interface DensityOption { id: DensityId; label: string; desc: string }
+
+export const THEMES: ThemeOption[] = [
+  // ── DARK (6) ──
+  { id: 'obsidian', label: 'Obsidian', emoji: '⬛', dark: true, category: 'Dark',
+    desc: 'Deep black — max contrast, pro default',
+    bg: '#080C14', surface: '#0D1320', panel: '#111827', elevated: '#1a2332',
+    text1: '#E2E8F0', text2: '#8b99b0', text3: '#4a5568',
+    border: 'rgba(255,255,255,0.06)', hoverBg: 'rgba(255,255,255,0.04)' },
+  { id: 'midnight', label: 'Midnight', emoji: '🌑', dark: true, category: 'Dark',
+    desc: 'Classic dark blue-black',
+    bg: '#0A0F1E', surface: '#111827', panel: '#1E293B', elevated: '#273549',
+    text1: '#CBD5E1', text2: '#7d8da0', text3: '#475569',
+    border: 'rgba(255,255,255,0.07)', hoverBg: 'rgba(255,255,255,0.05)' },
+  { id: 'carbon', label: 'Carbon', emoji: '🖤', dark: true, category: 'Dark',
+    desc: 'Pure neutral — zero color bias',
+    bg: '#111111', surface: '#1A1A1A', panel: '#222222', elevated: '#2c2c2c',
+    text1: '#D4D4D4', text2: '#888888', text3: '#555555',
+    border: 'rgba(255,255,255,0.08)', hoverBg: 'rgba(255,255,255,0.05)' },
+  { id: 'slate', label: 'Slate', emoji: '🌫', dark: true, category: 'Dark',
+    desc: 'Cool blue-grey professional',
+    bg: '#0F172A', surface: '#1E293B', panel: '#273549', elevated: '#334155',
+    text1: '#CBD5E1', text2: '#7d8da0', text3: '#475569',
+    border: 'rgba(255,255,255,0.07)', hoverBg: 'rgba(255,255,255,0.05)' },
+  { id: 'navy', label: 'Navy', emoji: '🌊', dark: true, category: 'Dark',
+    desc: 'Deep ocean — Bloomberg inspired',
+    bg: '#030D1C', surface: '#071428', panel: '#0c1e38', elevated: '#132d4f',
+    text1: '#BAE6FD', text2: '#6b9cc3', text3: '#3a6b96',
+    border: 'rgba(100,180,255,0.08)', hoverBg: 'rgba(100,180,255,0.05)' },
+  { id: 'eclipse', label: 'Eclipse', emoji: '🌘', dark: true, category: 'Dark',
+    desc: 'Deep purple-black, violet tones',
+    bg: '#0E0A1A', surface: '#150F2A', panel: '#1e1638', elevated: '#271f48',
+    text1: '#DDD6FE', text2: '#9985c4', text3: '#5e4d8a',
+    border: 'rgba(160,120,255,0.08)', hoverBg: 'rgba(160,120,255,0.05)' },
+
+  // ── SPECIAL (6) ──
+  { id: 'dhaka', label: 'Dhaka Night', emoji: '🏙', dark: true, category: 'Special',
+    desc: 'Green-tinted — DSE inspired',
+    bg: '#0A1A0A', surface: '#0D200D', panel: '#132813', elevated: '#1a341a',
+    text1: '#BBF7D0', text2: '#6bbc82', text3: '#3a7a4e',
+    border: 'rgba(0,200,100,0.08)', hoverBg: 'rgba(0,200,100,0.05)' },
+  { id: 'crimson', label: 'Crimson', emoji: '🔴', dark: true, category: 'Special',
+    desc: 'Bold red-dark — aggressive mode',
+    bg: '#1A0505', surface: '#200A0A', panel: '#2c1010', elevated: '#381818',
+    text1: '#FCA5A5', text2: '#b86060', text3: '#7a3535',
+    border: 'rgba(255,80,80,0.08)', hoverBg: 'rgba(255,80,80,0.05)' },
+  { id: 'forest', label: 'Forest', emoji: '🌲', dark: true, category: 'Special',
+    desc: 'Deep green — calming natural',
+    bg: '#0A1208', surface: '#0F1A0C', panel: '#162412', elevated: '#1e3018',
+    text1: '#A7F3D0', text2: '#5eaa80', text3: '#357050',
+    border: 'rgba(0,180,100,0.08)', hoverBg: 'rgba(0,180,100,0.05)' },
+  { id: 'aurora', label: 'Aurora', emoji: '🌌', dark: true, category: 'Special',
+    desc: 'Northern lights — cyan & purple',
+    bg: '#070D1A', surface: '#0C1428', panel: '#121e38', elevated: '#182a4a',
+    text1: '#A5F3FC', text2: '#5eb0c0', text3: '#357080',
+    border: 'rgba(0,200,255,0.08)', hoverBg: 'rgba(0,200,255,0.05)' },
+  { id: 'plasma', label: 'Plasma', emoji: '⚡', dark: true, category: 'Special',
+    desc: 'Electric violet — high energy',
+    bg: '#0D0815', surface: '#150E22', panel: '#1e1530', elevated: '#281e40',
+    text1: '#E9D5FF', text2: '#9a7acc', text3: '#6a4a9a',
+    border: 'rgba(180,100,255,0.08)', hoverBg: 'rgba(180,100,255,0.05)' },
+  { id: 'glacier', label: 'Glacier', emoji: '🧊', dark: true, category: 'Special',
+    desc: 'Icy blue-teal — cold precision',
+    bg: '#071318', surface: '#0C1C24', panel: '#122830', elevated: '#18343e',
+    text1: '#B8E8F5', text2: '#6aaabe', text3: '#3a7088',
+    border: 'rgba(0,180,220,0.08)', hoverBg: 'rgba(0,180,220,0.05)' },
+
+  // ── LIGHT (2) ──
+  { id: 'arctic', label: 'Arctic', emoji: '☀️', dark: false, category: 'Light',
+    desc: 'Clean professional light',
+    bg: '#F0F4F8', surface: '#FFFFFF', panel: '#E8EDF2', elevated: '#dde4ec',
+    text1: '#1E293B', text2: '#64748B', text3: '#94A3B8',
+    border: 'rgba(0,0,0,0.08)', hoverBg: 'rgba(0,0,0,0.04)' },
+  { id: 'sand', label: 'Sand', emoji: '🏖', dark: false, category: 'Light',
+    desc: 'Warm off-white — gentle',
+    bg: '#FAF7F0', surface: '#FFFFFF', panel: '#F0EBE0', elevated: '#e6dfd2',
+    text1: '#292524', text2: '#78716C', text3: '#A8A29E',
+    border: 'rgba(0,0,0,0.07)', hoverBg: 'rgba(0,0,0,0.03)' },
+]
+
+export const ACCENTS: AccentOption[] = [
+  { id: 'teal',    label: 'Teal',    color: '#00D4AA', glow: 'rgba(0,212,170,0.3)'  },
+  { id: 'azure',   label: 'Azure',   color: '#3B82F6', glow: 'rgba(59,130,246,0.3)' },
+  { id: 'cyan',    label: 'Cyan',    color: '#06B6D4', glow: 'rgba(6,182,212,0.3)'  },
+  { id: 'emerald', label: 'Emerald', color: '#10B981', glow: 'rgba(16,185,129,0.3)' },
+  { id: 'violet',  label: 'Violet',  color: '#8B5CF6', glow: 'rgba(139,92,246,0.3)' },
+  { id: 'rose',    label: 'Rose',    color: '#F43F5E', glow: 'rgba(244,63,94,0.3)'  },
+  { id: 'amber',   label: 'Amber',   color: '#F59E0B', glow: 'rgba(245,158,11,0.3)' },
+  { id: 'gold',    label: 'Gold',    color: '#EAB308', glow: 'rgba(234,179,8,0.3)'  },
+]
+
+export const DENSITIES: DensityOption[] = [
+  { id: 'compact',     label: 'Compact',     desc: 'Max data density' },
+  { id: 'comfortable', label: 'Comfortable', desc: 'Balanced default' },
+  { id: 'spacious',    label: 'Spacious',    desc: 'Relaxed reading'  },
+]
+
+// ═══════════════════════════════════════════════════════════
+// applyTheme — sets 20+ CSS vars on :root
+// ═══════════════════════════════════════════════════════════
+export function applyTheme(
+  themeId: ThemeId, accentId: AccentId, densityId: DensityId,
+  buyColor = '#00e676', sellColor = '#ff1744'
+) {
+  const t = THEMES.find(x => x.id === themeId)
+  const a = ACCENTS.find(x => x.id === accentId)
+  if (!t || !a) return
+  const r = document.documentElement
+
+  r.setAttribute('data-theme', themeId)
+  r.setAttribute('data-accent', accentId)
+  r.setAttribute('data-density', densityId)
+
+  r.style.setProperty('--t-bg',       t.bg)
+  r.style.setProperty('--t-surface',  t.surface)
+  r.style.setProperty('--t-panel',    t.panel)
+  r.style.setProperty('--t-elevated', t.elevated)
+  r.style.setProperty('--t-text1',    t.text1)
+  r.style.setProperty('--t-text2',    t.text2)
+  r.style.setProperty('--t-text3',    t.text3)
+  r.style.setProperty('--t-border',   t.border)
+  r.style.setProperty('--t-hover',    t.hoverBg)
+  r.style.setProperty('--t-accent',   a.color)
+  r.style.setProperty('--t-accent-glow', a.glow)
+  r.style.setProperty('--t-buy',      buyColor)
+  r.style.setProperty('--t-sell',     sellColor)
+  r.style.setProperty('--color-scheme', t.dark ? 'dark' : 'light')
+  r.style.colorScheme = t.dark ? 'dark' : 'light'
+
+  // Legacy compat
+  r.style.setProperty('--bg', t.bg)
+  r.style.setProperty('--surface', t.surface)
+  r.style.setProperty('--text', t.text1)
+  r.style.setProperty('--accent', a.color)
+  r.style.setProperty('--accent-glow', a.glow)
+}
+
+// ═══════════════════════════════════════════════════════════
+// Zustand Store
+// ═══════════════════════════════════════════════════════════
+interface ThemeState {
+  theme: ThemeId; accent: AccentId; density: DensityId
+  sidebarCollapsed: boolean; tickerEnabled: boolean
+  pendingTheme: ThemeId | null; pendingAccent: AccentId | null
+  buyColor: string; sellColor: string
+  setTheme: (t: ThemeId) => void; setAccent: (a: AccentId) => void
+  setDensity: (d: DensityId) => void
+  previewTheme: (t: ThemeId) => void; previewAccent: (a: AccentId) => void
+  confirmTheme: () => void; cancelPreview: () => void
+  toggleSidebar: () => void; setSidebarCollapsed: (v: boolean) => void
+  toggleTicker: () => void
+  setBuyColor: (c: string) => void; setSellColor: (c: string) => void
+}
+
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set, get) => ({
+      theme: 'obsidian', accent: 'teal', density: 'comfortable',
+      sidebarCollapsed: false, tickerEnabled: true,
+      pendingTheme: null, pendingAccent: null,
+      buyColor: '#00e676', sellColor: '#ff1744',
+
+      // Instant apply (for density, buy/sell)
+      setTheme:  (theme)  => { set({ theme, pendingTheme: null }); applyTheme(theme, get().accent, get().density, get().buyColor, get().sellColor) },
+      setAccent: (accent) => { set({ accent, pendingAccent: null }); applyTheme(get().theme, accent, get().density, get().buyColor, get().sellColor) },
+      setDensity:(d) => { set({ density: d }); applyTheme(get().theme, get().accent, d, get().buyColor, get().sellColor) },
+
+      // Preview (CSS changes but store doesn't save yet)
+      previewTheme:  (t) => { set({ pendingTheme: t });  applyTheme(t, get().pendingAccent ?? get().accent, get().density, get().buyColor, get().sellColor) },
+      previewAccent: (a) => { set({ pendingAccent: a }); applyTheme(get().pendingTheme ?? get().theme, a, get().density, get().buyColor, get().sellColor) },
+
+      // Confirm = save pending → actual (persists to localStorage)
+      confirmTheme: () => {
+        const s = get()
+        const nt = s.pendingTheme ?? s.theme
+        const na = s.pendingAccent ?? s.accent
+        set({ theme: nt, accent: na, pendingTheme: null, pendingAccent: null })
+        applyTheme(nt, na, s.density, s.buyColor, s.sellColor)
+      },
+
+      // Cancel = revert CSS to saved theme
+      cancelPreview: () => {
+        const s = get()
+        set({ pendingTheme: null, pendingAccent: null })
+        applyTheme(s.theme, s.accent, s.density, s.buyColor, s.sellColor)
+      },
+
+      toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+      toggleTicker: () => set(s => ({ tickerEnabled: !s.tickerEnabled })),
+      setBuyColor:  (c) => { set({ buyColor: c });  applyTheme(get().theme, get().accent, get().density, c, get().sellColor) },
+      setSellColor: (c) => { set({ sellColor: c }); applyTheme(get().theme, get().accent, get().density, get().buyColor, c) },
+    }),
+    {
+      name: 'bd_oms_theme_v5',
+      onRehydrateStorage: () => (state) => {
+        // This runs AFTER localStorage is loaded — applies the saved theme
+        if (state) {
+          applyTheme(state.theme, state.accent, state.density, state.buyColor, state.sellColor)
+        }
+      },
+    }
+  )
+)
+
+// NOTE: No applyTheme() call here! The onRehydrateStorage callback handles it.
+// Calling it here would override the saved theme on every page load.
+
+==== FILE: src/components/dashboard/WidgetPanel.tsx ====
+NOT FOUND
+
+==== FILE: src/components/layout/Topbar.tsx ====
+// @ts-nocheck
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useAuthStore } from '@/store/authStore'
+import { useMarketData } from '@/hooks/useMarketData'
+import { ThemeMenu } from '@/components/ui/ThemeMenu'
+
+// ── Bangladesh Standard Market Sessions ─────────────────────
+// DSE & CSE follow BSEC-defined sessions (Sun–Thu, BST UTC+6):
+//   Pre-Opening:  09:30 – 10:00 (order entry, no matching)
+//   Opening:      10:00 – 10:01 (opening auction)
+//   Continuous:   10:01 – 14:00 (regular trading)
+//   Closing:      14:00 – 14:01 (closing auction)
+//   Post-Closing: 14:01 – 14:30 (trade reporting)
+//   Closed:       everything else
+function getBDMarketSession(): { label: string; color: string; glow: string; dot: string } {
+  const now = new Date()
+  const utcDay = now.getUTCDay()
+  // BD weekends: Friday(5) & Saturday(6)
+  const isFriSat = utcDay === 5 || utcDay === 6
+  if (isFriSat) return { label: 'CLOSED', color: '#666', glow: 'none', dot: '#555' }
+
+  const bstH = (now.getUTCHours() + 6) % 24
+  const bstM = now.getUTCMinutes()
+  const t = bstH * 60 + bstM // minutes since midnight BST
+
+  if (t >= 570 && t < 600)  return { label: 'PRE-OPENING',  color: '#ffd740', glow: 'rgba(255,215,64,0.3)', dot: '#ffd740' }
+  if (t >= 600 && t < 601)  return { label: 'OPENING',      color: '#00e676', glow: 'rgba(0,230,118,0.3)', dot: '#00e676' }
+  if (t >= 601 && t < 840)  return { label: 'CONTINUOUS',   color: '#00e676', glow: 'rgba(0,230,118,0.3)', dot: '#00e676' }
+  if (t >= 840 && t < 841)  return { label: 'CLOSING',      color: '#ff9100', glow: 'rgba(255,145,0,0.3)', dot: '#ff9100' }
+  if (t >= 841 && t < 870)  return { label: 'POST-CLOSING', color: '#ff9100', glow: 'rgba(255,145,0,0.3)', dot: '#ff9100' }
+  return { label: 'CLOSED', color: '#666', glow: 'none', dot: '#555' }
+}
+
+function useSignalRStatus() {
+  const { ticksArray, loading } = useMarketData()
+  const [ok, setOk] = useState(false)
+  useEffect(() => { if (ticksArray.length > 0) setOk(true) }, [ticksArray.length])
+  return { isConnected: ok || ticksArray.length > 0, loading, count: ticksArray.length }
+}
+
+const Div = () => <div style={{ width: 1, height: 20, background: 'var(--t-border)', flexShrink: 0 }} />
+
+function Pill({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <div style={{
+    display: 'flex', alignItems: 'center', gap: 5,
+    padding: '4px 10px', borderRadius: 20, flexShrink: 0,
+    background: 'var(--t-hover)', border: '1px solid var(--t-border)', ...style,
+  }}>{children}</div>
+}
+
+export function Topbar() {
+  const user = useAuthStore(s => s.user)
+  const { ticksArray, marketStatus } = useMarketData()
+  const sr = useSignalRStatus()
+
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus() } }
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
+  }, [])
+
+  const [time, setTime] = useState(new Date())
+  useEffect(() => { const iv = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(iv) }, [])
+  const bdtTime = time.toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+
+  const [session, setSession] = useState(getBDMarketSession())
+  useEffect(() => { const iv = setInterval(() => setSession(getBDMarketSession()), 15000); return () => clearInterval(iv) }, [])
+
+  // Use hook market status if it says open, otherwise use session calculator
+  const phase = marketStatus.isOpen
+    ? { label: 'CONTINUOUS', color: '#00e676', glow: 'rgba(0,230,118,0.3)', dot: '#00e676' }
+    : session
+
+  const isTrading = phase.label === 'CONTINUOUS' || phase.label === 'OPENING'
+
+  // DSE + CSE Indexes
+  const indexes = useMemo(() => {
+    const stocks = ticksArray
+    if (!stocks.length) return [
+      { name: 'DSEX', value: '—', chg: null, ex: 'DSE' },
+      { name: 'DS30', value: '—', chg: null, ex: 'DSE' },
+      { name: 'DSES', value: '—', chg: null, ex: 'DSE' },
+      { name: 'CASPI', value: '—', chg: null, ex: 'CSE' },
+      { name: 'CSE30', value: '—', chg: null, ex: 'CSE' },
+    ]
+    const avg = stocks.reduce((s, t) => s + (t.changePercent || 0), 0) / stocks.length
+    return [
+      { name: 'DSEX',  value: '5,432', chg: +(avg * 0.8).toFixed(2), ex: 'DSE' },
+      { name: 'DS30',  value: '1,987', chg: +(avg * 1.2).toFixed(2), ex: 'DSE' },
+      { name: 'DSES',  value: '1,245', chg: +(avg * 0.6).toFixed(2), ex: 'DSE' },
+      { name: 'CASPI', value: '18,420', chg: +(avg * 0.9).toFixed(2), ex: 'CSE' },
+      { name: 'CSE30', value: '9,841',  chg: +(avg * 1.1).toFixed(2), ex: 'CSE' },
+    ]
+  }, [ticksArray])
+
+  return (
+    <header style={{
+      height: 'var(--oms-topbar-h, 48px)',
+      background: 'var(--t-surface)',
+      borderBottom: '1px solid var(--t-border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 14px',
+      position: 'sticky', top: 0, zIndex: 50,
+    }}>
+
+      {/* ── LEFT: Session + Indexes ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <Pill>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%', background: phase.dot, flexShrink: 0,
+            boxShadow: phase.glow !== 'none' ? `0 0 6px ${phase.glow}` : 'none',
+            animation: isTrading ? 'oms-pulse 2s ease-in-out infinite' : 'none',
+          }} />
+          <span style={{ fontSize: 9, fontWeight: 700, color: phase.color, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em' }}>
+            {phase.label}
+          </span>
+        </Pill>
+
+        {/* DSE indexes */}
+        {indexes.filter(i => i.ex === 'DSE').map(idx => (
+          <div key={idx.name} style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '4px 8px', borderRadius: 6, flexShrink: 0,
+            background: 'var(--t-hover)',
+          }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace" }}>{idx.name}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace" }}>{idx.value}</span>
+            {idx.chg !== null && (
+              <span style={{ fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: idx.chg >= 0 ? 'var(--t-buy)' : 'var(--t-sell)' }}>
+                {idx.chg >= 0 ? '▲' : '▼'}{Math.abs(idx.chg).toFixed(2)}%
+              </span>
+            )}
+          </div>
+        ))}
+
+        <Div />
+
+        {/* CSE indexes */}
+        {indexes.filter(i => i.ex === 'CSE').map(idx => (
+          <div key={idx.name} style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '4px 8px', borderRadius: 6, flexShrink: 0,
+            background: 'var(--t-hover)',
+          }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace" }}>{idx.name}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace" }}>{idx.value}</span>
+            {idx.chg !== null && (
+              <span style={{ fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: idx.chg >= 0 ? 'var(--t-buy)' : 'var(--t-sell)' }}>
+                {idx.chg >= 0 ? '▲' : '▼'}{Math.abs(idx.chg).toFixed(2)}%
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ── CENTER: Search ── */}
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, padding: '0 8px' }}>
+        <div style={{
+          width: '100%', maxWidth: 300,
+          display: 'flex', alignItems: 'center', gap: 8,
+          height: 30, padding: '0 12px',
+          background: searchFocused ? 'var(--t-elevated)' : 'var(--t-hover)',
+          border: `1px solid ${searchFocused ? 'var(--t-accent)' : 'var(--t-border)'}`,
+          borderRadius: 8, transition: 'all 0.2s',
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--t-text3)' }}>
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input ref={searchRef} type="text" placeholder="Search symbol..."
+            value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)}
+            style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: 'var(--t-text1)', fontSize: 12 }}
+          />
+          <kbd style={{ fontSize: 8, color: 'var(--t-text3)', background: 'var(--t-hover)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--t-border)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, flexShrink: 0 }}>⌘K</kbd>
+        </div>
+      </div>
+
+      {/* ── RIGHT: Exchanges + SignalR + Clock + Theme + User ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        {['DSE', 'CSE'].map(ex => (
+          <Pill key={ex}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: phase.dot, boxShadow: phase.glow !== 'none' ? `0 0 4px ${phase.glow}` : 'none' }} />
+            <span style={{ fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: isTrading ? 'var(--t-buy)' : 'var(--t-text3)' }}>{ex}</span>
+          </Pill>
+        ))}
+
+        <Div />
+
+        <Pill style={{ background: sr.isConnected ? 'transparent' : 'transparent' }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: sr.isConnected ? 'var(--t-accent)' : sr.loading ? '#ffd740' : 'var(--t-sell)',
+            animation: sr.isConnected ? 'oms-pulse 2s ease-in-out infinite' : 'none',
+          }} />
+          <span style={{ fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: sr.isConnected ? 'var(--t-accent)' : sr.loading ? '#ffd740' : 'var(--t-sell)' }}>
+            {sr.isConnected ? 'LIVE' : sr.loading ? 'SYNC' : 'OFF'}
+          </span>
+          {sr.isConnected && sr.count > 0 && <span style={{ fontSize: 8, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace" }}>{sr.count}</span>}
+        </Pill>
+
+        <Div />
+
+        <Pill>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace" }}>{bdtTime}</span>
+          <span style={{ fontSize: 7, fontWeight: 700, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace", background: 'var(--t-hover)', padding: '1px 4px', borderRadius: 3 }}>BDT</span>
+        </Pill>
+
+        <Div />
+        <ThemeMenu variant="compact" />
+
+        {user && (
+          <>
+            <Div />
+            <Pill style={{ padding: '3px 10px 3px 4px', cursor: 'default' }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: '50%',
+                background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--t-accent)', fontWeight: 700, fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
+              }}>{user.fullName.charAt(0)}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t-text1)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.fullName}</span>
+                <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--t-accent)', fontFamily: "'JetBrains Mono', monospace", opacity: 0.7 }}>{user.role}</span>
+              </div>
+            </Pill>
+          </>
+        )}
+      </div>
+    </header>
+  )
+}
+
+==== FILE: src/components/layout/Sidebar.tsx ====
+// @ts-nocheck
+import { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
+import { authApi } from '@/api/auth'
+import type { UserRole } from '@/types'
+import logoImg from '@/assets/images/logo.png'
+
+const Icon = {
+  Dashboard: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>,
+  Orders: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/><path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  Portfolio: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 17l4-8 4 5 3-3 4 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  Market: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2 12h2l3-7 4 14 3-9 2 5 2-3h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Admin: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  Tenants: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 22V12h6v10" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  RBAC: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  Logout: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Collapse: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+}
+
+interface NavItem { label: string; path: string; Icon: () => React.ReactElement; roles?: UserRole[]; section?: string }
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Dashboard', path: '/dashboard', Icon: Icon.Dashboard },
+  { label: 'Orders',    path: '/orders',    Icon: Icon.Orders },
+  { label: 'Portfolio', path: '/portfolio', Icon: Icon.Portfolio, roles: ['Investor','Trader','Admin','SuperAdmin','BrokerageHouse','BrokerageAdmin'] },
+  { label: 'Market',    path: '/market',    Icon: Icon.Market },
+  { label: 'Admin Panel',    path: '/admin',   Icon: Icon.Admin,   roles: ['SuperAdmin','Admin'], section: 'Admin' },
+  { label: 'Tenant Manager', path: '/tenants', Icon: Icon.Tenants, roles: ['SuperAdmin'], section: 'Admin' },
+  { label: 'RBAC & Roles',   path: '/rbac',    Icon: Icon.RBAC,    roles: ['SuperAdmin'], section: 'Admin' },
+]
+
+export function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false)
+  const navigate = useNavigate()
+  const user = useAuthStore(s => s.user)
+  const logout = useAuthStore(s => s.logout)
+  if (!user) return null
+
+  const visible = NAV_ITEMS.filter(i => !i.roles || i.roles.includes(user.role))
+  const main = visible.filter(i => !i.section)
+  const admin = visible.filter(i => i.section === 'Admin')
+
+  const handleLogout = async () => {
+    try { await authApi.logout() } catch {}
+    logout(); navigate('/login')
+  }
+
+  // ALL colors from CSS vars
+  return (
+    <aside style={{
+      width: collapsed ? 56 : 240,
+      minHeight: '100vh',
+      background: 'var(--t-surface)',
+      borderRight: '1px solid var(--t-border)',
+      display: 'flex', flexDirection: 'column',
+      transition: 'width 0.3s cubic-bezier(0.16,1,0.3,1)',
+      flexShrink: 0, position: 'sticky', top: 0, zIndex: 100, overflow: 'hidden',
+    }}>
+      {/* Logo */}
+      <div style={{
+        padding: collapsed ? '16px 0' : '16px',
+        display: 'flex', alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between',
+        borderBottom: '1px solid var(--t-border)', minHeight: 60, position: 'relative',
+      }}>
+        {!collapsed ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src={logoImg} alt="OMS" style={{ height: 34, width: 'auto', objectFit: 'contain' }} />
+            <div style={{ lineHeight: 1.2 }}>
+              <span style={{ color: 'var(--t-text1)', fontWeight: 700, fontSize: 13 }}>
+                BD Stock <span style={{ color: 'var(--t-accent)' }}>OMS</span>
+              </span>
+              <div style={{ fontSize: 8, color: 'var(--t-text3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>BSEC · DSE · CSE · CDBL</div>
+            </div>
+          </div>
+        ) : (
+          <img src={logoImg} alt="OMS" style={{ height: 28, width: 'auto' }} />
+        )}
+        <button onClick={() => setCollapsed(v => !v)} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'var(--t-text3)', padding: 4,
+          transform: collapsed ? 'rotate(180deg)' : 'none',
+          transition: 'all 0.3s', borderRadius: 6,
+        }}><Icon.Collapse /></button>
+        <div style={{ position: 'absolute', bottom: 0, left: '10%', right: '10%', height: 1, background: `linear-gradient(90deg, transparent, var(--t-accent), transparent)`, opacity: 0.2 }} />
+      </div>
+
+      {/* User */}
+      {!collapsed && (
+        <div style={{ margin: '10px 12px', padding: 12, background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: '50%',
+              background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--t-accent)', fontWeight: 700, fontSize: 14, fontFamily: "'JetBrains Mono', monospace",
+            }}>{user.fullName.charAt(0)}</div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div style={{ color: 'var(--t-text1)', fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.fullName}</div>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 3,
+                background: 'var(--t-hover)', color: 'var(--t-accent)',
+                fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                fontFamily: "'JetBrains Mono', monospace", border: '1px solid var(--t-border)',
+              }}>
+                <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--t-accent)' }} />
+                {user.role}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav style={{ flex: 1, padding: collapsed ? '12px 6px' : '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {main.map(item => (
+          <NavLink key={item.path} to={item.path} title={collapsed ? item.label : undefined}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: collapsed ? '10px 0' : '9px 12px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 500,
+              color: isActive ? 'var(--t-accent)' : 'var(--t-text2)',
+              background: isActive ? 'var(--t-hover)' : 'transparent',
+              borderLeft: isActive && !collapsed ? '2px solid var(--t-accent)' : '2px solid transparent',
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+            })}>
+            <item.Icon />
+            {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+          </NavLink>
+        ))}
+
+        {admin.length > 0 && (
+          <>
+            {!collapsed ? (
+              <div style={{ color: 'var(--t-text3)', fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', padding: '16px 4px 6px', fontWeight: 700 }}>ADMINISTRATION</div>
+            ) : (
+              <div style={{ height: 1, margin: '10px 8px', background: 'var(--t-border)' }} />
+            )}
+            {admin.map(item => (
+              <NavLink key={item.path} to={item.path} title={collapsed ? item.label : undefined}
+                style={({ isActive }) => ({
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: collapsed ? '10px 0' : '9px 12px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 500,
+                  color: isActive ? 'var(--t-accent)' : 'var(--t-text2)',
+                  background: isActive ? 'var(--t-hover)' : 'transparent',
+                  transition: 'all 0.15s', whiteSpace: 'nowrap',
+                })}>
+                <item.Icon />
+                {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+              </NavLink>
+            ))}
+          </>
+        )}
+      </nav>
+
+      {/* Bottom */}
+      <div style={{ padding: collapsed ? '12px 6px' : '12px 10px', borderTop: '1px solid var(--t-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {!collapsed && user.role === 'SuperAdmin' && (
+          <div style={{
+            background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+            borderRadius: 8, padding: '7px 10px', color: 'var(--t-accent)',
+            fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--t-accent)', animation: 'oms-pulse 2s ease-in-out infinite' }} />
+            Master DB Owner
+          </div>
+        )}
+        <button onClick={handleLogout} style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          background: 'var(--t-hover)', border: '1px solid var(--t-border)',
+          borderRadius: 8, padding: collapsed ? '10px 0' : '9px 12px',
+          color: 'var(--t-text3)', fontSize: 13, cursor: 'pointer', width: '100%',
+          transition: 'all 0.2s',
+        }}>
+          <Icon.Logout />
+          {!collapsed && <span>Sign out</span>}
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+==== FILE: src/styles/oms-tokens.css ====
+/* ═══════════════════════════════════════════════════════════════
+   BD Stock OMS — Design Tokens v2
+   ALL components read --t-* variables set by themeStore.applyTheme()
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Defaults (overridden by applyTheme) */
+  --t-bg:       #080C14;
+  --t-surface:  #0D1320;
+  --t-panel:    #111827;
+  --t-elevated: #1a2332;
+  --t-text1:    #E2E8F0;
+  --t-text2:    #8b99b0;
+  --t-text3:    #4a5568;
+  --t-border:   rgba(255,255,255,0.06);
+  --t-hover:    rgba(255,255,255,0.04);
+  --t-accent:   #00D4AA;
+  --t-accent-glow: rgba(0,212,170,0.3);
+  --t-buy:      #00e676;
+  --t-sell:     #ff1744;
+  --t-glass:    rgba(13,19,32,0.92);
+  --t-glass-border: rgba(255,255,255,0.06);
+  --t-glass-text: #8b99b0;
+
+  /* Layout */
+  --oms-topbar-h:  48px;
+  --oms-sidebar-w: 240px;
+  --oms-sidebar-c: 56px;
+  --oms-radius:    10px;
+  --oms-radius-sm: 6px;
+}
+
+/* Global reset */
+html, body, #root {
+  background: var(--t-bg) !important;
+  color: var(--t-text1) !important;
+}
+
+/* Scrollbar adapts to theme */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--t-border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--t-text3); }
+
+/* Animations */
+@keyframes oms-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+@keyframes oms-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--t-accent-glow); }
+  50%      { box-shadow: 0 0 20px var(--t-accent-glow); }
+}
+@keyframes oms-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+==== FILE: src/App.tsx ====
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { LoginPage }      from '@/pages/LoginPage'
+import { SignUpPage }     from '@/pages/SignUpPage'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import DashboardPage from "@/pages/DashboardPage"
+import {
+  OrdersPage, PortfolioPage, MarketPage,
+  SuperAdminPage, RbacPage, TenantPage,
+  ForbiddenPage, NotFoundPage,
+} from '@/pages/PlaceholderPages'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public */}
+        <Route path="/login"  element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+
+        {/* All authenticated users */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard"  element={<DashboardPage />} />
+            <Route path="/orders"     element={<OrdersPage />} />
+            <Route path="/portfolio"  element={<PortfolioPage />} />
+            <Route path="/market"     element={<MarketPage />} />
+          </Route>
+        </Route>
+
+        {/* SuperAdmin only */}
+        <Route element={<ProtectedRoute allowedRoles={['SuperAdmin']} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/super-admin"  element={<SuperAdminPage />} />
+            <Route path="/tenants"      element={<TenantPage />} />
+            <Route path="/rbac"         element={<RbacPage />} />
+          </Route>
+        </Route>
+
+        {/* SuperAdmin + Admin */}
+        <Route element={<ProtectedRoute allowedRoles={['SuperAdmin','Admin']} />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/admin" element={<SuperAdminPage />} />
+          </Route>
+        </Route>
+
+        {/* Redirects */}
+        <Route path="/"    element={<Navigate to="/dashboard" replace />} />
+        <Route path="/403" element={<ForbiddenPage />} />
+        <Route path="*"    element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+==== FILE: package.json ====
+{
+  "name": "bdstockoms-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
+    "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-query-devtools": "^5.91.3",
+    "@types/react-grid-layout": "^1.3.6",
+    "@types/recharts": "^1.8.29",
+    "axios": "^1.13.6",
+    "clsx": "^2.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-grid-layout": "^2.2.2",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "jsdom": "^28.1.0",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}
+
+==== FILE: vite.config.ts ====
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: { '@': path.resolve(__dirname, './src') },
+  },
+  server: {
+    port: 5173,
+    headers: {
+      'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; connect-src 'self' http://localhost:5289 ws://localhost:5173 ws://localhost:5289; default-src 'self' 'unsafe-inline' data: blob: https:;",
+    },
+    proxy: {
+      '/api': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
+      '/auth': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
+      '/hubs': { target: 'http://localhost:5289', changeOrigin: true, secure: false, ws: true },
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+  },
+})
+
+==== FILE: registry ====
+FOUND: src/components/widgets/registry.tsx
+// @ts-nocheck
+import { MarketTickerStrip }    from "./MarketTickerStrip"
+import { WatchlistWidget }      from "./WatchlistWidget"
+import { OrderEntryWidget }     from "./OrderEntryWidget"
+import { OrderBookWidget }      from "./OrderBookWidget"
+import { TopMoversWidget }      from "./TopMoversWidget"
+import { MarketMapWidget }      from "./MarketMapWidget"
+import { MarketDepthWidget }    from "./MarketDepthWidget"
+import { BuySellPressureWidget } from "./BuySellPressureWidget"
+import { PortfolioWidget }      from "./PortfolioWidget"
+import { PriceChartWidget }     from "./PriceChartWidget"
+import { NotificationsWidget }  from "./NotificationsWidget"
+import { AIPredictionWidget }   from "./AIPredictionWidget"
+import { IndexSummaryWidget }   from "./IndexSummaryWidget"
+import { NewsFeedWidget }       from "./NewsFeedWidget"
+import { RMSLimitsWidget }      from "./RMSLimitsWidget"
+import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
+
+export interface WidgetDef {
+  id:         string
+  title:      string
+  label:      string
+  icon:       string
+  minW:       number
+  minH:       number
+  defaultW:   number
+  defaultH:   number
+  category:   string
+  component:  React.ComponentType<any>
+}
+
+export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
+  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
+  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
+  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
+  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
+  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:1, minH:4, defaultW:6,  defaultH:4,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
+  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
+  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
+  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
+  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
+  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
+  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
+  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
+  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
+  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
+  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
+  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
+]
+
+// Object map keyed by id — used by DashboardPage
+export const WIDGET_REGISTRY: Record<string, WidgetDef> = Object.fromEntries(
+  WIDGET_REGISTRY_LIST.map(w => [w.id, w])
+)
+
+export const CATEGORIES = [...new Set(WIDGET_REGISTRY_LIST.map(w => w.category))]
+FOUND: src/test/Unit/Day50/registry.test.ts
+// @ts-nocheck
+import { describe, it, expect } from "vitest"
+import { WIDGET_REGISTRY_LIST, WIDGET_REGISTRY, CATEGORIES } from "@/components/widgets/registry"
+
+describe("Widget Registry", () => {
+  it("has exactly 16 widgets", () => {
+    expect(WIDGET_REGISTRY_LIST).toHaveLength(16)
+  })
+  it("every widget has required fields", () => {
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(w.id).toBeTruthy()
+      expect(w.label).toBeTruthy()
+      expect(w.icon).toBeTruthy()
+      expect(w.minW).toBeGreaterThan(0)
+      expect(w.minH).toBeGreaterThan(0)
+      expect(w.defaultW).toBeGreaterThan(0)
+      expect(w.defaultH).toBeGreaterThan(0)
+      expect(w.category).toBeTruthy()
+      expect(w.component).toBeTruthy()
+    })
+  })
+  it("all widget ids are unique", () => {
+    const ids = WIDGET_REGISTRY_LIST.map(w => w.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it("has all 16 expected widget ids", () => {
+    const expected = ["ticker","watchlist","order","orderbook","executions","movers","heatmap","depth","pressure","portfolio","chart","notif","ai","index","news","rms"]
+    expected.forEach(id => {
+      expect(WIDGET_REGISTRY[id]).toBeDefined()
+    })
+  })
+  it("CATEGORIES is derived from registry", () => {
+    expect(CATEGORIES.length).toBeGreaterThan(0)
+    CATEGORIES.forEach(cat => {
+      expect(WIDGET_REGISTRY_LIST.some(w => w.category === cat)).toBe(true)
+    })
+  })
+  it("defaultW is always >= minW", () => {
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(w.defaultW).toBeGreaterThanOrEqual(w.minW)
+    })
+  })
+  it("defaultH is always >= minH (except ticker)", () => {
+    WIDGET_REGISTRY_LIST.filter(w => w.id !== "ticker").forEach(w => {
+      expect(w.defaultH).toBeGreaterThanOrEqual(w.minH)
+    })
+  })
+  it("ticker widget spans full width by default", () => {
+    const ticker = WIDGET_REGISTRY["ticker"]
+    expect(ticker?.defaultW).toBe(12)
+  })
+  it("all widgets have a valid category", () => {
+    const validCats = ["Market","Trading","Portfolio","System","AI","News","Risk"]
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(validCats).toContain(w.category)
+    })
+  })
+})
+
+==== DASHBOARD STORE FILES ====
