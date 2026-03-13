@@ -47,7 +47,7 @@ const now = () => new Date().toISOString()
 
 // Default widget IDs (matches existing registry)
 const ALL_WIDGET_IDS = [
-  'ticker','index','movers','watchlist','chart','orderbook',
+  'ticker','index','movers','watchlist','chart','orderbook','buysell',
   'order','portfolio','executions','heatmap','depth','pressure',
   'notif','news','ai','rms'
 ]

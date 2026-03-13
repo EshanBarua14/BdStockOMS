@@ -9,6 +9,7 @@ export interface StockTick {
   stockId: number
   tradingCode: string
   stockName?: string
+  companyName?: string
   lastPrice: number
   change: number
   changePercent: number
@@ -19,7 +20,11 @@ export interface StockTick {
   lowPrice?: number
   closePrice?: number
   ycp?: number
-  category?: string
+  category?: string        // A | B | G | N | Z | Spot
+  exchange?: string        // DSE | CSE
+  circuitBreakerHigh?: number
+  circuitBreakerLow?: number
+  boardLotSize?: number
   marketCap?: number
   pe?: number
 }

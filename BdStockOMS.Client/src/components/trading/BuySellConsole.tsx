@@ -13,12 +13,12 @@ type Side        = 'BUY' | 'SELL'
 type PriceType   = 'Limit' | 'Market' | 'MarketAtBest'
 type TimeInForce = 'Day' | 'IOC' | 'FOK'
 type Exchange    = 'DSE' | 'CSE' | 'Both'
-type Market      = 'Regular' | 'SME' | 'ATB' | 'GOV' | 'ODD_LOT' | 'BLOCK'
+type Market      = 'Regular' | 'SME' | 'ATB' | 'GOV' | 'ODD_LOT' | 'BLOCK' | 'Spot'
 
 // BD market places reference:
 // DSE: Regular, SME (Small & Medium), ATB (Alternative Trading Board), GOV (Govt securities)
 // CSE: Regular, SME, ATB, GOV, Odd Lot, Block
-const MARKETS: Market[] = ['Regular', 'SME', 'ATB', 'GOV', 'ODD_LOT', 'BLOCK']
+const MARKETS: Market[] = ['Regular', 'SME', 'ATB', 'GOV', 'ODD_LOT', 'BLOCK', 'Spot']
 
 interface BOClient {
   userId: number
@@ -531,7 +531,10 @@ export function BuySellConsole() {
           {client && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, background: 'var(--t-panel)', borderRadius: 8, padding: '10px 12px', border: `1px solid ${sideColor}20` }}>
               <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--t-text1)' }}>{client.fullName}</span>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--t-text1)' }}>{client.fullName}</span>
+                  <span style={{ fontSize: 9, color: 'var(--t-accent)', fontFamily: mono, marginLeft: 8 }}>{client.boNumber}</span>
+                </div>
                 <span style={{ fontSize: 9, color: 'var(--t-text3)', fontFamily: mono }}>{client.accountType}</span>
               </div>
               <Tile label="CASH BALANCE"    value={`৳${client.cashBalance.toLocaleString()}`}       color="var(--t-buy)" />
@@ -563,18 +566,41 @@ export function BuySellConsole() {
                   { value: 'GOV',     label: 'GOV — Govt Securities' },
                   { value: 'ODD_LOT', label: 'Odd Lot Market' },
                   { value: 'BLOCK',   label: 'Block Market' },
+                  { value: 'Spot',    label: 'Spot Market (T+0)' },
                 ]} />
             </div>
           </div>
 
           {/* ── Symbol ── */}
           <div>
-            <Label text="SYMBOL" sub={live?.category ? `Category: ${live.category}` : undefined} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+              <Label text="SYMBOL" />
+              {live?.category && (
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: mono, padding: '2px 7px', borderRadius: 4, border: `1px solid ${catColor(live.category)}50`, color: catColor(live.category), background: `${catColor(live.category)}12` }}>
+                  Category {live.category}
+                </span>
+              )}
+              {live?.exchange && (
+                <span style={{ fontSize: 9, fontWeight: 700, fontFamily: mono, padding: '2px 7px', borderRadius: 4, color: live.exchange === 'DSE' ? '#60a5fa' : '#a78bfa', border: `1px solid ${live.exchange === 'DSE' ? '#60a5fa' : '#a78bfa'}40` }}>
+                  {live.exchange}
+                </span>
+              )}
+            </div>
             <SymbolSearch value={symbol} onChange={(v: string) => { setSymbol(v); setPrice('') }}
               onSelect={handleSymbolSelect} stocks={ticksArray} />
           </div>
 
           {/* ── Live price strip + circuit breaker ── */}
+          {live?.category === 'Z' && (
+            <div style={{ background: 'rgba(255,23,68,0.08)', border: '1px solid rgba(255,23,68,0.3)', borderRadius: 6, padding: '6px 10px', color: 'var(--t-sell)', fontSize: 10, fontFamily: mono }}>
+              ⚠ Category Z — Defaulter stock. SPOT settlement only, T+0. No margin eligible.
+            </div>
+          )}
+          {live?.category === 'Spot' && (
+            <div style={{ background: 'rgba(255,145,0,0.08)', border: '1px solid rgba(255,145,0,0.3)', borderRadius: 6, padding: '6px 10px', color: '#ff9100', fontSize: 10, fontFamily: mono }}>
+              ⚡ Spot Market — T+0 settlement. Immediate cash required.
+            </div>
+          )}
           {live && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
               <Tile label="LAST"   value={`৳${live.lastPrice?.toFixed(2) ?? '—'}`}       color="var(--t-text1)" />
