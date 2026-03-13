@@ -1,0 +1,2965 @@
+==== FILE: src/components/widgets/registry.tsx ====
+// @ts-nocheck
+import { MarketTickerStrip }    from "./MarketTickerStrip"
+import { WatchlistWidget }      from "./WatchlistWidget"
+import { OrderEntryWidget }     from "./OrderEntryWidget"
+import { OrderBookWidget }      from "./OrderBookWidget"
+import { TopMoversWidget }      from "./TopMoversWidget"
+import { MarketMapWidget }      from "./MarketMapWidget"
+import { MarketDepthWidget }    from "./MarketDepthWidget"
+import { BuySellPressureWidget } from "./BuySellPressureWidget"
+import { PortfolioWidget }      from "./PortfolioWidget"
+import { PriceChartWidget }     from "./PriceChartWidget"
+import { NotificationsWidget }  from "./NotificationsWidget"
+import { AIPredictionWidget }   from "./AIPredictionWidget"
+import { IndexSummaryWidget }   from "./IndexSummaryWidget"
+import { NewsFeedWidget }       from "./NewsFeedWidget"
+import { RMSLimitsWidget }      from "./RMSLimitsWidget"
+import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
+
+export interface WidgetDef {
+  id:         string
+  title:      string
+  label:      string
+  icon:       string
+  minW:       number
+  minH:       number
+  defaultW:   number
+  defaultH:   number
+  category:   string
+  component:  React.ComponentType<any>
+}
+
+export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
+  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
+  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
+  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
+  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
+  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:1, minH:4, defaultW:6,  defaultH:4,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
+  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
+  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
+  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
+  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
+  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
+  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
+  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
+  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
+  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
+  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
+  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
+]
+
+// Object map keyed by id — used by DashboardPage
+export const WIDGET_REGISTRY: Record<string, WidgetDef> = Object.fromEntries(
+  WIDGET_REGISTRY_LIST.map(w => [w.id, w])
+)
+
+export const CATEGORIES = [...new Set(WIDGET_REGISTRY_LIST.map(w => w.category))]
+// @ts-nocheck
+import { describe, it, expect } from "vitest"
+import { WIDGET_REGISTRY_LIST, WIDGET_REGISTRY, CATEGORIES } from "@/components/widgets/registry"
+
+describe("Widget Registry", () => {
+  it("has exactly 16 widgets", () => {
+    expect(WIDGET_REGISTRY_LIST).toHaveLength(16)
+  })
+  it("every widget has required fields", () => {
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(w.id).toBeTruthy()
+      expect(w.label).toBeTruthy()
+      expect(w.icon).toBeTruthy()
+      expect(w.minW).toBeGreaterThan(0)
+      expect(w.minH).toBeGreaterThan(0)
+      expect(w.defaultW).toBeGreaterThan(0)
+      expect(w.defaultH).toBeGreaterThan(0)
+      expect(w.category).toBeTruthy()
+      expect(w.component).toBeTruthy()
+    })
+  })
+  it("all widget ids are unique", () => {
+    const ids = WIDGET_REGISTRY_LIST.map(w => w.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it("has all 16 expected widget ids", () => {
+    const expected = ["ticker","watchlist","order","orderbook","executions","movers","heatmap","depth","pressure","portfolio","chart","notif","ai","index","news","rms"]
+    expected.forEach(id => {
+      expect(WIDGET_REGISTRY[id]).toBeDefined()
+    })
+  })
+  it("CATEGORIES is derived from registry", () => {
+    expect(CATEGORIES.length).toBeGreaterThan(0)
+    CATEGORIES.forEach(cat => {
+      expect(WIDGET_REGISTRY_LIST.some(w => w.category === cat)).toBe(true)
+    })
+  })
+  it("defaultW is always >= minW", () => {
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(w.defaultW).toBeGreaterThanOrEqual(w.minW)
+    })
+  })
+  it("defaultH is always >= minH (except ticker)", () => {
+    WIDGET_REGISTRY_LIST.filter(w => w.id !== "ticker").forEach(w => {
+      expect(w.defaultH).toBeGreaterThanOrEqual(w.minH)
+    })
+  })
+  it("ticker widget spans full width by default", () => {
+    const ticker = WIDGET_REGISTRY["ticker"]
+    expect(ticker?.defaultW).toBe(12)
+  })
+  it("all widgets have a valid category", () => {
+    const validCats = ["Market","Trading","Portfolio","System","AI","News","Risk"]
+    WIDGET_REGISTRY_LIST.forEach(w => {
+      expect(validCats).toContain(w.category)
+    })
+  })
+})
+
+==== FILE: src/components/widgets/WidgetPanel.tsx ====
+// @ts-nocheck
+// src/components/widgets/WidgetPanel.tsx
+// Premium glass widget panel — all colors from CSS vars
+
+import React, { useRef, useEffect } from "react"
+import type { ColorGroup } from "../../hooks/useDashboardPersistence"
+
+const COLOR_HEX: Record<string, string> = {
+  teal: "#14b8a6", blue: "#3b82f6", amber: "#f59e0b", purple: "#a855f7", red: "#ef4444",
+}
+const COLOR_OPTIONS = [
+  { id: "teal", label: "Teal", hex: "#14b8a6" },
+  { id: "blue", label: "Blue", hex: "#3b82f6" },
+  { id: "amber", label: "Amber", hex: "#f59e0b" },
+  { id: "purple", label: "Purple", hex: "#a855f7" },
+  { id: "red", label: "Red", hex: "#ef4444" },
+]
+
+interface WidgetPanelProps {
+  id: string; title: string; children: React.ReactNode
+  colorGroup: ColorGroup; onColorChange: (c: ColorGroup) => void
+  onFullscreen: () => void; onClose: () => void
+  menuOpen: boolean; onMenuToggle: () => void
+}
+
+function IconBtn({ onClick, title, children, danger = false }: any) {
+  return (
+    <button onClick={onClick} title={title} style={{
+      width: 20, height: 20, borderRadius: 4,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'transparent', border: 'none', cursor: 'pointer',
+      color: 'var(--t-text3)', transition: 'all 0.12s',
+    }}
+      onMouseEnter={e => {
+        e.currentTarget.style.color = danger ? 'var(--t-sell)' : 'var(--t-text1)'
+        e.currentTarget.style.background = danger ? 'rgba(255,23,68,0.08)' : 'var(--t-hover)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.color = 'var(--t-text3)'
+        e.currentTarget.style.background = 'transparent'
+      }}
+    >{children}</button>
+  )
+}
+
+export function WidgetPanel({
+  id, title, children, colorGroup, onColorChange, onFullscreen, onClose, menuOpen, onMenuToggle,
+}: WidgetPanelProps) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menuOpen) return
+    const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) onMenuToggle() }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [menuOpen, onMenuToggle])
+
+  const gc = colorGroup ? COLOR_HEX[colorGroup] : null
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: 'var(--t-surface)', border: `1px solid ${gc ? gc + '35' : 'var(--t-border)'}`,
+      borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.15s, box-shadow 0.15s',
+      boxShadow: gc ? `0 0 12px ${gc}12` : 'none', position: 'relative',
+    }}>
+      {/* Neon top line */}
+      <div style={{
+        position: 'absolute', top: 0, left: gc ? '5%' : '15%', right: gc ? '5%' : '15%',
+        height: 1, zIndex: 1, pointerEvents: 'none',
+        background: gc ? `linear-gradient(90deg, transparent, ${gc}60, transparent)` : 'linear-gradient(90deg, transparent, var(--t-accent), transparent)',
+        opacity: gc ? 0.7 : 0.12,
+      }} />
+
+      {/* Header */}
+      <div className="widget-drag-handle" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 8px', height: 28, flexShrink: 0,
+        background: 'var(--t-panel)', borderBottom: '1px solid var(--t-border)',
+        cursor: 'grab', userSelect: 'none',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+            background: gc || 'var(--t-accent)', boxShadow: `0 0 4px ${gc || 'var(--t-accent-glow)'}`, opacity: 0.7,
+          }} />
+          <span style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+            color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace",
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{title}</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <IconBtn onClick={onMenuToggle} title="Link group">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            </IconBtn>
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', right: 0, top: 24, zIndex: 200,
+                width: 140, borderRadius: 10, padding: 6,
+                background: 'var(--t-elevated)', border: '1px solid var(--t-border)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+              }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t-text3)', letterSpacing: '0.08em', padding: '2px 6px 6px', fontFamily: "'JetBrains Mono', monospace" }}>LINK GROUP</div>
+                {COLOR_OPTIONS.map(o => (
+                  <button key={o.id} onClick={() => { onColorChange(colorGroup === o.id ? null : o.id as ColorGroup); onMenuToggle() }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '5px 6px',
+                      borderRadius: 6, background: colorGroup === o.id ? 'var(--t-hover)' : 'transparent',
+                      border: 'none', cursor: 'pointer', color: colorGroup === o.id ? 'var(--t-text1)' : 'var(--t-text2)', fontSize: 11,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+                    onMouseLeave={e => { if (colorGroup !== o.id) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: o.hex }} />
+                    {o.label}
+                    {colorGroup === o.id && <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--t-text3)' }}>✓</span>}
+                  </button>
+                ))}
+                <div style={{ height: 1, background: 'var(--t-border)', margin: '4px 0' }} />
+                <button onClick={() => { onColorChange(null); onMenuToggle() }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '5px 6px', borderRadius: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--t-text3)', fontSize: 11 }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1px solid var(--t-border)' }} />
+                  None
+                </button>
+              </div>
+            )}
+          </div>
+          <IconBtn onClick={onFullscreen} title="Fullscreen">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 4.5V1h3.5M7.5 1H11v3.5M11 7.5V11H7.5M4.5 11H1V7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </IconBtn>
+          <IconBtn onClick={onClose} title="Hide" danger>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+          </IconBtn>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>{children}</div>
+    </div>
+  )
+}
+
+==== FILE: src/hooks/useOrders.ts ====
+// src/hooks/useOrders.ts
+// Fixed: 3s polling, optimistic place/cancel, immediate double-refresh, SignalR merge
+
+import { useState, useEffect, useCallback, useRef } from "react"
+import { getOrders, placeOrder, cancelOrder } from "../api/client"
+import { subscribeMarket } from "./useSignalR"
+
+export interface Order {
+  id: number
+  stockId: number
+  tradingCode: string
+  stockName?: string
+  orderType: number        // 0=Buy, 1=Sell
+  orderCategory: number    // 0=Market, 1=Limit, 2=StopLoss
+  quantity: number
+  filledQuantity?: number
+  averagePrice?: number
+  limitPrice?: number
+  status: number           // 0=Pending,1=Open,2=PartiallyFilled,3=Filled,4=Cancelled,5=Rejected,6=Expired
+  createdAt: string
+  updatedAt?: string
+  investorId?: number
+}
+
+export interface PlaceOrderDto {
+  stockId: number
+  orderType: number
+  orderCategory: number
+  quantity: number
+  limitPrice?: number
+  investorId?: number
+}
+
+export const ORDER_STATUS: Record<number, { label: string; color: string }> = {
+  0: { label: "Pending",       color: "text-amber-400" },
+  1: { label: "Open",          color: "text-blue-400" },
+  2: { label: "Partial Fill",  color: "text-cyan-400" },
+  3: { label: "Filled",        color: "text-emerald-400" },
+  4: { label: "Cancelled",     color: "text-zinc-500" },
+  5: { label: "Rejected",      color: "text-red-400" },
+  6: { label: "Expired",       color: "text-zinc-600" },
+}
+
+export const ORDER_TYPE_LABEL: Record<number, string> = { 0: "Buy", 1: "Sell" }
+export const ORDER_CAT_LABEL: Record<number, string>  = { 0: "Market", 1: "Limit", 2: "Stop Loss" }
+
+function normaliseOrders(raw: any): Order[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (raw.items) return raw.items
+  if (raw.data) return raw.data
+  if (typeof raw === "object") return Object.values(raw)
+  return []
+}
+
+export function useOrders() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [placing, setPlacing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const mountedRef = useRef(true)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const fetchOrders = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true)
+      const raw = await getOrders()
+      if (!mountedRef.current) return
+      const list = normaliseOrders(raw)
+      list.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      setOrders(list)
+      setError(null)
+    } catch (e: any) {
+      if (mountedRef.current) setError(e?.message ?? "Failed to load orders")
+    } finally {
+      if (mountedRef.current && !silent) setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    mountedRef.current = true
+    fetchOrders()
+    // 3s polling — was 8s
+    pollRef.current = setInterval(() => fetchOrders(true), 3000)
+    return () => {
+      mountedRef.current = false
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
+  }, [fetchOrders])
+
+  // SignalR OrderUpdate — immediate merge
+  useEffect(() => {
+    return (subscribeMarket as any)("OrderUpdate", (updated: Order) => {
+      if (!mountedRef.current) return
+      setOrders(prev => {
+        const idx = prev.findIndex(o => o.id === updated.id)
+        const next = idx >= 0
+          ? prev.map(o => o.id === updated.id ? { ...o, ...updated } : o)
+          : [updated, ...prev]
+        return next.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      })
+    })
+  }, [])
+
+  const place = useCallback(async (dto: PlaceOrderDto): Promise<Order> => {
+    setPlacing(true)
+    const tempId = -(Date.now())
+    const optimistic: Order = {
+      id: tempId, stockId: dto.stockId, tradingCode: "",
+      orderType: dto.orderType, orderCategory: dto.orderCategory,
+      quantity: dto.quantity, limitPrice: dto.limitPrice,
+      filledQuantity: 0, status: 0, createdAt: new Date().toISOString(),
+    }
+    setOrders(prev => [optimistic, ...prev])
+    try {
+      const result = await placeOrder(dto) as Order
+      setOrders(prev =>
+        [result, ...prev.filter(o => o.id !== tempId)]
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      )
+      setTimeout(() => fetchOrders(true), 400)
+      setTimeout(() => fetchOrders(true), 2000)
+      return result
+    } catch (e) {
+      setOrders(prev => prev.filter(o => o.id !== tempId))
+      throw e
+    } finally {
+      setPlacing(false)
+    }
+  }, [fetchOrders])
+
+  const cancel = useCallback(async (id: number) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 4 } : o))
+    try {
+      await cancelOrder(id)
+      setTimeout(() => fetchOrders(true), 400)
+    } catch { fetchOrders(true) }
+  }, [fetchOrders])
+
+  const executions = orders.filter(o => o.status === 2 || o.status === 3)
+  return { orders, executions, loading, placing, error, place, cancel, refresh: () => fetchOrders(false) }
+}
+
+==== FILE: src/hooks/useMarketData.ts ====
+// src/hooks/useMarketData.ts
+// Fixed: live BulkPriceUpdate merge, market status from /api/helth, BST fallback
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { getMarketData } from "../api/market"
+import { subscribeMarket } from "./useSignalR"
+
+export interface StockTick {
+  stockId: number
+  tradingCode: string
+  stockName?: string
+  lastPrice: number
+  change: number
+  changePercent: number
+  volume: number
+  turnover?: number
+  openPrice?: number
+  highPrice?: number
+  lowPrice?: number
+  closePrice?: number
+  ycp?: number
+  category?: string
+  marketCap?: number
+  pe?: number
+}
+
+export interface MarketStatus {
+  isOpen: boolean
+  label: string
+  activeStocks: number
+}
+
+export function normaliseMarketData(raw: any): StockTick[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (raw.items && Array.isArray(raw.items)) return raw.items
+  if (raw.data && Array.isArray(raw.data)) return raw.data
+  if (typeof raw === "object") return Object.values(raw)
+  return []
+}
+
+function inferMarketStatus(raw?: any): MarketStatus {
+  if (raw?.marketStatus !== undefined) {
+    const s = String(raw.marketStatus).toLowerCase()
+    const isOpen = s === "open" || s === "1" || s === "true"
+    return { isOpen, label: isOpen ? "Market Open" : "Market Closed", activeStocks: raw.activeStocks ?? 0 }
+  }
+  // Fallback: DSE hours Sun–Thu 10:00–14:30 BST (UTC+6)
+  const now = new Date()
+  const bst = (now.getUTCHours() + 6) % 24
+  const min = now.getUTCMinutes()
+  const t = bst * 60 + min
+  const isWeekday = now.getUTCDay() !== 5 && now.getUTCDay() !== 6  // not Fri/Sat
+  const isOpen = isWeekday && t >= 600 && t <= 870
+  return { isOpen, label: isOpen ? "Market Open" : "Market Closed", activeStocks: 0 }
+}
+
+export function useMarketData() {
+  const [ticks, setTicks] = useState<Map<string, StockTick>>(new Map())
+  const [marketStatus, setMarketStatus] = useState<MarketStatus>({ isOpen: false, label: "Checking…", activeStocks: 0 })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const mountedRef = useRef(true)
+
+  const fetchStatus = useCallback(async () => {
+    if (mountedRef.current) setMarketStatus(inferMarketStatus())
+  }, [])
+
+  const seed = useCallback(async () => {
+    try {
+      const raw = await getMarketData()
+      if (!mountedRef.current) return
+      const items = normaliseMarketData(raw)
+      const map = new Map<string, StockTick>()
+      items.forEach((t: StockTick) => { if (t.tradingCode) map.set(t.tradingCode, t) })
+      setTicks(map)
+      setError(null)
+    } catch (e: any) {
+      if (mountedRef.current) setError(e?.message ?? "Market data unavailable")
+    } finally {
+      if (mountedRef.current) setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    mountedRef.current = true
+    seed()
+    fetchStatus()
+    const si = setInterval(fetchStatus, 60_000)
+    return () => { mountedRef.current = false; clearInterval(si) }
+  }, [seed, fetchStatus])
+
+  // BulkPriceUpdate — incremental merge
+  useEffect(() => {
+    return subscribeMarket("BulkPriceUpdate", (raw: any) => {
+      if (!mountedRef.current) return
+      const items = normaliseMarketData(raw)
+      if (!items.length) return
+      setTicks(prev => {
+        const next = new Map(prev)
+        items.forEach((t: StockTick) => {
+          if (t.tradingCode) next.set(t.tradingCode, { ...(next.get(t.tradingCode) ?? {}), ...t })
+        })
+        return next
+      })
+    })
+  }, [])
+
+  useEffect(() => {
+    return subscribeMarket("IndexUpdate", (data: any) => {
+      if (mountedRef.current && data?.marketStatus !== undefined)
+        setMarketStatus(inferMarketStatus(data))
+    })
+  }, [])
+
+  const ticksArray = Array.from(ticks.values())
+  return {
+    ticks, ticksArray, marketStatus, loading, error,
+    getStock: (code: string) => ticks.get(code),
+    refresh: seed,
+  }
+}
+
+==== FILE: src/store/useTemplateStore.ts ====
+// src/store/useTemplateStore.ts
+// Day 52 — Zustand persist store for dashboard templates
+// Supports: save/load/delete/rename multiple templates, export/import as JSON
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+// ─── Types ────────────────────────────────────────────────────
+export interface LayoutItem {
+  i: string; x: number; y: number; w: number; h: number
+  [key: string]: any
+}
+
+export interface WidgetState {
+  id: string
+  visible: boolean
+  colorGroup: string | null
+}
+
+export interface DashboardPage {
+  id: string
+  name: string
+  icon: string
+  layout: LayoutItem[]
+  widgets: WidgetState[]
+}
+
+export interface DashboardTemplate {
+  id: string
+  name: string
+  description: string
+  pages: DashboardPage[]
+  activePageId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExportedTemplate {
+  _format: 'bd_oms_template_v1'
+  _exportedAt: string
+  template: DashboardTemplate
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+const now = () => new Date().toISOString()
+
+// Default widget IDs (matches existing registry)
+const ALL_WIDGET_IDS = [
+  'ticker','index','movers','watchlist','chart','orderbook',
+  'order','portfolio','executions','heatmap','depth','pressure',
+  'notif','news','ai','rms'
+]
+
+const defaultWidgets = (): WidgetState[] =>
+  ALL_WIDGET_IDS.map(id => ({ id, visible: true, colorGroup: null }))
+
+// Default preset layouts (matching existing useDashboardPersistence)
+const PRESET_LAYOUTS: Record<string, LayoutItem[]> = {
+  Trading: [
+    { i:'ticker',x:0,y:0,w:48,h:4 },{ i:'index',x:0,y:4,w:10,h:14 },
+    { i:'chart',x:10,y:4,w:24,h:30 },{ i:'orderbook',x:34,y:4,w:14,h:20 },
+    { i:'order',x:0,y:18,w:10,h:20 },{ i:'executions',x:34,y:24,w:14,h:14 },
+    { i:'rms',x:0,y:38,w:24,h:12 },{ i:'notif',x:24,y:38,w:24,h:12 },
+  ],
+  Research: [
+    { i:'ticker',x:0,y:0,w:48,h:4 },{ i:'movers',x:0,y:4,w:14,h:22 },
+    { i:'chart',x:14,y:4,w:20,h:30 },{ i:'heatmap',x:34,y:4,w:14,h:20 },
+    { i:'news',x:0,y:26,w:14,h:20 },{ i:'ai',x:14,y:34,w:20,h:16 },
+    { i:'watchlist',x:34,y:24,w:14,h:22 },
+  ],
+  Portfolio: [
+    { i:'ticker',x:0,y:0,w:48,h:4 },{ i:'portfolio',x:0,y:4,w:24,h:24 },
+    { i:'executions',x:24,y:4,w:24,h:24 },{ i:'rms',x:0,y:28,w:24,h:14 },
+    { i:'order',x:24,y:28,w:24,h:14 },
+  ],
+}
+
+function createDefaultPage(name = 'Main', presetKey = 'Trading'): DashboardPage {
+  const layout = PRESET_LAYOUTS[presetKey] ?? PRESET_LAYOUTS.Trading
+  return {
+    id: uid(),
+    name,
+    icon: '📊',
+    layout,
+    widgets: defaultWidgets().map(w => ({
+      ...w,
+      visible: layout.some(l => l.i === w.id),
+    })),
+  }
+}
+
+function createDefaultTemplate(): DashboardTemplate {
+  const mainPage = createDefaultPage('Trading', 'Trading')
+  return {
+    id: uid(),
+    name: 'Default Workspace',
+    description: 'Auto-created default template',
+    pages: [mainPage],
+    activePageId: mainPage.id,
+    createdAt: now(),
+    updatedAt: now(),
+  }
+}
+
+// ─── Store ────────────────────────────────────────────────────
+interface TemplateStore {
+  // State
+  templates: DashboardTemplate[]
+  activeTemplateId: string | null
+
+  // Template CRUD
+  createTemplate: (name: string, description?: string) => string
+  deleteTemplate: (id: string) => void
+  renameTemplate: (id: string, name: string) => void
+  setActiveTemplate: (id: string) => void
+  duplicateTemplate: (id: string) => string
+
+  // Page CRUD (within active template)
+  addPage: (name?: string, preset?: string) => string
+  deletePage: (pageId: string) => void
+  renamePage: (pageId: string, name: string) => void
+  setPageIcon: (pageId: string, icon: string) => void
+  setActivePage: (pageId: string) => void
+  reorderPages: (pageIds: string[]) => void
+
+  // Layout operations (on active page)
+  updateLayout: (layout: LayoutItem[]) => void
+  setWidgetVisible: (widgetId: string, visible: boolean) => void
+  setWidgetColor: (widgetId: string, color: string | null) => void
+  applyPreset: (presetKey: string) => void
+
+  // Export / Import
+  exportTemplate: (id: string) => ExportedTemplate | null
+  exportAllTemplates: () => ExportedTemplate[]
+  importTemplate: (data: ExportedTemplate) => string | null
+
+  // Computed helpers
+  getActiveTemplate: () => DashboardTemplate | null
+  getActivePage: () => DashboardPage | null
+  getVisibleLayout: () => LayoutItem[]
+}
+
+export const useTemplateStore = create<TemplateStore>()(
+  persist(
+    (set, get) => {
+      // Internal helper: update active template
+      const updateActive = (fn: (t: DashboardTemplate) => DashboardTemplate) => {
+        set(s => {
+          const idx = s.templates.findIndex(t => t.id === s.activeTemplateId)
+          if (idx < 0) return s
+          const updated = [...s.templates]
+          updated[idx] = { ...fn(updated[idx]), updatedAt: now() }
+          return { templates: updated }
+        })
+      }
+
+      // Internal helper: update active page within active template
+      const updateActivePage = (fn: (p: DashboardPage) => DashboardPage) => {
+        updateActive(t => {
+          const pages = t.pages.map(p => p.id === t.activePageId ? fn(p) : p)
+          return { ...t, pages }
+        })
+      }
+
+      return {
+        templates: [createDefaultTemplate()],
+        activeTemplateId: null, // will be set on init
+
+        // ── Template CRUD ──
+        createTemplate: (name, description = '') => {
+          const t = createDefaultTemplate()
+          t.name = name
+          t.description = description
+          set(s => ({ templates: [...s.templates, t], activeTemplateId: t.id }))
+          return t.id
+        },
+
+        deleteTemplate: (id) => {
+          set(s => {
+            const filtered = s.templates.filter(t => t.id !== id)
+            if (filtered.length === 0) {
+              const def = createDefaultTemplate()
+              return { templates: [def], activeTemplateId: def.id }
+            }
+            const activeId = s.activeTemplateId === id ? filtered[0].id : s.activeTemplateId
+            return { templates: filtered, activeTemplateId: activeId }
+          })
+        },
+
+        renameTemplate: (id, name) => {
+          set(s => ({
+            templates: s.templates.map(t => t.id === id ? { ...t, name, updatedAt: now() } : t)
+          }))
+        },
+
+        setActiveTemplate: (id) => set({ activeTemplateId: id }),
+
+        duplicateTemplate: (id) => {
+          const s = get()
+          const src = s.templates.find(t => t.id === id)
+          if (!src) return ''
+          const dup: DashboardTemplate = {
+            ...JSON.parse(JSON.stringify(src)),
+            id: uid(),
+            name: `${src.name} (Copy)`,
+            createdAt: now(),
+            updatedAt: now(),
+          }
+          // Regenerate page IDs
+          dup.pages = dup.pages.map(p => ({ ...p, id: uid() }))
+          dup.activePageId = dup.pages[0]?.id ?? ''
+          set(s => ({ templates: [...s.templates, dup], activeTemplateId: dup.id }))
+          return dup.id
+        },
+
+        // ── Page CRUD ──
+        addPage: (name = 'New Page', preset = 'Trading') => {
+          const page = createDefaultPage(name, preset)
+          updateActive(t => ({
+            ...t,
+            pages: [...t.pages, page],
+            activePageId: page.id,
+          }))
+          return page.id
+        },
+
+        deletePage: (pageId) => {
+          updateActive(t => {
+            if (t.pages.length <= 1) return t // keep at least 1 page
+            const pages = t.pages.filter(p => p.id !== pageId)
+            const activePageId = t.activePageId === pageId ? pages[0].id : t.activePageId
+            return { ...t, pages, activePageId }
+          })
+        },
+
+        renamePage: (pageId, name) => {
+          updateActive(t => ({
+            ...t,
+            pages: t.pages.map(p => p.id === pageId ? { ...p, name } : p),
+          }))
+        },
+
+        setPageIcon: (pageId, icon) => {
+          updateActive(t => ({
+            ...t,
+            pages: t.pages.map(p => p.id === pageId ? { ...p, icon } : p),
+          }))
+        },
+
+        setActivePage: (pageId) => {
+          updateActive(t => ({ ...t, activePageId: pageId }))
+        },
+
+        reorderPages: (pageIds) => {
+          updateActive(t => {
+            const ordered = pageIds.map(id => t.pages.find(p => p.id === id)).filter(Boolean) as DashboardPage[]
+            // Append any missing pages (safety)
+            t.pages.forEach(p => { if (!ordered.find(o => o.id === p.id)) ordered.push(p) })
+            return { ...t, pages: ordered }
+          })
+        },
+
+        // ── Layout operations ──
+        updateLayout: (layout) => {
+          updateActivePage(p => ({ ...p, layout }))
+        },
+
+        setWidgetVisible: (widgetId, visible) => {
+          updateActivePage(p => ({
+            ...p,
+            widgets: p.widgets.map(w => w.id === widgetId ? { ...w, visible } : w),
+          }))
+        },
+
+        setWidgetColor: (widgetId, color) => {
+          updateActivePage(p => ({
+            ...p,
+            widgets: p.widgets.map(w => w.id === widgetId ? { ...w, colorGroup: color } : w),
+          }))
+        },
+
+        applyPreset: (presetKey) => {
+          const presetLayout = PRESET_LAYOUTS[presetKey]
+          if (!presetLayout) return
+          updateActivePage(p => ({
+            ...p,
+            layout: presetLayout,
+            widgets: p.widgets.map(w => ({
+              ...w,
+              visible: presetLayout.some(l => l.i === w.id),
+            })),
+          }))
+        },
+
+        // ── Export / Import ──
+        exportTemplate: (id) => {
+          const t = get().templates.find(t => t.id === id)
+          if (!t) return null
+          return { _format: 'bd_oms_template_v1', _exportedAt: now(), template: JSON.parse(JSON.stringify(t)) }
+        },
+
+        exportAllTemplates: () => {
+          return get().templates.map(t => ({
+            _format: 'bd_oms_template_v1' as const,
+            _exportedAt: now(),
+            template: JSON.parse(JSON.stringify(t)),
+          }))
+        },
+
+        importTemplate: (data) => {
+          if (data?._format !== 'bd_oms_template_v1' || !data?.template) return null
+          const t: DashboardTemplate = {
+            ...data.template,
+            id: uid(),
+            createdAt: now(),
+            updatedAt: now(),
+          }
+          // Regenerate page IDs for safety
+          t.pages = t.pages.map(p => ({ ...p, id: uid() }))
+          t.activePageId = t.pages[0]?.id ?? ''
+          set(s => ({ templates: [...s.templates, t], activeTemplateId: t.id }))
+          return t.id
+        },
+
+        // ── Computed ──
+        getActiveTemplate: () => {
+          const s = get()
+          return s.templates.find(t => t.id === s.activeTemplateId) ?? s.templates[0] ?? null
+        },
+
+        getActivePage: () => {
+          const t = get().getActiveTemplate()
+          if (!t) return null
+          return t.pages.find(p => p.id === t.activePageId) ?? t.pages[0] ?? null
+        },
+
+        getVisibleLayout: () => {
+          const page = get().getActivePage()
+          if (!page) return []
+          return page.layout.filter(l =>
+            page.widgets.find(w => w.id === l.i)?.visible !== false
+          )
+        },
+      }
+    },
+    {
+      name: 'bd_oms_templates_v1',
+      onRehydrateStorage: () => (state) => {
+        if (state && state.templates.length > 0 && !state.activeTemplateId) {
+          state.activeTemplateId = state.templates[0].id
+        }
+        // Ensure at least one template exists
+        if (state && state.templates.length === 0) {
+          const def = createDefaultTemplate()
+          state.templates = [def]
+          state.activeTemplateId = def.id
+        }
+      },
+    }
+  )
+)
+
+==== WIDGET FILES ====
+
+-- src/components/widgets/AIPredictionWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect, useMemo } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+
+function momentumSignal(stocks, symbol) {
+  const s = stocks.find(x => x.tradingCode === symbol)
+  if (!s) return null
+  const chg      = s.changePercent ?? 0
+  const vol      = s.volume ?? 0
+  const avgVol   = stocks.reduce((a, x) => a + (x.volume ?? 0), 0) / (stocks.length || 1)
+  const volRatio = vol / (avgVol || 1)
+  const price    = s.lastTradePrice ?? 0
+  const high     = s.highPrice ?? price
+  const low      = s.lowPrice  ?? price
+  const range    = high - low
+  const pos      = range > 0 ? (price - low) / range : 0.5
+
+  let score = 50
+  score += chg * 4
+  score += (volRatio - 1) * 8
+  score += (pos - 0.5) * 20
+  score = Math.max(5, Math.min(95, score))
+
+  const signal = score >= 65 ? "BUY" : score <= 35 ? "SELL" : "HOLD"
+  const conf   = Math.round(Math.abs(score - 50) * 2)
+
+  return {
+    score: Math.round(score), signal, confidence: conf,
+    factors: [
+      { name: "Momentum",     val: chg,              score: Math.min(100, 50 + chg * 8) },
+      { name: "Volume",       val: volRatio.toFixed(2) + "x", score: Math.min(100, 50 + (volRatio - 1) * 20) },
+      { name: "Price Pos.",   val: (pos * 100).toFixed(0) + "%", score: pos * 100 },
+      { name: "Change%",      val: chg.toFixed(2) + "%", score: Math.min(100, 50 + chg * 5) },
+    ]
+  }
+}
+
+const SIG_COLORS = { BUY: "#00D4AA", SELL: "#FF6B6B", HOLD: "#F59E0B" }
+
+export function AIPredictionWidget() {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [symbol, setSymbol] = useState("")
+  const [pred, setPred]     = useState(null)
+  const [scanning, setScanning] = useState(false)
+  const [topPicks, setTopPicks] = useState([])
+
+  const stock = stocks.find(s => s.tradingCode === symbol)
+
+  useEffect(() => {
+    if (!symbol || !stock) { setPred(null); return }
+    setPred(momentumSignal(stocks, symbol))
+    const id = setInterval(() => setPred(momentumSignal(stocks, symbol)), 5000)
+    return () => clearInterval(id)
+  }, [symbol, stock?.lastTradePrice])
+
+  const scanAll = () => {
+    setScanning(true)
+    setTimeout(() => {
+      const picks = stocks
+        .map(s => ({ ...s, sig: momentumSignal(stocks, s.tradingCode) }))
+        .filter(s => s.sig?.signal === "BUY" && s.sig.confidence > 50)
+        .sort((a, b) => b.sig.score - a.sig.score)
+        .slice(0, 5)
+      setTopPicks(picks)
+      setScanning(false)
+    }, 800)
+  }
+
+  const arcPath = (pct) => {
+    const r = 50, cx = 60, cy = 65
+    const start = Math.PI, end = Math.PI + (pct / 100) * Math.PI
+    const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start)
+    const x2 = cx + r * Math.cos(end),   y2 = cy + r * Math.sin(end)
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${pct > 50 ? 1 : 0} 1 ${x2} ${y2}`
+  }
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <span style={{ color: "#8B5CF6", fontSize: 10, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>⬡ AI SIGNAL</span>
+        <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"
+          style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 8px", color: "#fff", fontSize: 11, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        <button onClick={scanAll} disabled={scanning} style={{ padding: "4px 8px", background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: 5, color: "#8B5CF6", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>
+          {scanning ? "Scanning…" : "Scan All"}
+        </button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
+        {pred ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* Signal gauge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <path d={arcPath(100)} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round" />
+                <path d={arcPath(pred.score)} fill="none" stroke={SIG_COLORS[pred.signal]} strokeWidth="8" strokeLinecap="round" style={{ transition: "all 0.5s" }} />
+                <text x="60" y="58" textAnchor="middle" fill={SIG_COLORS[pred.signal]} fontSize="20" fontFamily="Space Mono" fontWeight="bold">{pred.signal}</text>
+                <text x="60" y="70" textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="Space Mono">{pred.score}/100</text>
+              </svg>
+              <div>
+                <div style={{ color: SIG_COLORS[pred.signal], fontSize: 22, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{pred.signal}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>Confidence: {pred.confidence}%</div>
+                <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginTop: 2 }}>Momentum Model</div>
+              </div>
+            </div>
+
+            {/* Factor bars */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {pred.factors.map(f => (
+                <div key={f.name}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{f.name}</span>
+                    <span style={{ color: "#fff", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{f.val}</span>
+                  </div>
+                  <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.max(0, Math.min(100, f.score))}%`, height: "100%", background: f.score >= 60 ? "#00D4AA" : f.score <= 40 ? "#FF6B6B" : "#F59E0B", borderRadius: 2, transition: "width 0.4s" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)", borderRadius: 6, padding: "6px 8px", color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>
+              ⚠ Momentum model only. Not financial advice.
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: "12px 0", fontFamily: "'Space Mono',monospace" }}>Enter symbol for AI signal</div>
+            {topPicks.length > 0 && (
+              <div>
+                <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace", marginBottom: 6 }}>TOP BUY SIGNALS</div>
+                {topPicks.map(p => (
+                  <div key={p.tradingCode} onClick={() => setSymbol(p.tradingCode)}
+                    style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }}>
+                    <span style={{ color: "#00D4AA", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>{p.tradingCode}</span>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>Score: {p.sig.score}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/BuySellPressureWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+import { subscribeMarket } from "@/hooks/useSignalR"
+
+export function BuySellPressureWidget({ linkedSymbol }) {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [symbol, setSymbol] = useState(linkedSymbol ?? "")
+  const [history, setHistory] = useState([])
+  const [live, setLive] = useState(null)  // { buyPressure, sellPressure }
+
+  useEffect(() => { if (linkedSymbol) setSymbol(linkedSymbol) }, [linkedSymbol])
+
+  // Seed from stock data
+  const stock = stocks.find(s => s.tradingCode === symbol)
+  useEffect(() => {
+    if (!stock) return
+    const bp = stock.buyPressure ?? (50 + (stock.changePercent ?? 0) * 3)
+    setLive({ buyPressure: Math.min(90, Math.max(10, bp)), sellPressure: Math.min(90, Math.max(10, 100 - bp)) })
+  }, [stock?.tradingCode, stock?.lastTradePrice])
+
+  // Real SignalR pressure updates
+  useEffect(() => {
+    return subscribeMarket("PressureUpdate", (list: any[]) => {
+      const entry = list.find(p => p.tradingCode === symbol || stocks.find(s => s.id === p.stockId)?.tradingCode === symbol)
+      if (!entry) return
+      const bp = entry.buyPressure
+      setLive({ buyPressure: bp, sellPressure: entry.sellPressure ?? 100 - bp })
+      setHistory(h => [...h.slice(-29), { buy: bp, sell: entry.sellPressure ?? 100 - bp, t: Date.now() }])
+    })
+  }, [symbol, stocks])
+
+  // Also update from BulkPriceUpdate which includes buyPressure field
+  useEffect(() => {
+    return subscribeMarket("BulkPriceUpdate", (updates: any[]) => {
+      const u = updates.find(x => x.tradingCode === symbol)
+      if (!u?.buyPressure) return
+      const bp = u.buyPressure
+      setLive({ buyPressure: bp, sellPressure: u.sellPressure ?? 100 - bp })
+      setHistory(h => [...h.slice(-29), { buy: bp, sell: u.sellPressure ?? 100 - bp, t: Date.now() }])
+    })
+  }, [symbol])
+
+  const latest = live ?? { buyPressure: 50, sellPressure: 50 }
+  const buyPct  = latest.buyPressure.toFixed(1)
+  const sellPct = latest.sellPressure.toFixed(1)
+  const maxVal  = Math.max(...history.map(h => Math.max(h.buy, h.sell)), 100)
+  const barH    = 80
+
+  return (
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+      <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
+        <input value={symbol} onChange={e=>setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"
+          style={{ width:80, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:5, padding:"4px 8px", color:"#fff", fontSize:11, outline:"none", fontFamily:"'Space Mono',monospace" }} />
+        <span style={{ color:"rgba(255,255,255,0.3)", fontSize:10, fontFamily:"'Space Mono',monospace", marginLeft:"auto" }}>BUY/SELL PRESSURE</span>
+        <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace" }}>● LIVE</span>
+      </div>
+
+      <div style={{ padding:"12px 16px", display:"flex", flexDirection:"column", gap:8, flexShrink:0 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <span style={{ color:"#00D4AA", fontSize:18, fontFamily:"'Space Mono',monospace", fontWeight:700 }}>{buyPct}%</span>
+          <span style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontFamily:"'Space Mono',monospace" }}>BUY vs SELL</span>
+          <span style={{ color:"#FF6B6B", fontSize:18, fontFamily:"'Space Mono',monospace", fontWeight:700 }}>{sellPct}%</span>
+        </div>
+        <div style={{ height:10, borderRadius:5, overflow:"hidden", background:"rgba(255,255,255,0.05)", display:"flex" }}>
+          <div style={{ width:`${latest.buyPressure}%`, background:"linear-gradient(90deg,#00B894,#00D4AA)", transition:"width 0.6s ease", borderRadius:"5px 0 0 5px" }} />
+          <div style={{ flex:1, background:"linear-gradient(90deg,#FF6B6B,#E84393)", borderRadius:"0 5px 5px 0" }} />
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between" }}>
+          <span style={{ color:"#00D4AA", fontSize:10, fontFamily:"'Space Mono',monospace" }}>● BUY</span>
+          <span style={{ color:"#FF6B6B", fontSize:10, fontFamily:"'Space Mono',monospace" }}>SELL ●</span>
+        </div>
+      </div>
+
+      <div style={{ flex:1, padding:"4px 8px", display:"flex", alignItems:"flex-end", gap:2, overflow:"hidden" }}>
+        {history.map((h,i) => (
+          <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", gap:1, alignItems:"stretch" }}>
+            <div style={{ height:`${(h.buy/maxVal)*barH}px`, background:`rgba(0,212,170,${0.3+(h.buy/100)*0.5})`, borderRadius:"2px 2px 0 0", transition:"height 0.3s" }} />
+            <div style={{ height:`${(h.sell/maxVal)*barH*0.6}px`, background:`rgba(255,107,107,${0.3+(h.sell/100)*0.4})`, borderRadius:"0 0 2px 2px" }} />
+          </div>
+        ))}
+        {history.length === 0 && stock && (
+          <div style={{ margin:"auto", color:"rgba(255,255,255,0.2)", fontSize:11, fontFamily:"'Space Mono',monospace" }}>Waiting for live data…</div>
+        )}
+        {!stock && <span style={{ color:"rgba(255,255,255,0.2)", fontSize:11, margin:"auto", fontFamily:"'Space Mono',monospace" }}>Select a symbol</span>}
+      </div>
+
+      <div style={{ padding:"5px 8px", borderTop:"1px solid rgba(255,255,255,0.05)", flexShrink:0 }}>
+        <span style={{ fontSize:10, fontFamily:"'Space Mono',monospace", color: latest.buyPressure > 60 ? "#00D4AA" : latest.buyPressure < 40 ? "#FF6B6B" : "rgba(255,255,255,0.4)" }}>
+          {latest.buyPressure > 65 ? "● Strong buying pressure" : latest.buyPressure < 35 ? "● Strong selling pressure" : latest.buyPressure > 55 ? "● Mild buying" : latest.buyPressure < 45 ? "● Mild selling" : "● Balanced market"}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/ExecutionListWidget.tsx --
+// @ts-nocheck
+import { useMemo, useState } from "react"
+import { useOrders } from "@/hooks/useOrders"
+
+export function ExecutionListWidget({ linkedSymbol, onSymbolClick }) {
+  const { orders: _o } = useOrders()
+  const orders = _o ?? []
+  const [search, setSearch] = useState("")
+  const [dateF, setDateF]   = useState("Today")
+
+  const executions = useMemo(() => {
+    const now = new Date()
+    return orders.filter(o => {
+      if (o.status !== "Filled") return false
+      if (search && !o.symbol?.toUpperCase().includes(search.toUpperCase())) return false
+      if (dateF === "Today") {
+        const d = new Date(o.updatedAt ?? o.createdAt)
+        return d.toDateString() === now.toDateString()
+      }
+      return true
+    })
+  }, [orders, search, dateF])
+
+  const totalBought = executions.filter(o => o.side === "Buy").reduce((a, o) => a + (o.quantity * (o.price ?? 0)), 0)
+  const totalSold   = executions.filter(o => o.side === "Sell").reduce((a, o) => a + (o.quantity * (o.price ?? 0)), 0)
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Symbol…"
+          style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 8px", color: "#fff", fontSize: 11, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        {["Today","All"].map(d => (
+          <button key={d} onClick={() => setDateF(d)} style={{ padding: "4px 8px", background: dateF === d ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${dateF === d ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: dateF === d ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{d}</button>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "80px 40px 60px 70px 80px 1fr", gap: 4, padding: "4px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", flexShrink: 0 }}>
+        {["SYMBOL","SIDE","QTY","PRICE","VALUE","TIME"].map(h => (
+          <span key={h} style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{h}</span>
+        ))}
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {executions.length === 0
+          ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: 16, fontFamily: "'Space Mono',monospace" }}>No executions</div>
+          : executions.map(o => {
+            const val = (o.filledQuantity || o.quantity) * (o.price ?? 0)
+            const t   = new Date(o.updatedAt ?? o.createdAt)
+            return (
+              <div key={o.orderId} onClick={() => onSymbolClick?.(o.symbol)}
+                style={{ display: "grid", gridTemplateColumns: "80px 40px 60px 70px 80px 1fr", gap: 4, padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.03)", cursor: "pointer", background: linkedSymbol === o.symbol ? "rgba(0,212,170,0.04)" : "transparent" }}>
+                <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{o.symbol}</span>
+                <span style={{ color: o.side === "Buy" ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.side}</span>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.filledQuantity || o.quantity}</span>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>৳{o.price?.toFixed(2) ?? "—"}</span>
+                <span style={{ color: "#fff", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>৳{val.toLocaleString()}</span>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{t.toLocaleTimeString()}</span>
+              </div>
+            )
+          })
+        }
+      </div>
+
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "4px 8px", display: "flex", gap: 16, flexShrink: 0 }}>
+        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>Bought: <span style={{ color: "#00D4AA" }}>৳{totalBought.toLocaleString()}</span></span>
+        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>Sold: <span style={{ color: "#FF6B6B" }}>৳{totalSold.toLocaleString()}</span></span>
+        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>Count: <span style={{ color: "#fff" }}>{executions.length}</span></span>
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/IndexSummaryWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+import { subscribeMarket } from "@/hooks/useSignalR"
+
+const BASE = { dsex:6248.30, dses:1312.45, ds30:2187.60, cseAll:18420.50, cse30:9841.20 }
+
+const INDEX_DEFS = [
+  { key:"dsex",   code:"DSEX",   name:"DSE General"   },
+  { key:"dses",   code:"DSES",   name:"DSE Shariah"   },
+  { key:"ds30",   code:"DS30",   name:"DSE 30"        },
+  { key:"cseAll", code:"CSEALL", name:"CSE All Share"  },
+  { key:"cse30",  code:"CSE30",  name:"CSE 30"        },
+]
+
+export function IndexSummaryWidget() {
+  const { stocks: _s, connected } = useMarketData()
+  const stocks = _s ?? []
+  const [indices, setIndices] = useState(
+    INDEX_DEFS.map(d => ({ ...d, value:BASE[d.key], base:BASE[d.key], change:0, changePct:0, up:true }))
+  )
+
+  // Real SignalR index updates from backend
+  useEffect(() => {
+    return subscribeMarket("IndexUpdate", (data: any) => {
+      setIndices(prev => prev.map(idx => {
+        const val = data[idx.key]
+        if (val === undefined) return idx
+        const chg    = val - idx.base
+        const chgPct = (chg / idx.base) * 100
+        return { ...idx, value:val, change:chg, changePct:chgPct, up:chg >= 0 }
+      }))
+    })
+  }, [])
+
+  const advancers = stocks.filter(s => (s.changePercent ?? 0) > 0).length
+  const decliners = stocks.filter(s => (s.changePercent ?? 0) < 0).length
+  const unchanged = stocks.length - advancers - decliners
+
+  return (
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+      <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+        <span style={{ color:"rgba(255,255,255,0.5)", fontSize:10, fontFamily:"'Space Mono',monospace" }}>MARKET INDICES</span>
+        <span style={{ color: connected ? "#00D4AA" : "#FF6B6B", fontSize:9, fontFamily:"'Space Mono',monospace" }}>{connected ? "● LIVE" : "○ offline"}</span>
+      </div>
+
+      <div style={{ flex:1, overflowY:"auto" }}>
+        {indices.map(idx => (
+          <div key={idx.code} style={{ padding:"10px 12px", borderBottom:"1px solid rgba(255,255,255,0.04)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <div>
+              <div style={{ color:"#fff", fontSize:12, fontFamily:"'Space Mono',monospace", fontWeight:700 }}>{idx.code}</div>
+              <div style={{ color:"rgba(255,255,255,0.3)", fontSize:10 }}>{idx.name}</div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ color:"#fff", fontSize:13, fontFamily:"'Space Mono',monospace", fontWeight:700 }}>{idx.value.toFixed(2)}</div>
+              <div style={{ color: idx.up ? "#00D4AA" : "#FF6B6B", fontSize:11, fontFamily:"'Space Mono',monospace" }}>
+                {idx.up ? "▲" : "▼"} {Math.abs(idx.change).toFixed(2)} ({Math.abs(idx.changePct).toFixed(2)}%)
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ borderTop:"1px solid rgba(255,255,255,0.05)", padding:"6px 10px", flexShrink:0 }}>
+        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:9, fontFamily:"'Space Mono',monospace", marginBottom:4 }}>MARKET BREADTH · {stocks.length} stocks</div>
+        <div style={{ display:"flex", height:6, borderRadius:3, overflow:"hidden", gap:1 }}>
+          <div style={{ flex:advancers, background:"#00D4AA", borderRadius:"3px 0 0 3px" }} />
+          <div style={{ flex:unchanged, background:"rgba(255,255,255,0.2)" }} />
+          <div style={{ flex:decliners, background:"#FF6B6B", borderRadius:"0 3px 3px 0" }} />
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
+          <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace" }}>▲ {advancers}</span>
+          <span style={{ color:"rgba(255,255,255,0.3)", fontSize:9, fontFamily:"'Space Mono',monospace" }}>— {unchanged}</span>
+          <span style={{ color:"#FF6B6B", fontSize:9, fontFamily:"'Space Mono',monospace" }}>▼ {decliners}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/MarketDepthWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect, useCallback } from "react"
+import { apiClient } from "@/api/client"
+import { subscribeMarket } from "@/hooks/useSignalR"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function MarketDepthWidget({ linkedSymbol, onSymbolClick }) {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [symbol, setSymbol] = useState(linkedSymbol ?? "")
+  const [depth,  setDepth]  = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => { if (linkedSymbol) setSymbol(linkedSymbol) }, [linkedSymbol])
+
+  // REST load on symbol change
+  const load = useCallback(async (sym) => {
+    if (!sym) return
+    setLoading(true)
+    try {
+      const r = await apiClient.get(`/marketdepth/${sym}`)
+      setDepth(r.data)
+    } catch {
+      // Fallback: generate from last price
+      const s = stocks.find(x => x.tradingCode === sym)
+      if (s) {
+        const p    = s.lastTradePrice
+        const tick = Math.max(0.01, Math.round(p * 0.001 * 100) / 100)
+        const bp   = (s.buyPressure ?? 50) / 100
+        setDepth({
+          lastPrice: p, spread: tick * 2,
+          bids: Array.from({length:10},(_,i)=>({ price:+(p-(i+1)*tick).toFixed(2), qty:Math.round(3000*bp/(i*0.4+1)), orders:Math.ceil(Math.random()*15+1) })),
+          asks: Array.from({length:10},(_,i)=>({ price:+(p+(i+1)*tick).toFixed(2), qty:Math.round(3000*(1-bp)/(i*0.4+1)), orders:Math.ceil(Math.random()*15+1) })),
+        })
+      }
+    }
+    setLoading(false)
+  }, [stocks])
+
+  useEffect(() => { load(symbol) }, [symbol])
+
+  // Live SignalR depth updates
+  useEffect(() => {
+    return subscribeMarket("DepthUpdate", (d) => {
+      if (d.tradingCode === symbol) setDepth(d)
+    })
+  }, [symbol])
+
+  const stock = stocks.find(s => s.tradingCode === symbol)
+  const maxBidQty = Math.max(...(depth?.bids ?? []).map(b => b.qty), 1)
+  const maxAskQty = Math.max(...(depth?.asks ?? []).map(a => a.qty), 1)
+
+  return (
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+      <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
+        <input value={symbol} onChange={e=>{setSymbol(e.target.value.toUpperCase())}} placeholder="Symbol…"
+          style={{ width:80, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:5, padding:"4px 8px", color:"#fff", fontSize:11, outline:"none", fontFamily:"'Space Mono',monospace" }} />
+        {stock && <span style={{ color:"#fff", fontSize:12, fontFamily:"'Space Mono',monospace", fontWeight:700 }}>৳{stock.lastTradePrice?.toFixed(2)}</span>}
+        {depth && <span style={{ color:"rgba(255,255,255,0.3)", fontSize:10, fontFamily:"'Space Mono',monospace", marginLeft:"auto" }}>Spread: ৳{depth.spread?.toFixed(2)}</span>}
+        <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace" }}>● LIVE</span>
+      </div>
+
+      {/* Column headers */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr", padding:"3px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", flexShrink:0 }}>
+        {["Orders","Qty","Bid","Ask","Qty","Orders"].map((h,i) => (
+          <span key={i} style={{ color:"rgba(255,255,255,0.25)", fontSize:9, fontFamily:"'Space Mono',monospace", textAlign: i<3 ? "left":"right" }}>{h}</span>
+        ))}
+      </div>
+
+      <div style={{ flex:1, overflowY:"auto" }}>
+        {loading && <div style={{ padding:16, color:"rgba(255,255,255,0.2)", fontSize:11, textAlign:"center", fontFamily:"'Space Mono',monospace" }}>Loading…</div>}
+        {!loading && !depth && <div style={{ padding:16, color:"rgba(255,255,255,0.2)", fontSize:11, textAlign:"center", fontFamily:"'Space Mono',monospace" }}>Enter a symbol</div>}
+        {!loading && depth && (depth.bids ?? []).map((bid, i) => {
+          const ask = depth.asks?.[i]
+          return (
+            <div key={i} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr", padding:"3px 8px", borderBottom:"1px solid rgba(255,255,255,0.02)", position:"relative" }}>
+              {/* Bid volume bar */}
+              <div style={{ position:"absolute", left:0, top:0, height:"100%", width:`${(bid.qty/maxBidQty)*45}%`, background:"rgba(0,212,170,0.07)", pointerEvents:"none" }} />
+              {/* Ask volume bar */}
+              {ask && <div style={{ position:"absolute", right:0, top:0, height:"100%", width:`${(ask.qty/maxAskQty)*45}%`, background:"rgba(255,107,107,0.07)", pointerEvents:"none" }} />}
+              <span style={{ color:"rgba(255,255,255,0.35)", fontSize:10, fontFamily:"'Space Mono',monospace", zIndex:1 }}>{bid.orders}</span>
+              <span style={{ color:"rgba(0,212,170,0.8)", fontSize:10, fontFamily:"'Space Mono',monospace", zIndex:1 }}>{bid.qty?.toLocaleString()}</span>
+              <span style={{ color:"#00D4AA", fontSize:10, fontFamily:"'Space Mono',monospace", fontWeight:700, zIndex:1 }}>{bid.price?.toFixed(2)}</span>
+              {ask ? <>
+                <span style={{ color:"#FF6B6B", fontSize:10, fontFamily:"'Space Mono',monospace", fontWeight:700, textAlign:"right", zIndex:1 }}>{ask.price?.toFixed(2)}</span>
+                <span style={{ color:"rgba(255,107,107,0.8)", fontSize:10, fontFamily:"'Space Mono',monospace", textAlign:"right", zIndex:1 }}>{ask.qty?.toLocaleString()}</span>
+                <span style={{ color:"rgba(255,255,255,0.35)", fontSize:10, fontFamily:"'Space Mono',monospace", textAlign:"right", zIndex:1 }}>{ask.orders}</span>
+              </> : <><span/><span/><span/></>}
+            </div>
+          )
+        })}
+      </div>
+
+      {depth && (
+        <div style={{ borderTop:"1px solid rgba(255,255,255,0.05)", padding:"4px 8px", display:"flex", justifyContent:"space-between", flexShrink:0 }}>
+          <span style={{ color:"#00D4AA", fontSize:10, fontFamily:"'Space Mono',monospace" }}>
+            BID {depth.bids?.[0]?.price?.toFixed(2)}
+          </span>
+          <span style={{ color:"rgba(255,255,255,0.2)", fontSize:10, fontFamily:"'Space Mono',monospace" }}>
+            ৳{depth.lastPrice?.toFixed(2)}
+          </span>
+          <span style={{ color:"#FF6B6B", fontSize:10, fontFamily:"'Space Mono',monospace" }}>
+            ASK {depth.asks?.[0]?.price?.toFixed(2)}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+-- src/components/widgets/MarketMapWidget.tsx --
+// @ts-nocheck
+import { useMemo, useState } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function MarketMapWidget({ onSymbolClick }) {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [colorBy, setColorBy] = useState("change")
+  const [sizeBy,  setSizeBy]  = useState("volume")
+  const [sector,  setSector]  = useState("All")
+
+  const sectors = useMemo(() => ["All", ...new Set(stocks.map(s => s.category).filter(Boolean))], [stocks])
+
+  const tiles = useMemo(() => {
+    let s = stocks.filter(x => x.lastTradePrice > 0)
+    if (sector !== "All") s = s.filter(x => x.category === sector)
+    const maxVol = Math.max(...s.map(x => x.volume ?? 1), 1)
+    return s.map(x => {
+      const chg  = x.changePercent ?? 0
+      const size = Math.max(0.3, (x.volume ?? 0) / maxVol)
+      const r = chg >= 3 ? 0 : chg >= 0 ? Math.round(chg / 3 * 30) : Math.round(Math.min(1, Math.abs(chg) / 5) * 200)
+      const g = chg >= 0 ? Math.round(Math.min(1, chg / 5) * 212) : 0
+      const b = chg < 0 ? Math.round(Math.abs(chg) / 5 * 50) : 170
+      const bg = chg > 0.1 ? `rgba(0,${g},${b},0.85)` : chg < -0.1 ? `rgba(${r},0,${b * 0.3},0.85)` : "rgba(50,50,70,0.85)"
+      return { ...x, size, bg, chg }
+    }).sort((a, b) => b.size - a.size)
+  }, [stocks, sector, colorBy, sizeBy])
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0A0F1C", overflow: "hidden" }}>
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <select value={sector} onChange={e => setSector(e.target.value)} style={{ background: "#0D1320", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.6)", fontSize: 10, padding: "3px 6px", cursor: "pointer", maxWidth: 120 }}>
+          {sectors.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+          {[["change","% Chg"],["volume","Vol"]].map(([v,l]) => (
+            <button key={v} onClick={() => setColorBy(v)} style={{ padding: "3px 6px", background: colorBy === v ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${colorBy === v ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: colorBy === v ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 9, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflow: "auto", padding: 4 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 2, alignContent: "flex-start" }}>
+          {tiles.map(s => (
+            <div key={s.id} onClick={() => onSymbolClick?.(s.tradingCode)}
+              style={{ background: s.bg, borderRadius: 3, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", transition: "transform 0.1s", padding: "3px 2px", minWidth: 48, width: `calc(${Math.max(5, s.size * 14)}% - 4px)`, minHeight: 44, boxSizing: "border-box" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+              <span style={{ color: "rgba(255,255,255,0.9)", fontSize: Math.max(8, Math.min(11, s.size * 12)), fontFamily: "'Space Mono',monospace", fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{s.tradingCode}</span>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{s.chg >= 0 ? "+" : ""}{s.chg.toFixed(1)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "4px 8px", display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
+        {[["rgba(0,180,100,0.9)","Strong Buy"],["rgba(0,100,50,0.9)","Gain"],["rgba(50,50,70,0.9)","Flat"],["rgba(150,0,20,0.9)","Loss"],["rgba(200,0,30,0.9)","Strong Loss"]].map(([c,l]) => (
+          <span key={l} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'Space Mono',monospace" }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: c, display: "inline-block" }} />{l}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/MarketTickerBar.tsx --
+import { useState, useEffect, useRef } from 'react'
+
+interface TickerItem {
+  symbol: string
+  price: number
+  change: number
+  pct: number
+}
+
+const INITIAL_TICKERS: TickerItem[] = [
+  { symbol: 'DSEX',       price: 6248.32, change:  42.18, pct:  0.68 },
+  { symbol: 'DSES',       price: 1358.94, change:  12.44, pct:  0.92 },
+  { symbol: 'DS30',       price: 2214.56, change: -18.22, pct: -0.81 },
+  { symbol: 'SQURPHARMA', price: 312.50,  change:   8.90, pct:  2.93 },
+  { symbol: 'BATBC',      price: 716.00,  change: -12.40, pct: -1.70 },
+  { symbol: 'BRAC BANK',  price: 51.20,   change:   0.80, pct:  1.59 },
+  { symbol: 'GPHOUSE',    price: 48.80,   change:  -0.60, pct: -1.21 },
+  { symbol: 'MARICO',     price: 280.00,  change:   3.50, pct:  1.27 },
+  { symbol: 'ISLAMIBANK', price: 37.90,   change:   0.40, pct:  1.07 },
+  { symbol: 'DUTCHBANGL', price: 78.60,   change:  -1.10, pct: -1.38 },
+  { symbol: 'LHBL',       price: 42.30,   change:   1.20, pct:  2.92 },
+  { symbol: 'RENATA',     price: 1420.00, change: -22.00, pct: -1.52 },
+]
+
+function TickerItem({ item }: { item: TickerItem }) {
+  const isUp = item.change >= 0
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      paddingRight: 24, flexShrink: 0,
+      fontSize: 11.5, fontFamily: 'var(--font-mono)',
+    }}>
+      <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-ui)', fontSize: 11 }}>
+        {item.symbol}
+      </span>
+      <span style={{ color: 'var(--text-secondary)' }}>
+        ৳{item.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </span>
+      <span style={{ color: isUp ? 'var(--bull-strong)' : 'var(--bear-strong)', fontWeight: 600 }}>
+        {isUp ? '+' : ''}{item.pct.toFixed(2)}%
+      </span>
+      <span style={{ color: 'var(--border-strong)', userSelect: 'none' }}>·</span>
+    </span>
+  )
+}
+
+export function MarketTickerBar() {
+  const [tickers, setTickers] = useState(INITIAL_TICKERS)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [paused, setPaused] = useState(false)
+
+  // Simulate live price updates
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTickers(prev => prev.map(t => {
+        const delta  = (Math.random() - 0.48) * t.price * 0.002
+        const price  = Math.max(0.01, +(t.price + delta).toFixed(2))
+        const change = +(t.change + delta).toFixed(2)
+        const pct    = +((change / (price - change)) * 100).toFixed(2)
+        return { ...t, price, change, pct }
+      }))
+    }, 2500)
+    return () => clearInterval(id)
+  }, [])
+
+  const doubled = [...tickers, ...tickers]
+
+  return (
+    <div
+      style={{
+        height: 28,
+        background: 'var(--bg-elevated)',
+        borderBottom: '1px solid var(--border-subtle)',
+        display: 'flex', alignItems: 'center',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Left fade */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0, width: 40, height: '100%', zIndex: 2,
+        background: 'linear-gradient(to right, var(--bg-elevated), transparent)',
+        pointerEvents: 'none',
+      }} />
+      {/* Right fade */}
+      <div style={{
+        position: 'absolute', right: 0, top: 0, width: 40, height: '100%', zIndex: 2,
+        background: 'linear-gradient(to left, var(--bg-elevated), transparent)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Scrolling track */}
+      <div
+        ref={trackRef}
+        style={{
+          display: 'flex', alignItems: 'center',
+          animation: `tickerScroll 60s linear infinite`,
+          animationPlayState: paused ? 'paused' : 'running',
+          paddingLeft: 16,
+          willChange: 'transform',
+        }}
+      >
+        {doubled.map((item, i) => (
+          <TickerItem key={`${item.symbol}-${i}`} item={item} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/MarketTickerStrip.tsx --
+// @ts-nocheck
+import { useEffect, useRef } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function MarketTickerStrip() {
+  const { stocks: _stocks, connected } = useMarketData()
+  const stocks = _stocks ?? []
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let pos = 0
+    const speed = 0.5
+    const tick = () => {
+      pos -= speed
+      if (pos < -(el.scrollWidth / 2)) pos = 0
+      el.style.transform = `translateX(${pos}px)`
+      requestAnimationFrame(tick)
+    }
+    const raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [stocks.length])
+
+  const items = [...stocks, ...stocks]
+
+  return (
+    <div style={{ overflow: "hidden", background: "#0A0F1C", borderBottom: "1px solid rgba(255,255,255,0.06)", height: "100%", display: "flex", alignItems: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 2, padding: "0 8px", flexShrink: 0 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: connected ? "#00D4AA" : "#FF6B6B", display: "inline-block", boxShadow: connected ? "0 0 6px #00D4AA" : "none" }} />
+        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 9, fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>LIVE</span>
+      </div>
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        <div ref={ref} style={{ display: "flex", gap: 24, whiteSpace: "nowrap", willChange: "transform" }}>
+          {items.map((s, i) => (
+            <span key={i} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>{s.tradingCode}</span>
+              <span style={{ color: "#fff" }}>৳{(s.lastTradePrice ?? 0).toFixed(2)}</span>
+              <span style={{ color: (s.change ?? 0) >= 0 ? "#00D4AA" : "#FF6B6B" }}>
+                {(s.change ?? 0) >= 0 ? "▲" : "▼"}{Math.abs(s.changePercent ?? 0).toFixed(2)}%
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/NewsFeedWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { apiClient } from "@/api/client"
+import { subscribeMarket } from "@/hooks/useSignalR"
+
+const IMP_COLORS = { high:"#FF6B6B", medium:"#F59E0B", low:"rgba(255,255,255,0.3)" }
+
+export function NewsFeedWidget({ onSymbolClick }) {
+  const [news, setNews]     = useState([])
+  const [filter, setFilter] = useState("All")
+  const [search, setSearch] = useState("")
+
+  // Load initial news from REST
+  useEffect(() => {
+    apiClient.get("/news?count=20").then(r => {
+      setNews(r.data ?? [])
+    }).catch(() => {})
+  }, [])
+
+  // Live news from SignalR
+  useEffect(() => {
+    return subscribeMarket("NewsUpdate", (item: any) => {
+      setNews(prev => [{ ...item, isNew: true }, ...prev.slice(0, 49)])
+      // Clear "new" flag after 5s
+      setTimeout(() => {
+        setNews(prev => prev.map(n => n.id === item.id ? { ...n, isNew: false } : n))
+      }, 5000)
+    })
+  }, [])
+
+  const filtered = news.filter(n => {
+    if (filter !== "All" && n.importance !== filter.toLowerCase()) return false
+    if (search && !n.title?.toLowerCase().includes(search.toLowerCase()) && !n.tag?.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  return (
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+      <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search news…"
+          style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:5, padding:"4px 8px", color:"#fff", fontSize:11, outline:"none" }} />
+        <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace" }}>● LIVE</span>
+      </div>
+      <div style={{ padding:"4px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", display:"flex", gap:4, flexShrink:0 }}>
+        {["All","High","Medium","Low"].map(f => (
+          <button key={f} onClick={()=>setFilter(f)} style={{ padding:"3px 7px", background:filter===f?"rgba(255,255,255,0.08)":"none", border:`1px solid ${filter===f?"rgba(255,255,255,0.15)":"transparent"}`, borderRadius:4, color:filter===f?"#fff":"rgba(255,255,255,0.3)", fontSize:9, cursor:"pointer", fontFamily:"'Space Mono',monospace" }}>{f}</button>
+        ))}
+      </div>
+
+      <div style={{ flex:1, overflowY:"auto" }}>
+        {filtered.length === 0
+          ? <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", fontSize:11, padding:16, fontFamily:"'Space Mono',monospace" }}>No news</div>
+          : filtered.map((n,i) => (
+            <div key={n.id ?? i} onClick={()=>onSymbolClick?.(n.tag)}
+              style={{ padding:"8px 10px", borderBottom:"1px solid rgba(255,255,255,0.03)", cursor:"pointer", background: n.isNew ? "rgba(0,212,170,0.04)" : "transparent", transition:"background 0.5s", display:"flex", gap:8, alignItems:"flex-start" }}>
+              <span style={{ width:5, height:5, borderRadius:"50%", background:IMP_COLORS[n.importance]??"#fff", flexShrink:0, marginTop:5 }} />
+              <div style={{ flex:1 }}>
+                {n.isNew && <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace", marginRight:4 }}>NEW</span>}
+                <span style={{ color:"#fff", fontSize:11, lineHeight:1.4 }}>{n.title}</span>
+                <div style={{ display:"flex", gap:6, marginTop:4, alignItems:"center" }}>
+                  <span style={{ background:"rgba(0,212,170,0.1)", color:"#00D4AA", fontSize:9, padding:"1px 5px", borderRadius:3, fontFamily:"'Space Mono',monospace" }}>{n.tag}</span>
+                  <span style={{ color:"rgba(255,255,255,0.2)", fontSize:9, fontFamily:"'Space Mono',monospace" }}>{n.time}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/NotificationsWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { useSignalR } from "@/hooks/useSignalR"
+
+const TYPE_COLORS = { info: "#3B82F6", success: "#00D4AA", warning: "#F59E0B", error: "#FF6B6B", trade: "#8B5CF6" }
+
+export function NotificationsWidget() {
+  const [notes, setNotes]   = useState([])
+  const [filter, setFilter] = useState("All")
+  const [unread, setUnread] = useState(0)
+
+  useSignalR({
+    hub: "notification",
+    events: {
+      ReceiveNotification: (msg) => {
+        setNotes(prev => [{ id: Date.now(), ...msg, ts: new Date(), read: false }, ...prev.slice(0, 49)])
+        setUnread(u => u + 1)
+      },
+      OrderUpdate: (msg) => {
+        setNotes(prev => [{ id: Date.now(), type: "trade", title: "Order Update", message: msg, ts: new Date(), read: false }, ...prev.slice(0, 49)])
+        setUnread(u => u + 1)
+      },
+    },
+  })
+
+  // Demo notifications on mount
+  useEffect(() => {
+    const demos = [
+      { id: 1, type: "success", title: "System Ready", message: "BD Stock OMS connected to DSE live feed", ts: new Date(), read: false },
+      { id: 2, type: "info",    title: "Market Open",  message: "DSE trading session started — 10:00 AM", ts: new Date(Date.now() - 60000), read: false },
+    ]
+    setNotes(demos)
+    setUnread(2)
+  }, [])
+
+  const markAll = () => { setNotes(n => n.map(x => ({ ...x, read: true }))); setUnread(0) }
+
+  const filtered = filter === "All" ? notes : notes.filter(n => n.type === filter.toLowerCase())
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>NOTIFICATIONS</span>
+        {unread > 0 && <span style={{ background: "#FF6B6B", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 10 }}>{unread}</span>}
+        <button onClick={markAll} style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>Mark all read</button>
+      </div>
+      <div style={{ padding: "4px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 4, flexShrink: 0 }}>
+        {["All","Info","Success","Warning","Error","Trade"].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: "3px 7px", background: filter === f ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${filter === f ? "rgba(255,255,255,0.15)" : "transparent"}`, borderRadius: 4, color: filter === f ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 9, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{f}</button>
+        ))}
+      </div>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {filtered.length === 0
+          ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: 16, fontFamily: "'Space Mono',monospace" }}>No notifications</div>
+          : filtered.map(n => (
+            <div key={n.id} onClick={() => { setNotes(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)); setUnread(u => Math.max(0, u - (n.read ? 0 : 1))) }}
+              style={{ padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.03)", cursor: "pointer", background: n.read ? "transparent" : "rgba(255,255,255,0.02)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[n.type] ?? "#fff", flexShrink: 0, marginTop: 4 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ color: "#fff", fontSize: 11, fontWeight: n.read ? 400 : 600 }}>{n.title}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>{n.message}</div>
+                <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, marginTop: 3, fontFamily: "'Space Mono',monospace" }}>{n.ts?.toLocaleTimeString()}</div>
+              </div>
+              {!n.read && <span style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[n.type] ?? "#fff", flexShrink: 0 }} />}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/OrderBookWidget.tsx --
+// @ts-nocheck
+import { useState, useMemo } from "react"
+import { useOrders } from "@/hooks/useOrders"
+
+const STATUS_COLORS = {
+  Pending: "#F59E0B", Open: "#3B82F6", PartiallyFilled: "#8B5CF6",
+  Filled: "#00D4AA", Cancelled: "rgba(255,255,255,0.25)",
+  Rejected: "#FF6B6B", Expired: "rgba(255,255,255,0.2)",
+}
+
+export function OrderBookWidget({ linkedSymbol, onSymbolClick }) {
+  const { orders, loading, cancelOrder } = useOrders()
+  const [filter, setFilter]   = useState("Open")
+  const [search, setSearch]   = useState("")
+  const [sideF, setSideF]     = useState("All")
+  const [cancelling, setCancelling] = useState(null)
+
+  const filtered = useMemo(() => orders.filter(o => {
+    if (filter !== "All" && o.status !== filter) return false
+    if (sideF !== "All" && o.side !== sideF) return false
+    if (search && !o.symbol?.toUpperCase().includes(search.toUpperCase())) return false
+    return true
+  }), [orders, filter, sideF, search])
+
+  const handleCancel = async (orderId) => {
+    setCancelling(orderId)
+    await cancelOrder(orderId, "User cancelled")
+    setCancelling(null)
+  }
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      {/* Header + filters */}
+      <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter symbol…"
+            style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 8px", color: "#fff", fontSize: 11, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+          {["All","Buy","Sell"].map(s => (
+            <button key={s} onClick={() => setSideF(s)} style={{ padding: "4px 8px", background: sideF === s ? (s === "Buy" ? "rgba(0,212,170,0.2)" : s === "Sell" ? "rgba(255,107,107,0.2)" : "rgba(255,255,255,0.1)") : "none", border: `1px solid ${sideF === s ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: sideF === s ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{s}</button>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 3 }}>
+          {["All","Open","Pending","Filled","Cancelled"].map(s => (
+            <button key={s} onClick={() => setFilter(s)} style={{ padding: "3px 7px", background: filter === s ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${filter === s ? "rgba(255,255,255,0.15)" : "transparent"}`, borderRadius: 4, color: filter === s ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Column headers */}
+      <div style={{ display: "grid", gridTemplateColumns: "80px 40px 60px 70px 70px 60px 60px", gap: 4, padding: "4px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", flexShrink: 0 }}>
+        {["SYMBOL","SIDE","TYPE","QTY","PRICE","STATUS",""].map(h => (
+          <span key={h} style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace", letterSpacing: "0.06em" }}>{h}</span>
+        ))}
+      </div>
+
+      {/* Rows */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {loading
+          ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: 16 }}>Loading…</div>
+          : filtered.length === 0
+            ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: 16, fontFamily: "'Space Mono',monospace" }}>No orders</div>
+            : filtered.map(o => (
+                <div key={o.orderId} onClick={() => onSymbolClick?.(o.symbol)}
+                  style={{ display: "grid", gridTemplateColumns: "80px 40px 60px 70px 70px 60px 60px", gap: 4, padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.03)", cursor: "pointer", background: linkedSymbol === o.symbol ? "rgba(0,212,170,0.04)" : "transparent" }}>
+                  <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{o.symbol}</span>
+                  <span style={{ color: o.side === "Buy" ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.side}</span>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.type}</span>
+                  <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.quantity}</span>
+                  <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>৳{o.price?.toFixed(2) ?? "—"}</span>
+                  <span style={{ color: STATUS_COLORS[o.status] ?? "#fff", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{o.status}</span>
+                  {(o.status === "Open" || o.status === "Pending") && (
+                    <button onClick={e => { e.stopPropagation(); handleCancel(o.orderId) }}
+                      disabled={cancelling === o.orderId}
+                      style={{ background: "rgba(255,107,107,0.15)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 3, color: "#FF6B6B", fontSize: 9, cursor: "pointer", padding: "2px 4px", fontFamily: "'Space Mono',monospace" }}>
+                      {cancelling === o.orderId ? "…" : "CXL"}
+                    </button>
+                  )}
+                </div>
+              ))
+        }
+      </div>
+
+      {/* Footer stats */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "4px 8px", display: "flex", gap: 12, flexShrink: 0 }}>
+        {[["Total", orders.length], ["Open", orders.filter(o => o.status === "Open").length], ["Filled", orders.filter(o => o.status === "Filled").length]].map(([l, v]) => (
+          <span key={l} style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{l}: <span style={{ color: "#fff" }}>{v}</span></span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/OrderEntryWidget.tsx --
+// @ts-nocheck
+import { useState } from "react"
+import { useOrders } from "@/hooks/useOrders"
+import { rmsApi } from "@/api/rms"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function OrderEntryWidget() {
+  const { placeOrder, placing } = useOrders()
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [side, setSide]       = useState("Buy")
+  const [symbol, setSymbol]   = useState("")
+  const [type, setType]       = useState("Limit")
+  const [qty, setQty]         = useState("")
+  const [price, setPrice]     = useState("")
+  const [stop, setStop]       = useState("")
+  const [confirm, setConfirm] = useState(false)
+  const [rmsWarn, setRmsWarn] = useState(null)
+  const [msg, setMsg]         = useState(null)
+  const [searchQ, setSearchQ] = useState("")
+  const [showDrop, setShowDrop] = useState(false)
+
+  const filtered = stocks.filter(s => s.tradingCode?.includes(searchQ.toUpperCase())).slice(0, 6)
+  const liveStock = stocks.find(s => s.tradingCode === symbol)
+
+  const validate = async () => {
+    setRmsWarn(null)
+    try {
+      const res = await rmsApi.validateOrder({ symbol, side, type, quantity: Number(qty), price: Number(price) })
+      if (!res.isValid) { setRmsWarn(res.message ?? "RMS validation failed"); return }
+    } catch {}
+    setConfirm(true)
+  }
+
+  const submit = async () => {
+    setConfirm(false)
+    const res = await placeOrder({ symbol, side, type, quantity: Number(qty), price: type !== "Market" ? Number(price) : undefined, stopPrice: stop ? Number(stop) : undefined })
+    setMsg(res.success ? { ok: true, text: `✓ ${side} ${qty} ${symbol} placed` } : { ok: false, text: res.error })
+    setTimeout(() => setMsg(null), 4000)
+  }
+
+  const btn = (label, val, col) => (
+    <button onClick={() => setSide(val)} style={{ flex: 1, padding: "8px 0", background: side === val ? col : "rgba(255,255,255,0.04)", border: `1px solid ${side === val ? col : "rgba(255,255,255,0.08)"}`, borderRadius: 6, color: side === val ? "#000" : "rgba(255,255,255,0.5)", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>{label}</button>
+  )
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", padding: "10px 12px", gap: 8, overflowY: "auto" }}>
+      <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>ORDER ENTRY</div>
+
+      {/* Buy/Sell toggle */}
+      <div style={{ display: "flex", gap: 6 }}>
+        {btn("BUY", "Buy", "#00D4AA")}
+        {btn("SELL", "Sell", "#FF6B6B")}
+      </div>
+
+      {/* Symbol */}
+      <div style={{ position: "relative" }}>
+        <input value={searchQ || symbol} onChange={e => { setSearchQ(e.target.value); setSymbol(""); setShowDrop(true) }}
+          onFocus={() => setShowDrop(true)} onBlur={() => setTimeout(() => setShowDrop(false), 150)}
+          placeholder="Symbol e.g. BATBC" style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "8px 10px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        {showDrop && filtered.length > 0 && (
+          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#151D2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, zIndex: 20 }}>
+            {filtered.map(s => (
+              <button key={s.id} onMouseDown={() => { setSymbol(s.tradingCode); setSearchQ(""); setShowDrop(false); setPrice((s.lastTradePrice ?? 0).toFixed(2)) }}
+                style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", color: "#fff", fontSize: 11, cursor: "pointer", textAlign: "left", fontFamily: "'Space Mono',monospace" }}>
+                <span style={{ color: "#00D4AA" }}>{s.tradingCode}</span> <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>৳{(s.lastTradePrice ?? 0).toFixed(2)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Live price */}
+      {liveStock && (
+        <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,212,170,0.05)", border: "1px solid rgba(0,212,170,0.1)", borderRadius: 5, padding: "4px 8px" }}>
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>LTP</span>
+          <span style={{ color: "#00D4AA", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>৳{liveStock.lastTradePrice?.toFixed(2)}</span>
+        </div>
+      )}
+
+      {/* Order type */}
+      <div style={{ display: "flex", gap: 4 }}>
+        {["Market","Limit","StopLoss"].map(t => (
+          <button key={t} onClick={() => setType(t)} style={{ flex: 1, padding: "5px 0", background: type === t ? "rgba(255,255,255,0.1)" : "none", border: `1px solid ${type === t ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 5, color: type === t ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{t}</button>
+        ))}
+      </div>
+
+      {/* Qty + Price */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+        <div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>QTY</div>
+          <input type="number" value={qty} onChange={e => setQty(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        </div>
+        {type !== "Market" && (
+          <div>
+            <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>PRICE ৳</div>
+            <input type="number" value={price} onChange={e => setPrice(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+          </div>
+        )}
+      </div>
+      {type === "StopLoss" && (
+        <div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>STOP PRICE ৳</div>
+          <input type="number" value={stop} onChange={e => setStop(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        </div>
+      )}
+
+      {/* Order value */}
+      {qty && price && (
+        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 5, padding: "5px 8px", display: "flex", justifyContent: "space-between" }}>
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>ORDER VALUE</span>
+          <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(Number(qty) * Number(price)).toLocaleString()}</span>
+        </div>
+      )}
+
+      {rmsWarn && <div style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 5, padding: "6px 8px", color: "#F59E0B", fontSize: 11 }}>{rmsWarn}</div>}
+      {msg && <div style={{ background: msg.ok ? "rgba(0,212,170,0.1)" : "rgba(255,107,107,0.1)", border: `1px solid ${msg.ok ? "rgba(0,212,170,0.3)" : "rgba(255,107,107,0.3)"}`, borderRadius: 5, padding: "6px 8px", color: msg.ok ? "#00D4AA" : "#FF6B6B", fontSize: 11 }}>{msg.text}</div>}
+
+      <button onClick={validate} disabled={!symbol || !qty || placing} style={{ padding: "10px", background: side === "Buy" ? "#00D4AA" : "#FF6B6B", border: "none", borderRadius: 7, color: "#000", fontWeight: 700, fontSize: 13, cursor: "pointer", marginTop: "auto" }}>
+        {placing ? "Placing…" : `${side} ${symbol || "—"}`}
+      </button>
+
+      {/* Confirm modal */}
+      {confirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#0D1320", border: "1px solid rgba(0,212,170,0.2)", borderRadius: 12, padding: "24px 28px", minWidth: 280 }}>
+            <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Confirm Order</div>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 16, fontFamily: "'Space Mono',monospace", lineHeight: 1.8 }}>
+              {side} {qty} × {symbol}<br/>
+              {type !== "Market" && <>Price: ৳{price}<br/></>}
+              Type: {type}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={submit} style={{ flex: 1, padding: "9px", background: side === "Buy" ? "#00D4AA" : "#FF6B6B", border: "none", borderRadius: 7, color: "#000", fontWeight: 700, cursor: "pointer" }}>Confirm</button>
+              <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: "9px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+-- src/components/widgets/OrdersWidget.tsx --
+// @ts-nocheck
+// src/components/widgets/OrdersWidget.tsx
+// Full-featured orders table: sortable, searchable, filterable columns, drag-reorder
+
+import React from "react"
+import { DataTable } from "../ui/DataTable"
+import { useTableState, ColumnDef } from "../../hooks/useTableState"
+import { ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "../../hooks/useOrders"
+import type { Order } from "../../hooks/useOrders"
+
+function StatusBadge({ status }: { status: number }) {
+  const s = ORDER_STATUS[status] ?? { label: "Unknown", color: "text-zinc-500" }
+  return <span className={`text-[10px] font-semibold ${s.color}`}>{s.label}</span>
+}
+
+function TypeBadge({ type }: { type: number }) {
+  return (
+    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${type === 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+      {ORDER_TYPE_LABEL[type] ?? "—"}
+    </span>
+  )
+}
+
+const ORDER_COLUMNS: ColumnDef<Order>[] = [
+  {
+    key: "createdAt", label: "Time", visible: true, width: 72, sortable: true,
+    getValue: r => new Date(r.createdAt).getTime(),
+    render: (r) => <span className="text-zinc-500 font-mono text-[10px]">{new Date(r.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>,
+  },
+  {
+    key: "tradingCode", label: "Symbol", visible: true, width: 70, sortable: true,
+    render: (r) => <span className="font-bold text-zinc-100 font-mono text-[11px]">{r.tradingCode || `#${r.stockId}`}</span>,
+  },
+  {
+    key: "orderType", label: "Side", visible: true, width: 52, sortable: true,
+    render: (r) => <TypeBadge type={r.orderType} />,
+    getValue: r => r.orderType,
+  },
+  {
+    key: "orderCategory", label: "Type", visible: true, width: 60, sortable: true,
+    render: (r) => <span className="text-zinc-400 text-[10px]">{ORDER_CAT_LABEL[r.orderCategory]}</span>,
+  },
+  {
+    key: "quantity", label: "Qty", visible: true, width: 60, sortable: true,
+    render: (r) => <span className="font-mono text-[11px] text-zinc-300">{r.quantity.toLocaleString()}</span>,
+  },
+  {
+    key: "filledQuantity", label: "Filled", visible: true, width: 60, sortable: true,
+    render: (r) => <span className="font-mono text-[11px] text-zinc-400">{(r.filledQuantity ?? 0).toLocaleString()}</span>,
+  },
+  {
+    key: "limitPrice", label: "Limit", visible: true, width: 70, sortable: true,
+    render: (r) => r.limitPrice != null
+      ? <span className="font-mono text-[11px] text-zinc-300">{r.limitPrice.toFixed(2)}</span>
+      : <span className="text-zinc-600 text-[10px]">MKT</span>,
+  },
+  {
+    key: "averagePrice", label: "Avg Price", visible: false, width: 75, sortable: true,
+    render: (r) => r.averagePrice != null
+      ? <span className="font-mono text-[11px] text-zinc-300">{r.averagePrice.toFixed(2)}</span>
+      : <span className="text-zinc-700">—</span>,
+  },
+  {
+    key: "status", label: "Status", visible: true, width: 72, sortable: true,
+    render: (r) => <StatusBadge status={r.status} />,
+  },
+  {
+    key: "id", label: "Order ID", visible: false, width: 65, sortable: true,
+    render: (r) => <span className="font-mono text-[10px] text-zinc-600">#{r.id > 0 ? r.id : "…"}</span>,
+  },
+]
+
+interface OrdersWidgetProps {
+  ordersData: {
+    orders: Order[]
+    loading: boolean
+    cancel: (id: number) => void
+  }
+}
+
+export function OrdersWidget({ ordersData }: OrdersWidgetProps) {
+  const { orders, loading, cancel } = ordersData
+
+  const tableState = useTableState<Order>(
+    "orders-widget",
+    orders,
+    ORDER_COLUMNS,
+    50
+  )
+
+  if (loading && orders.length === 0) {
+    return <div className="flex items-center justify-center h-full text-xs text-zinc-600">Loading orders…</div>
+  }
+
+  return (
+    <DataTable
+      tableState={tableState}
+      rowKey={r => r.id}
+      showSearch
+      showColumnPicker
+      showPagination
+      stickyHeader
+      compact
+      emptyMessage="No orders yet"
+      rowClassName={r => r.id < 0 ? "opacity-60" : ""}
+      onRowClick={r => {
+        if (r.status === 0 || r.status === 1) {
+          if (confirm(`Cancel order #${r.id} for ${r.tradingCode}?`)) cancel(r.id)
+        }
+      }}
+    />
+  )
+}
+
+// ─── Executions Widget ────────────────────────────────────────────────────────
+
+const EXEC_COLUMNS: ColumnDef<Order>[] = [
+  {
+    key: "createdAt", label: "Time", visible: true, width: 72, sortable: true,
+    getValue: r => new Date(r.createdAt).getTime(),
+    render: (r) => <span className="text-zinc-500 font-mono text-[10px]">{new Date(r.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>,
+  },
+  {
+    key: "tradingCode", label: "Symbol", visible: true, width: 70, sortable: true,
+    render: (r) => <span className="font-bold text-zinc-100 font-mono text-[11px]">{r.tradingCode || `#${r.stockId}`}</span>,
+  },
+  {
+    key: "orderType", label: "Side", visible: true, width: 52, sortable: true,
+    render: (r) => <TypeBadge type={r.orderType} />,
+  },
+  {
+    key: "filledQuantity", label: "Filled", visible: true, width: 65, sortable: true,
+    render: (r) => <span className="font-mono text-[11px] text-emerald-400">{(r.filledQuantity ?? r.quantity).toLocaleString()}</span>,
+  },
+  {
+    key: "averagePrice", label: "Avg Price", visible: true, width: 80, sortable: true,
+    render: (r) => <span className="font-mono text-[11px] text-zinc-200">{r.averagePrice?.toFixed(2) ?? "—"}</span>,
+  },
+  {
+    key: "status", label: "Status", visible: true, width: 80, sortable: true,
+    render: (r) => <StatusBadge status={r.status} />,
+  },
+  {
+    key: "quantity", label: "Orig Qty", visible: false, width: 65, sortable: true,
+    render: (r) => <span className="font-mono text-[11px] text-zinc-500">{r.quantity.toLocaleString()}</span>,
+  },
+]
+
+interface ExecutionsWidgetProps {
+  ordersData: { executions: Order[] }
+}
+
+export function ExecutionsWidget({ ordersData }: ExecutionsWidgetProps) {
+  const tableState = useTableState<Order>("executions-widget", ordersData.executions, EXEC_COLUMNS, 50)
+  return (
+    <DataTable
+      tableState={tableState}
+      rowKey={r => r.id}
+      showSearch
+      showColumnPicker
+      compact
+      stickyHeader
+      emptyMessage="No executions yet"
+    />
+  )
+}
+
+-- src/components/widgets/PortfolioWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { apiClient } from "@/api/client"
+import { useAuthStore } from "@/store/authStore"
+
+export function PortfolioWidget() {
+  const user = useAuthStore(s => s.user)
+  const [data, setData]     = useState(null)
+  const [roi,  setRoi]      = useState(null)
+  const [tab,  setTab]      = useState("summary")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) return
+    const load = async () => {
+      try {
+        const [snap, roiData] = await Promise.all([
+          apiClient.get(`/portfoliosnapshot/latest/${user.userId}`).then(r => r.data),
+          apiClient.get(`/portfoliosnapshot/roi/${user.userId}`).then(r => r.data),
+        ])
+        setData(snap); setRoi(roiData)
+      } catch {}
+      finally { setLoading(false) }
+    }
+    load()
+    const id = setInterval(load, 30000)
+    return () => clearInterval(id)
+  }, [user?.userId])
+
+  const pnl    = data?.totalPnl ?? data?.unrealizedPnl ?? 0
+  const pnlPct = data?.totalPnlPercent ?? data?.roiPercent ?? 0
+  const up     = pnl >= 0
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        {[["summary","Summary"],["holdings","Holdings"],["roi","ROI"]].map(([t, l]) => (
+          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "7px 0", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? "#00D4AA" : "transparent"}`, color: tab === t ? "#00D4AA" : "rgba(255,255,255,0.35)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{l}</button>
+        ))}
+      </div>
+
+      {loading
+        ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12 }}>Loading…</div>
+        : !data
+          ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12, fontFamily: "'Space Mono',monospace", textAlign: "center", padding: 16 }}>No portfolio data yet.<br/>Start trading to see your portfolio.</div>
+          : (
+            <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+              {tab === "summary" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    ["Total Value",    `৳${(data.totalValue ?? 0).toLocaleString()}`,  "#fff"],
+                    ["Cash Balance",   `৳${(data.cashBalance ?? 0).toLocaleString()}`, "#fff"],
+                    ["Invested",       `৳${(data.investedAmount ?? 0).toLocaleString()}`, "#fff"],
+                    ["Today P&L",      `${up ? "+" : ""}৳${pnl.toLocaleString()}`,     up ? "#00D4AA" : "#FF6B6B"],
+                    ["Total Return",   `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`, pnlPct >= 0 ? "#00D4AA" : "#FF6B6B"],
+                  ].map(([l, v, c]) => (
+                    <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>{l}</span>
+                      <span style={{ color: c, fontSize: 12, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {tab === "holdings" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {(data.holdings ?? []).length === 0
+                    ? <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, textAlign: "center", padding: 16, fontFamily: "'Space Mono',monospace" }}>No holdings</div>
+                    : (data.holdings ?? []).map((h, i) => {
+                        const up = (h.unrealizedPnl ?? 0) >= 0
+                        return (
+                          <div key={i} style={{ padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{h.symbol}</span>
+                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(h.currentValue ?? 0).toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{h.quantity} @ ৳{h.avgCostPrice?.toFixed(2)}</span>
+                              <span style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{up ? "+" : ""}৳{(h.unrealizedPnl ?? 0).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        )
+                      })
+                  }
+                </div>
+              )}
+
+              {tab === "roi" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(roi?.history ?? []).slice(-10).map((r, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                      <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{new Date(r.date ?? r.capturedAt).toLocaleDateString()}</span>
+                      <span style={{ color: (r.roiPercent ?? 0) >= 0 ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{(r.roiPercent ?? 0) >= 0 ? "+" : ""}{(r.roiPercent ?? 0).toFixed(2)}%</span>
+                    </div>
+                  ))}
+                  {(roi?.history ?? []).length === 0 && <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, textAlign: "center", padding: 16, fontFamily: "'Space Mono',monospace" }}>No ROI history</div>}
+                </div>
+              )}
+            </div>
+          )
+      }
+    </div>
+  )
+}
+
+-- src/components/widgets/PriceChartWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect, useMemo } from "react"
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function PriceChartWidget({ linkedSymbol, onSymbolClick }) {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [symbol, setSymbol]   = useState(linkedSymbol ?? "")
+  const [chartType, setChartType] = useState("line")
+  const [period, setPeriod]   = useState("1D")
+  const [history, setHistory] = useState([])
+
+  useEffect(() => { if (linkedSymbol) setSymbol(linkedSymbol) }, [linkedSymbol])
+
+  const stock = stocks.find(s => s.tradingCode === symbol)
+
+  useEffect(() => {
+    if (!stock) return
+    const base = stock.lastTradePrice
+    const pts = 60
+    setHistory(Array.from({ length: pts }, (_, i) => {
+      const noise = (Math.random() - 0.5) * base * 0.02
+      const trend = ((i / pts) - 0.5) * base * (stock.changePercent ?? 0) * 0.02
+      const p = Math.max(0.01, base + trend + noise)
+      return {
+        t: new Date(Date.now() - (pts - i) * 60000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        price: parseFloat(p.toFixed(2)),
+        vol: Math.round(Math.random() * 5000 + 500),
+      }
+    }))
+  }, [stock?.tradingCode])
+
+  useEffect(() => {
+    if (!stock || history.length === 0) return
+    const id = setInterval(() => {
+      const last = history[history.length - 1]?.price ?? stock.lastTradePrice
+      const noise = (Math.random() - 0.5) * last * 0.004
+      const newPt = { t: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), price: parseFloat((last + noise).toFixed(2)), vol: Math.round(Math.random() * 3000 + 200) }
+      setHistory(h => [...h.slice(-59), newPt])
+    }, 3000)
+    return () => clearInterval(id)
+  }, [stock?.tradingCode, history.length])
+
+  const up     = stock ? (stock.changePercent ?? 0) >= 0 : true
+  const color  = up ? "#00D4AA" : "#FF6B6B"
+  const minP   = useMemo(() => Math.min(...history.map(h => h.price)), [history])
+  const maxP   = useMemo(() => Math.max(...history.map(h => h.price)), [history])
+  const firstP = history[0]?.price
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      {/* Toolbar */}
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"
+          style={{ width: 80, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 8px", color: "#fff", fontSize: 11, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        {stock && (
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ color: "#fff", fontSize: 13, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>৳{stock.lastTradePrice?.toFixed(2)}</span>
+            <span style={{ color, fontSize: 11, fontFamily: "'Space Mono',monospace" }}>{up ? "+" : ""}{stock.changePercent?.toFixed(2)}%</span>
+          </div>
+        )}
+        <div style={{ marginLeft: "auto", display: "flex", gap: 3 }}>
+          {["1D","1W","1M"].map(p => (
+            <button key={p} onClick={() => setPeriod(p)} style={{ padding: "3px 6px", background: period === p ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${period === p ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: period === p ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{p}</button>
+          ))}
+          {["line","area"].map(t => (
+            <button key={t} onClick={() => setChartType(t)} style={{ padding: "3px 6px", background: chartType === t ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${chartType === t ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: chartType === t ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{t}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {history.length === 0
+          ? <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12, fontFamily: "'Space Mono',monospace" }}>Select a symbol to chart</div>
+          : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <XAxis dataKey="t" tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "Space Mono" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
+                <YAxis domain={[minP * 0.999, maxP * 1.001]} tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "Space Mono" }} width={50} axisLine={false} tickLine={false} tickFormatter={v => `৳${v.toFixed(1)}`} />
+                <Tooltip contentStyle={{ background: "#0D1320", border: `1px solid ${color}44`, borderRadius: 6, fontSize: 11, fontFamily: "Space Mono" }} labelStyle={{ color: "rgba(255,255,255,0.4)" }} itemStyle={{ color }} formatter={v => [`৳${v}`, "Price"]} />
+                {firstP && <ReferenceLine y={firstP} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />}
+                <Line type="monotone" dataKey="price" stroke={color} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          )
+        }
+      </div>
+
+      {/* OHLCV strip */}
+      {stock && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "4px 8px", display: "flex", gap: 12, flexShrink: 0 }}>
+          {[["O", stock.closePrice], ["H", stock.highPrice], ["L", stock.lowPrice], ["V", `${((stock.volume ?? 0) / 1000).toFixed(0)}K`]].map(([l, v]) => (
+            <span key={l} style={{ fontSize: 10, fontFamily: "'Space Mono',monospace" }}>
+              <span style={{ color: "rgba(255,255,255,0.3)" }}>{l} </span>
+              <span style={{ color: "#fff" }}>{typeof v === "number" ? `৳${v?.toFixed(2)}` : v}</span>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+-- src/components/widgets/registry.tsx --
+// @ts-nocheck
+import { MarketTickerStrip }    from "./MarketTickerStrip"
+import { WatchlistWidget }      from "./WatchlistWidget"
+import { OrderEntryWidget }     from "./OrderEntryWidget"
+import { OrderBookWidget }      from "./OrderBookWidget"
+import { TopMoversWidget }      from "./TopMoversWidget"
+import { MarketMapWidget }      from "./MarketMapWidget"
+import { MarketDepthWidget }    from "./MarketDepthWidget"
+import { BuySellPressureWidget } from "./BuySellPressureWidget"
+import { PortfolioWidget }      from "./PortfolioWidget"
+import { PriceChartWidget }     from "./PriceChartWidget"
+import { NotificationsWidget }  from "./NotificationsWidget"
+import { AIPredictionWidget }   from "./AIPredictionWidget"
+import { IndexSummaryWidget }   from "./IndexSummaryWidget"
+import { NewsFeedWidget }       from "./NewsFeedWidget"
+import { RMSLimitsWidget }      from "./RMSLimitsWidget"
+import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
+
+export interface WidgetDef {
+  id:         string
+  title:      string
+  label:      string
+  icon:       string
+  minW:       number
+  minH:       number
+  defaultW:   number
+  defaultH:   number
+  category:   string
+  component:  React.ComponentType<any>
+}
+
+export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
+  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
+  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
+  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
+  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
+  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:1, minH:4, defaultW:6,  defaultH:4,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
+  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
+  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
+  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
+  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
+  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
+  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
+  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
+  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
+  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
+  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
+  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
+]
+
+// Object map keyed by id — used by DashboardPage
+export const WIDGET_REGISTRY: Record<string, WidgetDef> = Object.fromEntries(
+  WIDGET_REGISTRY_LIST.map(w => [w.id, w])
+)
+
+export const CATEGORIES = [...new Set(WIDGET_REGISTRY_LIST.map(w => w.category))]
+
+-- src/components/widgets/RMSLimitsWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { rmsApi } from "@/api/rms"
+
+function GaugeBar({ label, used, total, color }) {
+  const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0
+  const warn = pct > 80
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+        <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{label}</span>
+        <span style={{ color: warn ? "#FF6B6B" : "#fff", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{pct.toFixed(1)}%</span>
+      </div>
+      <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: warn ? "#FF6B6B" : color, borderRadius: 3, transition: "width 0.4s" }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+        <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>Used: ৳{(used ?? 0).toLocaleString()}</span>
+        <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>Limit: ৳{(total ?? 0).toLocaleString()}</span>
+      </div>
+    </div>
+  )
+}
+
+export function RMSLimitsWidget() {
+  const [limits, setLimits] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      try { setLimits(await rmsApi.getMyLimits()) } catch {}
+      finally { setLoading(false) }
+    }
+    load()
+    const id = setInterval(load, 15000)
+    return () => clearInterval(id)
+  }, [])
+
+  const l = limits ?? {}
+  const marginUsed  = l.marginUsed  ?? l.usedMargin  ?? 0
+  const marginLimit = l.marginLimit ?? l.totalMargin ?? 1000000
+  const dayBought   = l.dayBuyValue  ?? l.totalBuyToday  ?? 0
+  const dayLimit    = l.dayBuyLimit  ?? l.dailyBuyLimit  ?? 5000000
+  const exposure    = l.exposure     ?? l.totalExposure  ?? 0
+  const expLimit    = l.exposureLimit ?? l.maxExposure   ?? 10000000
+
+  const riskScore = marginLimit > 0 ? Math.min(100, (marginUsed / marginLimit) * 100) : 0
+  const riskColor = riskScore > 80 ? "#FF6B6B" : riskScore > 60 ? "#F59E0B" : "#00D4AA"
+  const riskLabel = riskScore > 80 ? "HIGH RISK" : riskScore > 60 ? "MODERATE" : "LOW RISK"
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>RMS LIMITS</span>
+        <span style={{ color: riskColor, fontSize: 10, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{riskLabel}</span>
+      </div>
+
+      {loading
+        ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12 }}>Loading…</div>
+        : (
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+            {/* Risk gauge */}
+            <div style={{ textAlign: "center", marginBottom: 12 }}>
+              <svg width="100" height="60" viewBox="0 0 100 60">
+                <path d="M 10 55 A 40 40 0 0 1 90 55" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round" />
+                <path d={`M 10 55 A 40 40 0 0 1 ${10 + 80 * Math.cos(Math.PI - (riskScore / 100) * Math.PI)} ${55 + 40 * Math.sin(Math.PI - (riskScore / 100) * Math.PI) * -1}`}
+                  fill="none" stroke={riskColor} strokeWidth="8" strokeLinecap="round" style={{ transition: "all 0.5s" }} />
+                <text x="50" y="55" textAnchor="middle" fill={riskColor} fontSize="12" fontFamily="Space Mono" fontWeight="bold">{riskScore.toFixed(0)}%</text>
+              </svg>
+            </div>
+
+            <GaugeBar label="Margin Used"    used={marginUsed} total={marginLimit} color="#00D4AA" />
+            <GaugeBar label="Day Buy Value"  used={dayBought}  total={dayLimit}    color="#3B82F6" />
+            <GaugeBar label="Exposure"       used={exposure}   total={expLimit}    color="#8B5CF6" />
+
+            {/* Quick stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
+              {[
+                ["Available Margin", `৳${(marginLimit - marginUsed).toLocaleString()}`, "#00D4AA"],
+                ["Cash Balance",     `৳${(l.cashBalance ?? 0).toLocaleString()}`,       "#fff"],
+                ["Open Orders",      l.openOrderCount ?? "—",                            "#F59E0B"],
+                ["Buying Power",     `৳${(l.buyingPower ?? marginLimit - marginUsed).toLocaleString()}`, "#3B82F6"],
+              ].map(([lbl, val, c]) => (
+                <div key={lbl} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 6, padding: "6px 8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{lbl}</div>
+                  <div style={{ color: c, fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700, marginTop: 2 }}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  )
+}
+
+-- src/components/widgets/TopMoversWidget.tsx --
+// @ts-nocheck
+import { useMemo, useState } from "react"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function TopMoversWidget({ onSymbolClick }) {
+  const { stocks: _s, connected } = useMarketData()
+  const stocks = _s ?? []
+  const [tab, setTab]   = useState("gainers")
+  const [count, setCount] = useState(10)
+  const [exch, setExch]   = useState("All")
+
+  const filtered = useMemo(() => {
+    let s = stocks.filter(x => x.lastTradePrice > 0)
+    if (exch !== "All") s = s.filter(x => x.exchange === exch)
+    const sorted = [...s].sort((a, b) => tab === "gainers"
+      ? (b.changePercent ?? 0) - (a.changePercent ?? 0)
+      : (a.changePercent ?? 0) - (b.changePercent ?? 0))
+    return sorted.slice(0, count)
+  }, [stocks, tab, count, exch])
+
+  const exchanges = ["All", ...new Set(stocks.map(s => s.exchange).filter(Boolean))]
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        {[["gainers","▲ Gainers","#00D4AA"],["losers","▼ Losers","#FF6B6B"]].map(([t, l, c]) => (
+          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "7px 0", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? c : "transparent"}`, color: tab === t ? c : "rgba(255,255,255,0.35)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{l}</button>
+        ))}
+      </div>
+
+      <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        {exchanges.slice(0,4).map(e => (
+          <button key={e} onClick={() => setExch(e)} style={{ padding: "3px 7px", background: exch === e ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${exch === e ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: exch === e ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{e}</button>
+        ))}
+        <select value={count} onChange={e => setCount(Number(e.target.value))} style={{ marginLeft: "auto", background: "#0D1320", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "2px 4px", cursor: "pointer" }}>
+          {[5,10,15,20].map(n => <option key={n} value={n}>Top {n}</option>)}
+        </select>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "24px 1fr 80px 70px 60px", gap: 4, padding: "4px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", flexShrink: 0 }}>
+        {["#","SYMBOL","PRICE","CHG%","VOL"].map(h => (
+          <span key={h} style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{h}</span>
+        ))}
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {filtered.map((s, i) => {
+          const up = (s.changePercent ?? 0) >= 0
+          const barW = Math.min(100, Math.abs(s.changePercent ?? 0) * 10)
+          return (
+            <div key={s.id} onClick={() => onSymbolClick?.(s.tradingCode)}
+              style={{ display: "grid", gridTemplateColumns: "24px 1fr 80px 70px 60px", gap: 4, padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.03)", cursor: "pointer", position: "relative", overflow: "hidden" }}>
+              {/* background bar */}
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${barW}%`, background: up ? "rgba(0,212,170,0.04)" : "rgba(255,107,107,0.04)", pointerEvents: "none" }} />
+              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{i+1}</span>
+              <div>
+                <div style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{s.tradingCode}</div>
+                <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 9 }}>{s.companyName?.slice(0,18)}</div>
+              </div>
+              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(s.lastTradePrice ?? 0).toFixed(2)}</span>
+              <span style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{up ? "+" : ""}{(s.changePercent ?? 0).toFixed(2)}%</span>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{((s.volume ?? 0)/1000).toFixed(0)}K</span>
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "3px 8px", display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
+        <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{stocks.length} stocks</span>
+        <span style={{ color: connected ? "#00D4AA" : "#FF6B6B", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{connected ? "● LIVE" : "○ offline"}</span>
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/WatchlistWidget.tsx --
+// @ts-nocheck
+import { useState, useEffect } from "react"
+import { watchlistApi } from "@/api/watchlist"
+import { marketApi } from "@/api/market"
+import { useMarketData } from "@/hooks/useMarketData"
+
+export function WatchlistWidget() {
+  const { stocks: _s } = useMarketData()
+  const stocks = _s ?? []
+  const [lists, setLists]       = useState([])
+  const [active, setActive]     = useState(0)
+  const [search, setSearch]     = useState("")
+  const [results, setResults]   = useState([])
+  const [newName, setNewName]   = useState("")
+  const [creating, setCreating] = useState(false)
+
+  useEffect(() => {
+    watchlistApi.getAll().then(d => { setLists(d ?? []); if (d?.length) setActive(d[0].id) }).catch(() => {})
+  }, [])
+
+  const activeList = lists.find(l => l.id === active)
+
+  const handleSearch = async (q) => {
+    setSearch(q)
+    if (q.length < 2) { setResults([]); return }
+    try { const d = await marketApi.searchStocks(q); setResults(d?.slice(0,6) ?? []) } catch {}
+  }
+
+  const addStock = async (stockId) => {
+    if (!active) return
+    try { await watchlistApi.addStock(active, stockId); const d = await watchlistApi.getAll(); setLists(d ?? []) } catch {}
+    setSearch(""); setResults([])
+  }
+
+  const removeStock = async (stockId) => {
+    if (!active) return
+    try { await watchlistApi.removeStock(active, stockId); const d = await watchlistApi.getAll(); setLists(d ?? []) } catch {}
+  }
+
+  const createList = async () => {
+    if (!newName.trim()) return
+    try { await watchlistApi.create(newName.trim()); const d = await watchlistApi.getAll(); setLists(d ?? []); setNewName(""); setCreating(false) } catch {}
+  }
+
+  const livePrice = (code) => stocks.find(s => s.tradingCode === code)
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", overflowX: "auto", flexShrink: 0 }}>
+        {lists.map(l => (
+          <button key={l.id} onClick={() => setActive(l.id)} style={{ padding: "7px 12px", background: "none", border: "none", borderBottom: `2px solid ${active === l.id ? "#00D4AA" : "transparent"}`, color: active === l.id ? "#00D4AA" : "rgba(255,255,255,0.4)", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Space Mono',monospace" }}>{l.name}</button>
+        ))}
+        {creating
+          ? <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 8px" }}>
+              <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && createList()} placeholder="List name" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(0,212,170,0.3)", borderRadius: 4, padding: "3px 6px", color: "#fff", fontSize: 11, width: 80, outline: "none" }} />
+              <button onClick={createList} style={{ background: "#00D4AA", border: "none", borderRadius: 4, color: "#000", fontSize: 11, padding: "3px 6px", cursor: "pointer" }}>+</button>
+              <button onClick={() => setCreating(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 11 }}>✕</button>
+            </div>
+          : <button onClick={() => setCreating(true)} style={{ padding: "7px 10px", background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontSize: 14, cursor: "pointer" }}>+</button>
+        }
+      </div>
+      {/* Search */}
+      <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)", position: "relative", flexShrink: 0 }}>
+        <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="Add stock…" style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "5px 8px", color: "#fff", fontSize: 11, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+        {results.length > 0 && (
+          <div style={{ position: "absolute", top: "100%", left: 8, right: 8, background: "#151D2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, zIndex: 10 }}>
+            {results.map(r => (
+              <button key={r.id} onClick={() => addStock(r.id)} style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", color: "#fff", fontSize: 11, cursor: "pointer", textAlign: "left", fontFamily: "'Space Mono',monospace" }}>
+                <span style={{ color: "#00D4AA" }}>{r.tradingCode}</span> <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10 }}>{r.companyName}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* Stock list */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {(activeList?.stocks ?? []).length === 0
+          ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 11, padding: "20px 0", fontFamily: "'Space Mono',monospace" }}>No stocks — search above to add</div>
+          : (activeList?.stocks ?? []).map(s => {
+              const live = livePrice(s.tradingCode) ?? s
+              const up = (live.change ?? live.changePercent ?? 0) >= 0
+              return (
+                <div key={s.id ?? s.stockId} style={{ display: "flex", alignItems: "center", padding: "6px 10px", borderBottom: "1px solid rgba(255,255,255,0.03)", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: "#fff", fontSize: 11, fontWeight: 700, fontFamily: "'Space Mono',monospace" }}>{s.tradingCode}</div>
+                    <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10 }}>{s.companyName}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(live.lastTradePrice ?? 0).toFixed(2)}</div>
+                    <div style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{up ? "▲" : "▼"}{Math.abs(live.changePercent ?? 0).toFixed(2)}%</div>
+                  </div>
+                  <button onClick={() => removeStock(s.stockId ?? s.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 14, padding: "0 2px" }}>×</button>
+                </div>
+              )
+            })
+        }
+      </div>
+    </div>
+  )
+}
+
+-- src/components/widgets/WidgetPanel.tsx --
+// @ts-nocheck
+// src/components/widgets/WidgetPanel.tsx
+// Premium glass widget panel — all colors from CSS vars
+
+import React, { useRef, useEffect } from "react"
+import type { ColorGroup } from "../../hooks/useDashboardPersistence"
+
+const COLOR_HEX: Record<string, string> = {
+  teal: "#14b8a6", blue: "#3b82f6", amber: "#f59e0b", purple: "#a855f7", red: "#ef4444",
+}
+const COLOR_OPTIONS = [
+  { id: "teal", label: "Teal", hex: "#14b8a6" },
+  { id: "blue", label: "Blue", hex: "#3b82f6" },
+  { id: "amber", label: "Amber", hex: "#f59e0b" },
+  { id: "purple", label: "Purple", hex: "#a855f7" },
+  { id: "red", label: "Red", hex: "#ef4444" },
+]
+
+interface WidgetPanelProps {
+  id: string; title: string; children: React.ReactNode
+  colorGroup: ColorGroup; onColorChange: (c: ColorGroup) => void
+  onFullscreen: () => void; onClose: () => void
+  menuOpen: boolean; onMenuToggle: () => void
+}
+
+function IconBtn({ onClick, title, children, danger = false }: any) {
+  return (
+    <button onClick={onClick} title={title} style={{
+      width: 20, height: 20, borderRadius: 4,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'transparent', border: 'none', cursor: 'pointer',
+      color: 'var(--t-text3)', transition: 'all 0.12s',
+    }}
+      onMouseEnter={e => {
+        e.currentTarget.style.color = danger ? 'var(--t-sell)' : 'var(--t-text1)'
+        e.currentTarget.style.background = danger ? 'rgba(255,23,68,0.08)' : 'var(--t-hover)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.color = 'var(--t-text3)'
+        e.currentTarget.style.background = 'transparent'
+      }}
+    >{children}</button>
+  )
+}
+
+export function WidgetPanel({
+  id, title, children, colorGroup, onColorChange, onFullscreen, onClose, menuOpen, onMenuToggle,
+}: WidgetPanelProps) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menuOpen) return
+    const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) onMenuToggle() }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [menuOpen, onMenuToggle])
+
+  const gc = colorGroup ? COLOR_HEX[colorGroup] : null
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: 'var(--t-surface)', border: `1px solid ${gc ? gc + '35' : 'var(--t-border)'}`,
+      borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.15s, box-shadow 0.15s',
+      boxShadow: gc ? `0 0 12px ${gc}12` : 'none', position: 'relative',
+    }}>
+      {/* Neon top line */}
+      <div style={{
+        position: 'absolute', top: 0, left: gc ? '5%' : '15%', right: gc ? '5%' : '15%',
+        height: 1, zIndex: 1, pointerEvents: 'none',
+        background: gc ? `linear-gradient(90deg, transparent, ${gc}60, transparent)` : 'linear-gradient(90deg, transparent, var(--t-accent), transparent)',
+        opacity: gc ? 0.7 : 0.12,
+      }} />
+
+      {/* Header */}
+      <div className="widget-drag-handle" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 8px', height: 28, flexShrink: 0,
+        background: 'var(--t-panel)', borderBottom: '1px solid var(--t-border)',
+        cursor: 'grab', userSelect: 'none',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+            background: gc || 'var(--t-accent)', boxShadow: `0 0 4px ${gc || 'var(--t-accent-glow)'}`, opacity: 0.7,
+          }} />
+          <span style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+            color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace",
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{title}</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <IconBtn onClick={onMenuToggle} title="Link group">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            </IconBtn>
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', right: 0, top: 24, zIndex: 200,
+                width: 140, borderRadius: 10, padding: 6,
+                background: 'var(--t-elevated)', border: '1px solid var(--t-border)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+              }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t-text3)', letterSpacing: '0.08em', padding: '2px 6px 6px', fontFamily: "'JetBrains Mono', monospace" }}>LINK GROUP</div>
+                {COLOR_OPTIONS.map(o => (
+                  <button key={o.id} onClick={() => { onColorChange(colorGroup === o.id ? null : o.id as ColorGroup); onMenuToggle() }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '5px 6px',
+                      borderRadius: 6, background: colorGroup === o.id ? 'var(--t-hover)' : 'transparent',
+                      border: 'none', cursor: 'pointer', color: colorGroup === o.id ? 'var(--t-text1)' : 'var(--t-text2)', fontSize: 11,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+                    onMouseLeave={e => { if (colorGroup !== o.id) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: o.hex }} />
+                    {o.label}
+                    {colorGroup === o.id && <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--t-text3)' }}>✓</span>}
+                  </button>
+                ))}
+                <div style={{ height: 1, background: 'var(--t-border)', margin: '4px 0' }} />
+                <button onClick={() => { onColorChange(null); onMenuToggle() }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '5px 6px', borderRadius: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--t-text3)', fontSize: 11 }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1px solid var(--t-border)' }} />
+                  None
+                </button>
+              </div>
+            )}
+          </div>
+          <IconBtn onClick={onFullscreen} title="Fullscreen">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 4.5V1h3.5M7.5 1H11v3.5M11 7.5V11H7.5M4.5 11H1V7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </IconBtn>
+          <IconBtn onClick={onClose} title="Hide" danger>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+          </IconBtn>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>{children}</div>
+    </div>
+  )
+}
+
+-- src/components/widgets/WidgetToolbar.tsx --
+// @ts-nocheck
+import { useState } from "react"
+import { WIDGET_REGISTRY, CATEGORIES } from "./registry"
+
+interface Props {
+  activeIds:   string[]
+  onToggle:    (id: string) => void
+  onReset:     () => void
+  onSave:      () => void
+}
+
+export function WidgetToolbar({ activeIds, onToggle, onReset, onSave }: Props) {
+  const [open, setOpen]   = useState(false)
+  const [cat, setCat]     = useState("All")
+  const [search, setSearch] = useState("")
+
+  const filtered = WIDGET_REGISTRY.filter(w =>
+    (cat === "All" || w.category === cat) &&
+    (search === "" || w.label.toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <div style={{ position: "relative" }}>
+      {/* Toggle button */}
+      <button onClick={() => setOpen(v => !v)} title="Add/Remove Widgets"
+        style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: open ? "rgba(0,212,170,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${open ? "rgba(0,212,170,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 7, color: open ? "#00D4AA" : "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer", fontFamily: "'Space Mono',monospace", transition: "all 0.15s" }}>
+        <span style={{ fontSize: 14 }}>⊞</span>
+        Widgets
+        <span style={{ background: "#00D4AA", color: "#000", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 10 }}>{activeIds.length}</span>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 340, background: "#0D1320", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, boxShadow: "0 24px 48px rgba(0,0,0,0.6)", zIndex: 200, overflow: "hidden" }}>
+          {/* Search */}
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search widgets…"
+              style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "6px 10px", color: "#fff", fontSize: 12, outline: "none" }} />
+          </div>
+
+          {/* Category tabs */}
+          <div style={{ display: "flex", gap: 4, padding: "6px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", overflowX: "auto" }}>
+            {["All", ...CATEGORIES].map(c => (
+              <button key={c} onClick={() => setCat(c)} style={{ padding: "3px 8px", background: cat === c ? "rgba(0,212,170,0.15)" : "none", border: `1px solid ${cat === c ? "rgba(0,212,170,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: cat === c ? "#00D4AA" : "rgba(255,255,255,0.35)", fontSize: 10, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Space Mono',monospace" }}>{c}</button>
+            ))}
+          </div>
+
+          {/* Widget list */}
+          <div style={{ maxHeight: 320, overflowY: "auto", padding: "6px 0" }}>
+            {filtered.map(w => {
+              const active = activeIds.includes(w.id)
+              return (
+                <div key={w.id} onClick={() => onToggle(w.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 14px", cursor: "pointer", background: active ? "rgba(0,212,170,0.05)" : "transparent", transition: "background 0.1s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = active ? "rgba(0,212,170,0.08)" : "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => e.currentTarget.style.background = active ? "rgba(0,212,170,0.05)" : "transparent"}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{w.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: active ? "#00D4AA" : "#fff", fontSize: 12, fontWeight: active ? 600 : 400 }}>{w.label}</div>
+                    <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{w.category} · {w.defaultW}×{w.defaultH}</div>
+                  </div>
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${active ? "#00D4AA" : "rgba(255,255,255,0.15)"}`, background: active ? "#00D4AA" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {active && <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#000" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Footer */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 12px", display: "flex", gap: 6 }}>
+            <button onClick={onSave} style={{ flex: 1, padding: "7px", background: "rgba(0,212,170,0.15)", border: "1px solid rgba(0,212,170,0.3)", borderRadius: 6, color: "#00D4AA", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>Save Layout</button>
+            <button onClick={onReset} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, color: "rgba(255,255,255,0.4)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>Reset</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

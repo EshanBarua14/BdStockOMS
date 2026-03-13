@@ -3,8 +3,8 @@ import { describe, it, expect } from "vitest"
 import { WIDGET_REGISTRY_LIST, WIDGET_REGISTRY, CATEGORIES } from "@/components/widgets/registry"
 
 describe("Widget Registry", () => {
-  it("has exactly 16 widgets", () => {
-    expect(WIDGET_REGISTRY_LIST).toHaveLength(16)
+  it("has exactly 17 widgets", () => {
+    expect(WIDGET_REGISTRY_LIST).toHaveLength(17)
   })
   it("every widget has required fields", () => {
     WIDGET_REGISTRY_LIST.forEach(w => {

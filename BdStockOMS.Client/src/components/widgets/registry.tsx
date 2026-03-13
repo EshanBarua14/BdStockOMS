@@ -15,6 +15,7 @@ import { IndexSummaryWidget }   from "./IndexSummaryWidget"
 import { NewsFeedWidget }       from "./NewsFeedWidget"
 import { RMSLimitsWidget }      from "./RMSLimitsWidget"
 import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
+import { BuySellConsole, BuySellConsoleEvents } from "@/components/trading/BuySellConsole"
 
 export interface WidgetDef {
   id:         string
@@ -30,6 +31,7 @@ export interface WidgetDef {
 }
 
 export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
+  { id:"buysell",   title:"Buy/Sell Console",  label:"Buy/Sell Console",  icon:"⚡", minW:1, minH:4, defaultW:4,  defaultH:8,  category:"Trading",   component: () => { BuySellConsoleEvents.open('BUY'); return null } },
   { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
   { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
   { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },

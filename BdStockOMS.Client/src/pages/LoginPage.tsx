@@ -373,12 +373,12 @@ export function LoginPage() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
             }} />
             <p style={{ color: 'var(--t-text3)', fontSize: 10, margin: 0, lineHeight: 1.7 }}>
-              {'Developed by '}
+              {'Design & Developed by '}
               <a href="https://www.linkedin.com/in/eshan01/" target="_blank" rel="noopener noreferrer"
                 style={{ color: 'rgba(0,212,170,0.5)', textDecoration: 'none', fontWeight: 600 }}>
                 Eshan Barua
               </a>
-              {' · BD Stock OMS v2'}
+              {' · BD Stock OMS'}
             </p>
             <p style={{
               color: 'var(--t-text3)', fontSize: 9, margin: '4px 0 0',

@@ -16,6 +16,7 @@ import { WidgetPanel } from "../components/widgets/WidgetPanel"
 import { WIDGET_REGISTRY } from "../components/widgets/registry"
 import { DashboardTabs } from "../components/dashboard/DashboardTabs"
 import { PriceTicker } from "../components/dashboard/PriceTicker"
+import { BuySellConsoleEvents } from "../components/trading/BuySellConsole"
 import { TemplateManager } from "../components/dashboard/TemplateManager"
 
 // ─── Error Boundary ───────────────────────────────────────────
@@ -235,7 +236,10 @@ export default function DashboardPage() {
               if (!reg) return null
               const visible = page?.widgets.find(w => w.id === id)?.visible !== false
               return (
-                <button key={id} onClick={() => store.setWidgetVisible(id, !visible)} style={{
+                <button key={id} onClick={() => {
+                  if (id === 'buysell') { BuySellConsoleEvents.open('BUY'); setShowPicker(false); return }
+                  store.setWidgetVisible(id, !visible)
+                }} style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '5px 8px', borderRadius: 6, fontSize: 11,
                   textAlign: 'left', cursor: 'pointer', transition: 'all 0.12s',
