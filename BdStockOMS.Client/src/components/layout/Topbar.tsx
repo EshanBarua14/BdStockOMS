@@ -210,6 +210,7 @@ export function Topbar() {
         </Pill>
 
         <Div />
+        <Div />
         <ThemeMenu variant="compact" />
 
         {user && (

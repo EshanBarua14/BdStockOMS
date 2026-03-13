@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { LoginPage }      from '@/pages/LoginPage'
-import { SignUpPage }     from '@/pages/SignUpPage'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import DashboardPage from "@/pages/DashboardPage"
+import { ProtectedRoute }    from '@/components/auth/ProtectedRoute'
+import { LoginPage }         from '@/pages/LoginPage'
+import { SignUpPage }        from '@/pages/SignUpPage'
+import { DashboardLayout }   from '@/components/layout/DashboardLayout'
+import DashboardPage         from "@/pages/DashboardPage"
+import { BuySellConsole }    from '@/components/trading/BuySellConsole'
 import {
   OrdersPage, PortfolioPage, MarketPage,
   SuperAdminPage, RbacPage, TenantPage,
@@ -49,6 +50,9 @@ export default function App() {
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="*"    element={<NotFoundPage />} />
       </Routes>
+
+      {/* Global Buy/Sell Console — renders as portal above all routes */}
+      <BuySellConsole />
     </BrowserRouter>
   )
 }

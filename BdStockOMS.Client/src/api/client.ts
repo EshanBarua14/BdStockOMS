@@ -53,6 +53,12 @@ export const getNews       = (count = 20) => fetch(`${BASE}/api/news?count=${cou
 export const getStocks     = () => fetch(`${BASE}/api/stocks`, { headers: headers() }).then(r => handle(r))
 export const searchStocks  = (q: string) => fetch(`${BASE}/api/stocks/search?q=${encodeURIComponent(q)}`, { headers: headers() }).then(r => handle(r))
 
+
+// ─── Investors / BO Accounts (for Buy/Sell Console) ──────────────────────────
+export const getMyInvestors   = (traderId: number) => fetch(`${BASE}/api/traders/${traderId}/investors`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+export const getBOAccounts    = () => fetch(`${BASE}/api/ccd/bo-accounts`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+export const getStockByCode   = (code: string) => fetch(`${BASE}/api/stocks/search?q=${encodeURIComponent(code)}`, { headers: headers() }).then(r => handle(r))
+
 // ─── Axios-compatible shim ────────────────────────────────────────────────────
 // Keeps old api/*.ts files (admin, auth, market, orders, portfolio, rms, watchlist)
 // working without any changes to those files.
