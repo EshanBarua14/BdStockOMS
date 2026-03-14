@@ -194,9 +194,18 @@ function ColumnPicker({ active, onClose, onChange }: { active: string[], onClose
 }
 
 // ─── Filter Panel ─────────────────────────────────────────────────────────────
-function FilterPanel({ filter, setFilter, onClose }: any) {
+function FilterPanel({ filter, setFilter, onClose, anchorRef }: any) {
+  const [pos, setPos] = useState({ top: 80, right: 16 })
+  useEffect(() => {
+    if (anchorRef?.current) {
+      const r = anchorRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) })
+    }
+  }, [])
   return (
-    <div style={{ position: "absolute", top: "100%", right: 0, zIndex: 200, background: "var(--t-elevated)", border: "1px solid var(--t-border)", borderRadius: 10, padding: 14, width: 260, boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 199 }} />
+      <div style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 200, background: "var(--t-elevated)", border: "1px solid var(--t-border)", borderRadius: 10, padding: 14, width: 260, boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
       <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t-text3)", marginBottom: 10, fontFamily: mono }}>ADVANCED FILTER</div>
       {[
         { key: "tradedOnly",  label: "Traded Only",  type: "checkbox" },
@@ -229,7 +238,8 @@ function FilterPanel({ filter, setFilter, onClose }: any) {
         <button onClick={() => setFilter({})} style={{ flex: 1, padding: "5px", fontSize: 10, borderRadius: 5, border: "1px solid var(--t-border)", background: "transparent", color: "var(--t-text3)", cursor: "pointer" }}>Clear</button>
         <button onClick={onClose} style={{ flex: 1, padding: "5px", fontSize: 10, borderRadius: 5, border: "none", background: "var(--t-accent)", color: "#000", fontWeight: 700, cursor: "pointer" }}>Done</button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 
