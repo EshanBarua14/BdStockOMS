@@ -120,22 +120,41 @@ describe("useTemplateStore", () => {
     expect(useTemplateStore.getState().getActivePage()!.icon).toBe("🚀")
   })
 
-  it("setWidgetVisible toggles widget visibility", () => {
+  it("setWidgetVisible removes instance when false, adds when true", () => {
     const s = useTemplateStore.getState()
     s.setActiveTemplate(s.templates[0].id)
+    // hide: removes instance
     useTemplateStore.getState().setWidgetVisible("chart", false)
-    const page = useTemplateStore.getState().getActivePage()!
-    const w = page.widgets.find(w => w.id === "chart")
-    expect(w?.visible).toBe(false)
+    const page1 = useTemplateStore.getState().getActivePage()!
+    const inst1 = page1.instances?.find(i => i.widgetId === "chart")
+    expect(inst1).toBeUndefined()
+    // show: adds instance back
+    useTemplateStore.getState().setWidgetVisible("chart", true)
+    const page2 = useTemplateStore.getState().getActivePage()!
+    const inst2 = page2.instances?.find(i => i.widgetId === "chart")
+    expect(inst2).toBeDefined()
   })
 
-  it("setWidgetColor updates widget color group", () => {
+  it("setWidgetColor updates instance color group", () => {
     const s = useTemplateStore.getState()
     s.setActiveTemplate(s.templates[0].id)
-    useTemplateStore.getState().setWidgetColor("chart", "blue")
-    const page = useTemplateStore.getState().getActivePage()!
-    const w = page.widgets.find(w => w.id === "chart")
-    expect(w?.colorGroup).toBe("blue")
+    const page0 = useTemplateStore.getState().getActivePage()!
+    const inst = page0.instances?.find(i => i.widgetId === "chart")
+    if (inst) {
+      useTemplateStore.getState().setWidgetColor(inst.instanceId, "blue")
+      const page = useTemplateStore.getState().getActivePage()!
+      const updated = page.instances?.find(i => i.instanceId === inst.instanceId)
+      expect(updated?.colorGroup).toBe("blue")
+    } else {
+      // chart not in preset — add it first
+      useTemplateStore.getState().addWidgetInstance("chart")
+      const page2 = useTemplateStore.getState().getActivePage()!
+      const newInst = page2.instances?.find(i => i.widgetId === "chart")!
+      useTemplateStore.getState().setWidgetColor(newInst.instanceId, "blue")
+      const page3 = useTemplateStore.getState().getActivePage()!
+      const updated = page3.instances?.find(i => i.instanceId === newInst.instanceId)
+      expect(updated?.colorGroup).toBe("blue")
+    }
   })
 
   it("applyPreset changes layout on active page", () => {
