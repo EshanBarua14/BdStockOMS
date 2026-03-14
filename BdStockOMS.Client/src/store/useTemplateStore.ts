@@ -84,8 +84,8 @@ function layoutToInstances(layout: LayoutItem[]): WidgetInstance[] {
   }))
 }
 
-function createDefaultPage(name = 'Main', presetKey = 'Trading'): DashboardPage {
-  const layout = PRESET_LAYOUTS[presetKey] ?? PRESET_LAYOUTS.Trading
+function createDefaultPage(name = 'Main', presetKey = 'Trading', empty = false): DashboardPage {
+  const layout = empty ? [] : (PRESET_LAYOUTS[presetKey] ?? PRESET_LAYOUTS.Trading)
   return {
     id: uid(),
     name,
@@ -96,11 +96,11 @@ function createDefaultPage(name = 'Main', presetKey = 'Trading'): DashboardPage 
 }
 
 function createDefaultTemplate(): DashboardTemplate {
-  const mainPage = createDefaultPage('Trading', 'Trading')
+  const mainPage = createDefaultPage('My Dashboard', 'Trading', true) // empty by default
   return {
     id: uid(),
-    name: 'Default Workspace',
-    description: 'Auto-created default template',
+    name: 'My Workspace',
+    description: 'Default workspace',
     pages: [mainPage],
     activePageId: mainPage.id,
     createdAt: now(),
@@ -234,7 +234,7 @@ export const useTemplateStore = create<TemplateStore>()(
 
         // ── Page CRUD ──────────────────────────────────────────
         addPage: (name = 'New Page', preset = 'Trading') => {
-          const page = createDefaultPage(name, preset)
+          const page = createDefaultPage(name, preset, true) // new pages start empty
           updateActive(t => ({ ...t, pages: [...t.pages, page], activePageId: page.id }))
           return page.id
         },

@@ -31,23 +31,35 @@ export interface WidgetDef {
 }
 
 export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
-  { id:"buysell",   title:"Buy/Sell Console",  label:"Buy/Sell Console",  icon:"⚡", minW:1, minH:4, defaultW:4,  defaultH:8,  category:"Trading",   component: () => { BuySellConsoleEvents.open('BUY'); return null } },
-  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:1, minH:4, defaultW:12, defaultH:1,  category:"Market",    component: MarketTickerStrip },
-  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: WatchlistWidget },
-  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:1, minH:4, defaultW:3,  defaultH:7,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
-  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Trading",   component: OrderBookWidget },
-  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:1, minH:4, defaultW:6,  defaultH:4,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
-  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: TopMoversWidget },
-  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: MarketMapWidget },
-  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Market",    component: MarketDepthWidget },
-  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: BuySellPressureWidget },
-  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"Portfolio", component: PortfolioWidget },
-  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:1, minH:4, defaultW:6,  defaultH:5,  category:"Market",    component: PriceChartWidget },
-  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"System",    component: NotificationsWidget },
-  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:1, minH:4, defaultW:3,  defaultH:6,  category:"AI",        component: AIPredictionWidget },
-  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Market",    component: IndexSummaryWidget },
-  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"News",      component: NewsFeedWidget },
-  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:1, minH:4, defaultW:3,  defaultH:5,  category:"Risk",      component: RMSLimitsWidget },
+  { id:"buysell",   title:"Buy/Sell Console",  label:"Buy/Sell Console",  icon:"⚡", minW:4, minH:6, defaultW:8, defaultH:14, category:"Trading",
+    component: () => (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:12, background:'var(--t-surface)' }}>
+        <span style={{ fontSize:32 }}>⚡</span>
+        <div style={{ fontSize:11, fontWeight:700, color:'var(--t-text2)', fontFamily:"'JetBrains Mono',monospace" }}>BUY / SELL CONSOLE</div>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={() => BuySellConsoleEvents.open('BUY')} style={{ padding:'8px 20px', fontSize:12, fontWeight:800, borderRadius:8, border:'none', cursor:'pointer', background:'var(--t-buy)', color:'#000', fontFamily:"'JetBrains Mono',monospace" }}>F1  BUY</button>
+          <button onClick={() => BuySellConsoleEvents.open('SELL')} style={{ padding:'8px 20px', fontSize:12, fontWeight:800, borderRadius:8, border:'none', cursor:'pointer', background:'var(--t-sell)', color:'#fff', fontFamily:"'JetBrains Mono',monospace" }}>F2  SELL</button>
+        </div>
+        <div style={{ fontSize:9, color:'var(--t-text3)', fontFamily:"'JetBrains Mono',monospace" }}>F1 Buy · F2 Sell · or click above</div>
+      </div>
+    )
+  },
+  { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:12, minH:4, defaultW:48, defaultH:4,  category:"Market",    component: MarketTickerStrip },
+  { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:6,  minH:10, defaultW:14, defaultH:22,  category:"Market",    component: WatchlistWidget },
+  { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:6,  minH:10, defaultW:10, defaultH:20,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
+  { id:"orderbook",  title:"Order Book",        label:"Order Book",        icon:"📋", minW:6,  minH:10, defaultW:14, defaultH:20,  category:"Trading",   component: OrderBookWidget },
+  { id:"executions", title:"Executions",        label:"Executions",        icon:"✅", minW:6,  minH:8,  defaultW:14, defaultH:14,  category:"Trading",   component: (p) => <ExecutionsWidget ordersData={p.ordersData} /> },
+  { id:"movers",     title:"Top Movers",        label:"Top Movers",        icon:"🚀", minW:6,  minH:10, defaultW:14, defaultH:22,  category:"Market",    component: TopMoversWidget },
+  { id:"heatmap",    title:"Market Map",        label:"Market Map",        icon:"🗺", minW:6,  minH:10, defaultW:14, defaultH:20,  category:"Market",    component: MarketMapWidget },
+  { id:"depth",      title:"Market Depth",      label:"Market Depth",      icon:"📊", minW:6,  minH:10, defaultW:14, defaultH:22,  category:"Market",    component: MarketDepthWidget },
+  { id:"pressure",   title:"Buy/Sell Pressure", label:"Buy/Sell Pressure", icon:"⚖️", minW:6,  minH:8,  defaultW:12, defaultH:16,  category:"Market",    component: BuySellPressureWidget },
+  { id:"portfolio",  title:"Portfolio",         label:"Portfolio",         icon:"💼", minW:6,  minH:10, defaultW:14, defaultH:22,  category:"Portfolio", component: PortfolioWidget },
+  { id:"chart",      title:"Price Chart",       label:"Price Chart",       icon:"📉", minW:6,  minH:10, defaultW:14, defaultH:20,  category:"Market",    component: PriceChartWidget },
+  { id:"notif",      title:"Notifications",     label:"Notifications",     icon:"🔔", minW:6,  minH:8,  defaultW:12, defaultH:16,  category:"System",    component: NotificationsWidget },
+  { id:"ai",         title:"AI Prediction",     label:"AI Prediction",     icon:"🤖", minW:6,  minH:10, defaultW:14, defaultH:22,  category:"AI",        component: AIPredictionWidget },
+  { id:"index",      title:"Index Summary",     label:"Index Summary",     icon:"🏦", minW:6,  minH:8,  defaultW:12, defaultH:16,  category:"Market",    component: IndexSummaryWidget },
+  { id:"news",       title:"News Feed",         label:"News Feed",         icon:"📰", minW:6,  minH:8,  defaultW:12, defaultH:16,  category:"News",      component: NewsFeedWidget },
+  { id:"rms",        title:"RMS Limits",        label:"RMS Limits",        icon:"🛡️", minW:6,  minH:8,  defaultW:12, defaultH:16,  category:"Risk",      component: RMSLimitsWidget },
 ]
 
 // Object map keyed by id — used by DashboardPage
