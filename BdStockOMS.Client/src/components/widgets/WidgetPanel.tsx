@@ -88,6 +88,18 @@ export function WidgetPanel({
             color: 'var(--t-text2)', fontFamily: "'JetBrains Mono', monospace",
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{title}</span>
+          {colorGroup && gc && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0,
+              padding: '1px 6px', borderRadius: 4,
+              background: gc + '20', border: `1px solid ${gc}50`,
+              fontSize: 8, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
+              color: gc, letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: gc, boxShadow: `0 0 4px ${gc}`, flexShrink: 0 }} />
+              {colorGroup}
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} onClick={e => e.stopPropagation()}>

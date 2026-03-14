@@ -18,4 +18,8 @@ public class StockResponseDto
     public decimal ValueInMillionTaka { get; set; }
     public DateTime LastUpdatedAt { get; set; }
     public bool IsActive { get; set; }
+    public string Category { get; set; } = "A";
+    public decimal CircuitBreakerHigh { get; set; }
+    public decimal CircuitBreakerLow { get; set; }
+    public int BoardLotSize { get; set; } = 1;
 }

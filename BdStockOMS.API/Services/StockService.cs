@@ -135,6 +135,10 @@ public class StockService : IStockService
         Volume = s.Volume,
         ValueInMillionTaka = s.ValueInMillionTaka,
         LastUpdatedAt = s.LastUpdatedAt,
-        IsActive = s.IsActive
+        IsActive = s.IsActive,
+        Category = s.Category.ToString(),
+        CircuitBreakerHigh = s.CircuitBreakerHigh,
+        CircuitBreakerLow = s.CircuitBreakerLow,
+        BoardLotSize = s.BoardLotSize
     };
 }
