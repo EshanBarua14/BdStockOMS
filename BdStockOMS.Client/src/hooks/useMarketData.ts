@@ -37,11 +37,33 @@ export interface MarketStatus {
 
 export function normaliseMarketData(raw: any): StockTick[] {
   if (!raw) return []
-  if (Array.isArray(raw)) return raw
-  if (raw.items && Array.isArray(raw.items)) return raw.items
-  if (raw.data && Array.isArray(raw.data)) return raw.data
-  if (typeof raw === "object") return Object.values(raw)
+  if (Array.isArray(raw)) return raw.map(normaliseStock)
+  if (raw.items && Array.isArray(raw.items)) return raw.items.map(normaliseStock)
+  if (raw.data && Array.isArray(raw.data)) return raw.data.map(normaliseStock)
+  if (typeof raw === "object") return Object.values(raw).map(normaliseStock)
   return []
+}
+
+function normaliseStock(s: any): StockTick {
+  return {
+    stockId:            s.id ?? s.stockId ?? 0,
+    tradingCode:        s.tradingCode ?? s.TradingCode ?? '',
+    stockName:          s.companyName ?? s.stockName ?? s.CompanyName ?? '',
+    companyName:        s.companyName ?? s.CompanyName ?? '',
+    lastPrice:          s.lastTradePrice ?? s.lastPrice ?? s.LastTradePrice ?? 0,
+    change:             s.change ?? s.Change ?? 0,
+    changePercent:      s.changePercent ?? s.ChangePercent ?? 0,
+    volume:             s.volume ?? s.Volume ?? 0,
+    highPrice:          s.highPrice ?? s.HighPrice ?? 0,
+    lowPrice:           s.lowPrice ?? s.LowPrice ?? 0,
+    closePrice:         s.closePrice ?? s.ClosePrice ?? 0,
+    openPrice:          s.openPrice ?? s.OpenPrice ?? 0,
+    exchange:           s.exchange ?? s.Exchange ?? '',
+    category:           s.category ?? s.Category ?? '',
+    circuitBreakerHigh: s.circuitBreakerHigh ?? s.CircuitBreakerHigh ?? 0,
+    circuitBreakerLow:  s.circuitBreakerLow  ?? s.CircuitBreakerLow  ?? 0,
+    boardLotSize:       s.boardLotSize ?? s.BoardLotSize ?? 1,
+  }
 }
 
 function inferMarketStatus(raw?: any): MarketStatus {

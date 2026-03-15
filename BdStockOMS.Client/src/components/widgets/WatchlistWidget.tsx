@@ -351,7 +351,11 @@ export function WatchlistWidget() {
   // Load
   const reload = useCallback(async () => {
     try {
-      const d = await watchlistApi.getAll()
+      let d = await watchlistApi.getAll()
+      if (!d || d.length === 0) {
+        try { await watchlistApi.create("My Watchlist") } catch {}
+        try { d = await watchlistApi.getAll() } catch {}
+      }
       setLists(d ?? [])
       setActive(a => a || d?.[0]?.id || 0)
     } catch {}

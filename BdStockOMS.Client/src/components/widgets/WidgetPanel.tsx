@@ -89,16 +89,11 @@ export function WidgetPanel({
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{title}</span>
           {colorGroup && gc && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0,
-              padding: '1px 6px', borderRadius: 4,
-              background: gc + '20', border: `1px solid ${gc}50`,
-              fontSize: 8, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
-              color: gc, letterSpacing: '0.06em', textTransform: 'uppercase',
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: gc, boxShadow: `0 0 4px ${gc}`, flexShrink: 0 }} />
-              {colorGroup}
-            </span>
+            <span title={`Link group: ${colorGroup}`} style={{
+              width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+              background: gc, boxShadow: `0 0 5px ${gc}`,
+              display: 'inline-block', marginLeft: 1,
+            }} />
           )}
         </div>
 

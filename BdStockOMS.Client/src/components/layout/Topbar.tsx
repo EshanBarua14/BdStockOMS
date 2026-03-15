@@ -1,5 +1,7 @@
+import { TopbarIconBtn } from "./TopbarIconBtn";
 // @ts-nocheck
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { AppSettingsBtn } from "./AppSettingsBtn";
 import { useAuthStore } from '@/store/authStore'
 import { useMarketData } from '@/hooks/useMarketData'
 import { ThemeMenu } from '@/components/ui/ThemeMenu'
@@ -210,6 +212,17 @@ export function Topbar() {
         </Pill>
 
         <Div />
+        <Div />
+
+        {/* ── News icon ── */}
+        <TopbarIconBtn icon="📰" title="News" count={0} onClick={() => {}} />
+
+        {/* ── Notifications ── */}
+        <TopbarIconBtn icon="🔔" title="Notifications" count={3} onClick={() => {}} />
+
+        {/* ── App Settings ── */}
+        <AppSettingsBtn />
+
         <Div />
         <ThemeMenu variant="compact" />
 

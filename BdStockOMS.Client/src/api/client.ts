@@ -1,7 +1,7 @@
 // src/api/client.ts
 // All endpoints — cache: no-store, Bearer auth, clean error handling
 
-const BASE = ""
+const BASE = "https://localhost:7219"
 
 function token() {
   try {

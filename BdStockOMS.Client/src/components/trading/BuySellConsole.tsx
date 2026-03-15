@@ -338,7 +338,7 @@ function ConfirmPopup({ order, onConfirm, onCancel, placing }: any) {
 }
 
 // ─── Main Console ─────────────────────────────────────────────────────────────
-export function BuySellConsole() {
+export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}) {
   const { place, placing } = useOrders()
   const { ticksArray }     = useMarketData()
 
@@ -400,7 +400,7 @@ export function BuySellConsole() {
 
   // Load BO clients once
   useEffect(() => {
-    if (open && clients.length === 0) {
+    if ((open || embedded) && clients.length === 0) {
       getBOAccounts().then((raw: any) => {
         const list = Array.isArray(raw) ? raw : raw?.items ?? raw?.data ?? []
         setClients(list.map((c: any) => ({
@@ -418,7 +418,7 @@ export function BuySellConsole() {
   const doOpen  = useCallback((s: Side) => { setSide(s); setOpen(true) }, [])
   const doClose = useCallback(() => { setOpen(false); setShowConfirm(false); setResult(null); setWarn(null) }, [])
 
-  useGlobalShortcuts(() => doOpen('BUY'), () => doOpen('SELL'), doClose)
+  useGlobalShortcuts(() => embedded ? null : doOpen('BUY'), () => embedded ? null : doOpen('SELL'), embedded ? () => {} : doClose)
 
   const handleSymbolSelect = (s: any) => {
     setSymbol(s.tradingCode)
@@ -461,7 +461,7 @@ export function BuySellConsole() {
     setClient(null); setBoQuery(''); setWarn(null); setResult(null)
   }
 
-  if (!open) return null
+  if (!open && !embedded) return null
 
   const isBuy      = side === 'BUY'
   const sideColor  = isBuy ? 'var(--t-buy)' : 'var(--t-sell)'
@@ -475,16 +475,24 @@ export function BuySellConsole() {
 
   return (
     <>
-      <div onClick={doClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }} />
+      {!embedded && <div onClick={doClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }} />}
 
       <div style={{
-        position: 'fixed', top: '50%', left: '50%', zIndex: 9991,
-        transform: 'translate(-50%, -50%)',
-        width: 540, maxWidth: '97vw', maxHeight: '94vh',
-        background: 'var(--t-surface)', border: `1px solid ${sideColor}30`,
-        borderRadius: 14, display: 'flex', flexDirection: 'column',
-        boxShadow: `0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px ${sideColor}15`,
-        animation: 'oms-slide-up 0.18s ease',
+        ...(embedded ? {
+          position: 'relative', width: '100%', height: '100%',
+          display: 'flex', flexDirection: 'column',
+          background: 'var(--t-surface)',
+          border: `1px solid ${sideColor}30`, borderRadius: 10,
+          overflow: 'hidden',
+        } : {
+          position: 'fixed', top: '50%', left: '50%', zIndex: 9991,
+          transform: 'translate(-50%, -50%)',
+          width: 540, maxWidth: '97vw', maxHeight: '94vh',
+          background: 'var(--t-surface)', border: `1px solid ${sideColor}30`,
+          borderRadius: 14, display: 'flex', flexDirection: 'column',
+          boxShadow: `0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px ${sideColor}15`,
+          animation: 'oms-slide-up 0.18s ease',
+        }),
       }}>
         {/* Accent line */}
         <div style={{ height: 2, flexShrink: 0, background: `linear-gradient(90deg, transparent, ${sideColor}, transparent)`, opacity: 0.8 }} />

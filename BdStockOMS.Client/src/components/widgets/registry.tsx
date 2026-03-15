@@ -32,6 +32,7 @@ export interface WidgetDef {
 
 export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
   { id:"buysell",   title:"Buy/Sell Console",  label:"Buy/Sell Console",  icon:"⚡", minW:4, minH:6, defaultW:8, defaultH:14, category:"Trading",
+    // replaced below
     component: () => (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:12, background:'var(--t-surface)' }}>
         <span style={{ fontSize:32 }}>⚡</span>
