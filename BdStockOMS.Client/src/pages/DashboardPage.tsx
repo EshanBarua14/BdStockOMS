@@ -11,7 +11,6 @@ import { useOrders } from "../hooks/useOrders"
 import { WidgetPanel } from "../components/widgets/WidgetPanel"
 import { WIDGET_REGISTRY } from "../components/widgets/registry"
 import { PriceTicker } from "../components/dashboard/PriceTicker"
-import { BuySellConsoleEvents } from "../components/trading/BuySellConsole"
 import { TemplateManager } from "../components/dashboard/TemplateManager"
 
 const mono = "'JetBrains Mono', monospace"
@@ -65,13 +64,11 @@ function WidgetDrawer({ open, onClose, onAdd }) {
           {byCategory.map(({ cat, items }) => (
             <div key={cat} style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--t-text3)', fontFamily: mono, letterSpacing: '0.1em', marginBottom: 5, paddingLeft: 2 }}>{cat && cat.toUpperCase()}</div>
-              {items.map(([id, reg]) => {
-                const isBuySell = id === 'buysell'
-                return (
+              {items.map(([id, reg]) => (
                   <div key={id}
-                    draggable={!isBuySell}
-                    onDragStart={!isBuySell ? e => e.dataTransfer.setData('widgetId', id) : undefined}
-                    onClick={() => { onAdd(id); if (!isBuySell) onClose() }}
+                    draggable={true}
+                    onDragStart={e => e.dataTransfer.setData('widgetId', id)}
+                    onClick={() => { onAdd(id); onClose() }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 7, cursor: 'pointer', border: '1px solid transparent', background: 'transparent', marginBottom: 2, transition: 'all 0.1s' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--t-hover)'; e.currentTarget.style.borderColor = 'var(--t-border)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' }}
@@ -79,12 +76,11 @@ function WidgetDrawer({ open, onClose, onAdd }) {
                     <span style={{ fontSize: 15, flexShrink: 0 }}>{reg.icon}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t-text1)', fontFamily: mono }}>{reg.title}</div>
-                      <div style={{ fontSize: 9, color: 'var(--t-text3)' }}>{isBuySell ? 'Opens console overlay' : `${reg.defaultW}×${reg.defaultH} · drag or click`}</div>
+                      <div style={{ fontSize: 9, color: 'var(--t-text3)' }}>{reg.defaultW}x{reg.defaultH} · drag or click</div>
                     </div>
-                    <span style={{ fontSize: 10, color: isBuySell ? 'var(--t-accent)' : 'var(--t-text3)', fontFamily: mono, flexShrink: 0 }}>{isBuySell ? '⚡' : '+'}</span>
+                    <span style={{ fontSize: 10, color: 'var(--t-text3)', fontFamily: mono, flexShrink: 0 }}>+</span>
                   </div>
-                )
-              })}
+              ))}
             </div>
           ))}
         </div>
@@ -184,6 +180,67 @@ function PageDrawer({ open, onClose, pages, activePageId, onSelect, onAdd, onRen
 }
 
 // ── Main Dashboard ──────────────────────────────────────────────────────────
+
+// ── Inline page tab with right-click menu ─────────────────────────────────
+function PageTab({ page, isActive, onSelect, onRename, onDelete, onDuplicate, onIconChange }: any) {
+  const [menu, setMenu] = useState<{x:number,y:number}|null>(null)
+  const [renaming, setRenaming] = useState(false)
+  const [renameVal, setRenameVal] = useState(page.name)
+  const ref = useRef<HTMLInputElement>(null)
+  const mono = "'JetBrains Mono', monospace"
+
+  useEffect(() => { if (renaming && ref.current) ref.current.focus() }, [renaming])
+  useEffect(() => { if (menu) { const close = () => setMenu(null); window.addEventListener('click', close); return () => window.removeEventListener('click', close) } }, [menu])
+
+  const commitRename = () => { if (renameVal.trim()) onRename(renameVal.trim()); setRenaming(false) }
+
+  if (renaming) return (
+    <input ref={ref} value={renameVal} onChange={e => setRenameVal(e.target.value)}
+      onBlur={commitRename} onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false) }}
+      id={`page-rename-${page.id}`} name={`page-rename-${page.id}`}
+      style={{ width: 80, fontSize: 10, fontFamily: mono, background: 'var(--t-hover)', border: '1px solid var(--t-accent)', borderRadius: 4, padding: '2px 6px', color: 'var(--t-text1)', outline: 'none' }}
+    />
+  )
+
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <button onClick={onSelect}
+        onContextMenu={e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}
+        onDoubleClick={() => { setRenameVal(page.name); setRenaming(true) }}
+        style={{
+          padding: '3px 10px', fontSize: 10, fontWeight: isActive ? 700 : 400,
+          border: 'none', borderBottom: `2px solid ${isActive ? 'var(--t-accent)' : 'transparent'}`,
+          background: 'transparent', cursor: 'pointer', fontFamily: mono,
+          color: isActive ? 'var(--t-accent)' : 'var(--t-text3)',
+          transition: 'all 0.1s', whiteSpace: 'nowrap', borderRadius: 0,
+        }}>{page.icon} {page.name}</button>
+      {menu && (
+        <div onClick={e => e.stopPropagation()} style={{
+          position: 'fixed', left: menu.x, top: menu.y, zIndex: 9999,
+          background: 'var(--t-surface)', border: '1px solid var(--t-border)',
+          borderRadius: 8, padding: '4px 0', minWidth: 140, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        }}>
+          {[
+            { label: '✏️ Rename', action: () => { setRenaming(true); setMenu(null) } },
+            { label: '📋 Duplicate', action: () => { onDuplicate(); setMenu(null) } },
+            { label: '🔖 Save layout', action: () => { setMenu(null) } },
+            { label: '🗑️ Delete page', action: () => { onDelete(); setMenu(null) }, danger: true },
+          ].map(item => (
+            <button key={item.label} onClick={item.action} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '7px 14px',
+              fontSize: 11, fontFamily: mono, background: 'none', border: 'none', cursor: 'pointer',
+              color: item.danger ? 'var(--t-sell)' : 'var(--t-text1)',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >{item.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const store    = useTemplateStore()
   const template = store.getActiveTemplate()
@@ -225,7 +282,7 @@ export default function DashboardPage() {
   }, [store])
 
   const handleAddWidget = useCallback((widgetId) => {
-    if (widgetId === 'buysell') { BuySellConsoleEvents.open('BUY'); return }
+
     store.addWidgetInstance(widgetId)
   }, [store])
 
@@ -250,13 +307,13 @@ export default function DashboardPage() {
         {/* Page tabs */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 0, overflow: 'hidden', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {pages.map(p => (
-            <button key={p.id} onClick={() => store.setActivePage(p.id)} style={{
-              flexShrink: 0, padding: '3px 10px', fontSize: 10, fontWeight: p.id === template?.activePageId ? 700 : 400,
-              border: 'none', borderBottom: `2px solid ${p.id === template?.activePageId ? 'var(--t-accent)' : 'transparent'}`,
-              background: 'transparent', cursor: 'pointer', fontFamily: mono,
-              color: p.id === template?.activePageId ? 'var(--t-accent)' : 'var(--t-text3)',
-              transition: 'all 0.1s', whiteSpace: 'nowrap', borderRadius: 0,
-            }}>{p.icon} {p.name}</button>
+            <PageTab key={p.id} page={p} isActive={p.id === template?.activePageId}
+              onSelect={() => store.setActivePage(p.id)}
+              onRename={(name) => store.renamePage(p.id, name)}
+              onDelete={() => { if (pages.length > 1) store.deletePage(p.id) }}
+              onDuplicate={() => store.addPage(`${p.name} Copy`, p.layout, p.instances)}
+              onIconChange={(icon) => store.setPageIcon(p.id, icon)}
+            />
           ))}
           <button onClick={() => store.addPage(`Page ${pages.length + 1}`)}
             style={{ flexShrink: 0, padding: '3px 8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t-text3)', fontSize: 14, borderRadius: 4 }}

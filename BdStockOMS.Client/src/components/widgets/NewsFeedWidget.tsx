@@ -1,3 +1,11 @@
+const DEMO_NEWS = [
+  { id:1, title:"DSE index rises 1.2% on banking sector gains", category:"Market", source:"Daily Star", publishedAt: new Date(Date.now()-1800000).toISOString(), summary:"The Dhaka Stock Exchange rose sharply today led by banking stocks." },
+  { id:2, title:"BATBC reports 15% profit growth in Q3 2026", category:"Corporate", source:"Financial Express", publishedAt: new Date(Date.now()-3600000).toISOString(), summary:"British American Tobacco Bangladesh posted strong quarterly results." },
+  { id:3, title:"Bangladesh Bank cuts policy rate by 25bps", category:"Economy", source:"Prothom Alo", publishedAt: new Date(Date.now()-7200000).toISOString(), summary:"Central bank eases monetary policy to support growth." },
+  { id:4, title:"GP subscriber base crosses 86 million", category:"Corporate", source:"BD News24", publishedAt: new Date(Date.now()-10800000).toISOString(), summary:"Grameenphone reports record subscriber numbers for Q1." },
+  { id:5, title:"CSE launches new SME board listing requirements", category:"Regulation", source:"BSS", publishedAt: new Date(Date.now()-14400000).toISOString(), summary:"Chittagong Stock Exchange updates SME listing criteria." },
+  { id:6, title:"BSEC approves 3 new mutual fund listings", category:"Regulation", source:"UNB", publishedAt: new Date(Date.now()-18000000).toISOString(), summary:"Securities regulator greenlights new fund products." },
+]
 // @ts-nocheck
 import { useState, useEffect } from "react"
 import { apiClient } from "@/api/client"
@@ -5,15 +13,15 @@ import { subscribeMarket } from "@/hooks/useSignalR"
 
 const IMP_COLORS = { high:"#FF6B6B", medium:"#F59E0B", low:"rgba(255,255,255,0.3)" }
 
-export function NewsFeedWidget({ onSymbolClick }) {
-  const [news, setNews]     = useState([])
+export function NewsFeedWidget({ onSymbolClick }: any) {
+  const [news, setNews]     = useState<any[]>([])
   const [filter, setFilter] = useState("All")
   const [search, setSearch] = useState("")
 
   // Load initial news from REST
   useEffect(() => {
     apiClient.get("/news?count=20").then(r => {
-      setNews(r.data ?? [])
+      setNews(r.data?.length ? r.data : DEMO_NEWS)
     }).catch(() => {})
   }, [])
 
@@ -53,7 +61,7 @@ export function NewsFeedWidget({ onSymbolClick }) {
           : filtered.map((n,i) => (
             <div key={n.id ?? i} onClick={()=>onSymbolClick?.(n.tag)}
               style={{ padding:"8px 10px", borderBottom:"1px solid rgba(255,255,255,0.03)", cursor:"pointer", background: n.isNew ? "rgba(0,212,170,0.04)" : "transparent", transition:"background 0.5s", display:"flex", gap:8, alignItems:"flex-start" }}>
-              <span style={{ width:5, height:5, borderRadius:"50%", background:IMP_COLORS[n.importance]??"#fff", flexShrink:0, marginTop:5 }} />
+              <span style={{ width:5, height:5, borderRadius:"50%", background:(IMP_COLORS as any)[n.importance]??"#fff", flexShrink:0, marginTop:5 }} />
               <div style={{ flex:1 }}>
                 {n.isNew && <span style={{ color:"#00D4AA", fontSize:9, fontFamily:"'Space Mono',monospace", marginRight:4 }}>NEW</span>}
                 <span style={{ color:"#fff", fontSize:11, lineHeight:1.4 }}>{n.title}</span>

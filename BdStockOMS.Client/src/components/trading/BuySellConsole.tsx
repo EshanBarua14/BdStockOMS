@@ -760,3 +760,7 @@ export function BuySellHoverTrigger({ symbol }: { symbol?: string }) {
     </div>
   )
 }
+
+export function BuySellConsoleInline(props: any) {
+  return <BuySellConsole embedded={true} {...props} />
+}

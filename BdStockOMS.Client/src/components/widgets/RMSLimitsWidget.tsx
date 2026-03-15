@@ -1,8 +1,15 @@
+const DEMO_RMS = {
+  cashLimit: 500000, purchasePower: 387450.20, usedPurchasePower: 112549.80,
+  mainMarket: { maxBuy: 300000, maxSell: 300000, consumed: 87450, remaining: 212550 },
+  atbMarket:  { maxBuy: 100000, maxSell: 100000, consumed: 25099, remaining: 74901 },
+  scMarket:   { maxBuy:  50000, maxSell:  50000, consumed:     0, remaining: 50000 },
+  suspendBuy: false, suspendSell: false, shortSellEnabled: false,
+}
 // @ts-nocheck
 import { useState, useEffect } from "react"
 import { rmsApi } from "@/api/rms"
 
-function GaugeBar({ label, used, total, color }) {
+function GaugeBar({ label, used, total, color }: any) {
   const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0
   const warn = pct > 80
   return (
@@ -23,12 +30,12 @@ function GaugeBar({ label, used, total, color }) {
 }
 
 export function RMSLimitsWidget() {
-  const [limits, setLimits] = useState(null)
+  const [limits, setLimits] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
-      try { setLimits(await rmsApi.getMyLimits()) } catch {}
+      try { setLimits(await rmsApi.getMyLimits()) } catch { setLimits(DEMO_RMS) }
       finally { setLoading(false) }
     }
     load()

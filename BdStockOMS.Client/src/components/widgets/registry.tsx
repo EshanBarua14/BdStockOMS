@@ -15,7 +15,7 @@ import { IndexSummaryWidget }   from "./IndexSummaryWidget"
 import { NewsFeedWidget }       from "./NewsFeedWidget"
 import { RMSLimitsWidget }      from "./RMSLimitsWidget"
 import { OrdersWidget, ExecutionsWidget } from "./OrdersWidget"
-import { BuySellConsole, BuySellConsoleEvents } from "@/components/trading/BuySellConsole"
+import { BuySellConsole, BuySellConsoleEvents, BuySellConsoleInline } from "@/components/trading/BuySellConsole"
 
 export interface WidgetDef {
   id:         string
@@ -31,20 +31,8 @@ export interface WidgetDef {
 }
 
 export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
-  { id:"buysell",   title:"Buy/Sell Console",  label:"Buy/Sell Console",  icon:"⚡", minW:4, minH:6, defaultW:8, defaultH:14, category:"Trading",
-    // replaced below
-    component: () => (
-      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:12, background:'var(--t-surface)' }}>
-        <span style={{ fontSize:32 }}>⚡</span>
-        <div style={{ fontSize:11, fontWeight:700, color:'var(--t-text2)', fontFamily:"'JetBrains Mono',monospace" }}>BUY / SELL CONSOLE</div>
-        <div style={{ display:'flex', gap:8 }}>
-          <button onClick={() => BuySellConsoleEvents.open('BUY')} style={{ padding:'8px 20px', fontSize:12, fontWeight:800, borderRadius:8, border:'none', cursor:'pointer', background:'var(--t-buy)', color:'#000', fontFamily:"'JetBrains Mono',monospace" }}>F1  BUY</button>
-          <button onClick={() => BuySellConsoleEvents.open('SELL')} style={{ padding:'8px 20px', fontSize:12, fontWeight:800, borderRadius:8, border:'none', cursor:'pointer', background:'var(--t-sell)', color:'#fff', fontFamily:"'JetBrains Mono',monospace" }}>F2  SELL</button>
-        </div>
-        <div style={{ fontSize:9, color:'var(--t-text3)', fontFamily:"'JetBrains Mono',monospace" }}>F1 Buy · F2 Sell · or click above</div>
-      </div>
-    )
-  },
+  { id:"buysell", title:"Buy/Sell Console", label:"Buy/Sell Console", icon:"⚡", minW:6, minH:14, defaultW:10, defaultH:22, category:"Trading",
+    component: BuySellConsoleInline },
   { id:"ticker",     title:"Market Ticker",     label:"Market Ticker",     icon:"📈", minW:12, minH:4, defaultW:48, defaultH:4,  category:"Market",    component: MarketTickerStrip },
   { id:"watchlist",  title:"Watchlist",         label:"Watchlist",         icon:"👁",  minW:6,  minH:10, defaultW:14, defaultH:22,  category:"Market",    component: WatchlistWidget },
   { id:"order",      title:"Order Entry",       label:"Order Entry",       icon:"⚡", minW:6,  minH:10, defaultW:10, defaultH:20,  category:"Trading",   component: (p) => <OrdersWidget ordersData={p.ordersData} /> },
