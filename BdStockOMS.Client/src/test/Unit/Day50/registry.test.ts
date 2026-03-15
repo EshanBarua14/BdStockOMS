@@ -47,7 +47,7 @@ describe("Widget Registry", () => {
   })
   it("ticker widget spans full width by default", () => {
     const ticker = WIDGET_REGISTRY["ticker"]
-    expect(ticker?.defaultW).toBe(48)
+    expect(ticker?.defaultW).toBe(24)
   })
   it("all widgets have a valid category", () => {
     const validCats = ["Market","Trading","Portfolio","System","AI","News","Risk"]

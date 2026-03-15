@@ -9,6 +9,22 @@ import { marketApi } from "@/api/market"
 import { useMarketData } from "@/hooks/useMarketData"
 import { BuySellConsoleEvents } from "@/components/trading/BuySellConsole"
 
+const DEMO_WATCHLIST_STOCKS = [
+  { tradingCode:'GP',         stockId:1,  exchange:'DSE', category:'A', lastTradePrice:380.50,  change:2.30,  changePercent:0.61,  volume:1823400, highPrice:383.00, lowPrice:376.00, closePrice:378.20 },
+  { tradingCode:'BATBC',      stockId:2,  exchange:'DSE', category:'A', lastTradePrice:615.92,  change:-4.10, changePercent:-0.66, volume:432100,  highPrice:622.00, lowPrice:612.00, closePrice:620.02 },
+  { tradingCode:'BERGERPBL',  stockId:3,  exchange:'DSE', category:'A', lastTradePrice:1131.95, change:11.20, changePercent:1.00,  volume:98200,   highPrice:1140.00,lowPrice:1118.00,closePrice:1120.75 },
+  { tradingCode:'BRACBANK',   stockId:4,  exchange:'DSE', category:'A', lastTradePrice:48.30,   change:0.80,  changePercent:1.68,  volume:3241000, highPrice:49.00,  lowPrice:47.20,  closePrice:47.50 },
+  { tradingCode:'DUTCHBANGL', stockId:5,  exchange:'DSE', category:'A', lastTradePrice:182.40,  change:-1.60, changePercent:-0.87, volume:654300,  highPrice:185.00, lowPrice:181.00, closePrice:184.00 },
+  { tradingCode:'SQURPHARMA', stockId:6,  exchange:'DSE', category:'A', lastTradePrice:242.10,  change:3.40,  changePercent:1.42,  volume:876500,  highPrice:244.00, lowPrice:238.00, closePrice:238.70 },
+  { tradingCode:'ISLAMIBANK', stockId:7,  exchange:'DSE', category:'A', lastTradePrice:35.60,   change:0.40,  changePercent:1.14,  volume:4123000, highPrice:36.00,  lowPrice:35.00,  closePrice:35.20 },
+  { tradingCode:'RENATA',     stockId:8,  exchange:'DSE', category:'A', lastTradePrice:1243.00, change:-8.50, changePercent:-0.68, volume:76400,   highPrice:1255.00,lowPrice:1238.00,closePrice:1251.50 },
+  { tradingCode:'CITYBANK',   stockId:9,  exchange:'CSE', category:'A', lastTradePrice:28.40,   change:-0.30, changePercent:-1.05, volume:2341000, highPrice:29.00,  lowPrice:28.00,  closePrice:28.70 },
+  { tradingCode:'NBL',        stockId:10, exchange:'CSE', category:'A', lastTradePrice:14.20,   change:0.10,  changePercent:0.71,  volume:5432000, highPrice:14.50,  lowPrice:14.00,  closePrice:14.10 },
+  { tradingCode:'MARICO',     stockId:11, exchange:'CSE', category:'A', lastTradePrice:98.70,   change:1.20,  changePercent:1.23,  volume:234500,  highPrice:99.50,  lowPrice:97.00,  closePrice:97.50 },
+  { tradingCode:'BXPHARMA',   stockId:12, exchange:'CSE', category:'A', lastTradePrice:67.80,   change:2.10,  changePercent:3.19,  volume:432100,  highPrice:68.50,  lowPrice:65.50,  closePrice:65.70 },
+]
+
+
 // ─── All available columns ────────────────────────────────────────────────────
 const ALL_COLUMNS = [
   { key: "tradingCode",    label: "Code",       w: 72  },
@@ -366,10 +382,17 @@ export function WatchlistWidget() {
   const activeList = useMemo(() => lists.find(l => l.id === active), [lists, active])
 
   // Merge live prices
+  const [exchTab, setExchTab] = useState<'All'|'DSE'|'CSE'>('All')
   const mergedStocks = useMemo(() => {
     const base = activeList?.stocks ?? []
+    // Use live ticks if available, else demo
+    const liveAll = ticksArray.length > 0 ? ticksArray : DEMO_WATCHLIST_STOCKS
+    if (base.length === 0) {
+      // No stocks in list — show all live/demo stocks
+      return liveAll
+    }
     return base.map((s: any) => {
-      const live = ticksArray.find(t => t.tradingCode === s.tradingCode)
+      const live = liveAll.find(t => t.tradingCode === s.tradingCode)
       return live ? { ...s, ...live, stockId: s.stockId, tradingCode: s.tradingCode } : s
     })
   }, [activeList, ticksArray])
@@ -377,13 +400,14 @@ export function WatchlistWidget() {
   // Apply filter
   const filteredStocks = useMemo(() => {
     let stocks = mergedStocks
+    if (exchTab !== 'All') stocks = stocks.filter((s: any) => s.exchange === exchTab)
     if (filter.tradedOnly) stocks = stocks.filter((s: any) => (s.volume ?? 0) > 0)
     if (filter.spotOnly)   stocks = stocks.filter((s: any) => s.category === "Spot")
     if (filter.exchange)   stocks = stocks.filter((s: any) => s.exchange === filter.exchange)
     if (filter.category)   stocks = stocks.filter((s: any) => s.category === filter.category)
     if (filter.symbolQ)    stocks = stocks.filter((s: any) => s.tradingCode?.startsWith(filter.symbolQ))
     return stocks
-  }, [mergedStocks, filter])
+  }, [mergedStocks, filter, exchTab])
 
   // Apply sort
   const sortedStocks = useMemo(() => {
@@ -531,6 +555,18 @@ export function WatchlistWidget() {
       </div>
 
       {/* ── Add stock search ── */}
+      {/* Exchange tabs */}
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
+        {(['All', 'DSE', 'CSE'] as const).map(tab => (
+          <button key={tab} onClick={() => setExchTab(tab)} style={{
+            flex: 1, padding: "5px 0", fontSize: 10, fontWeight: exchTab === tab ? 700 : 400,
+            border: "none", borderBottom: `2px solid ${exchTab === tab ? (tab === 'DSE' ? '#60a5fa' : tab === 'CSE' ? '#a78bfa' : 'var(--t-accent)') : 'transparent'}`,
+            background: "transparent", cursor: "pointer", fontFamily: mono,
+            color: exchTab === tab ? (tab === 'DSE' ? '#60a5fa' : tab === 'CSE' ? '#a78bfa' : 'var(--t-accent)') : 'var(--t-text3)',
+            transition: "all 0.1s",
+          }}>{tab}</button>
+        ))}
+      </div>
       <div style={{ padding: "5px 8px", borderBottom: "1px solid var(--t-border)", position: "relative", flexShrink: 0 }}>
         <input
           ref={searchRef}

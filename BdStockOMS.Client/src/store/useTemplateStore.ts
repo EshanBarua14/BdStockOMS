@@ -141,7 +141,7 @@ interface TemplateStore {
   duplicateTemplate: (id: string) => string
 
   // Page CRUD
-  addPage: (name?: string, preset?: string) => string
+  addPage: (name?: string, preset?: string, layout?: any[], instances?: any[]) => string
   deletePage: (pageId: string) => void
   renamePage: (pageId: string, name: string) => void
   setPageIcon: (pageId: string, icon: string) => void
@@ -233,8 +233,10 @@ export const useTemplateStore = create<TemplateStore>()(
         },
 
         // ── Page CRUD ──────────────────────────────────────────
-        addPage: (name = 'New Page', preset = 'Trading') => {
-          const page = createDefaultPage(name, preset, true) // new pages start empty
+        addPage: (name = 'New Page', preset = 'Trading', layout?: any[], instances?: any[]) => {
+          const page = createDefaultPage(name, preset, true)
+          if (layout) page.layout = JSON.parse(JSON.stringify(layout))
+          if (instances) page.instances = JSON.parse(JSON.stringify(instances))
           updateActive(t => ({ ...t, pages: [...t.pages, page], activePageId: page.id }))
           return page.id
         },

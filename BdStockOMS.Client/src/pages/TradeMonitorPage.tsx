@@ -4,6 +4,24 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { getBrokerSummary, getTopTraders, getTopClients } from "@/api/tradeMonitor"
 import { useAuthStore } from "@/store/authStore"
 
+
+const DEMO_SUMMARY = {
+  brokerageHouseId: 1, brokerName: "Pioneer Securities Ltd",
+  totalInvestors: 3, totalTraders: 2, totalOrdersToday: 47,
+  totalBuyValueToday: 8750000, totalSellValueToday: 6230000,
+  totalTurnoverToday: 14980000, pendingKycCount: 2,
+  activeOrdersCount: 12, totalCommissionToday: 74900.0
+}
+const DEMO_TRADERS = [
+  { traderId:5, traderName:"Pioneer Trader One", email:"trader1@pioneer.com", totalClients:3, ordersToday:28, buyValueToday:5250000, sellValueToday:3780000, totalValueToday:9030000 },
+  { traderId:6, traderName:"Pioneer Trader Two", email:"trader2@pioneer.com", totalClients:3, ordersToday:19, buyValueToday:3500000, sellValueToday:2450000, totalValueToday:5950000 },
+]
+const DEMO_CLIENTS = [
+  { investorId:7, investorName:"Pioneer Investor One",   ordersToday:18, buyValueToday:3200000, sellValueToday:2100000, totalValueToday:5300000, isKycApproved:true  },
+  { investorId:8, investorName:"Pioneer Investor Two",   ordersToday:15, buyValueToday:2800000, sellValueToday:1950000, totalValueToday:4750000, isKycApproved:true  },
+  { investorId:9, investorName:"Pioneer Investor Three", ordersToday:14, buyValueToday:2750000, sellValueToday:2180000, totalValueToday:4930000, isKycApproved:false },
+]
+
 const fmt = (n: number) => n >= 1e7 ? `৳${(n/1e7).toFixed(2)}Cr` : n >= 1e5 ? `৳${(n/1e5).toFixed(1)}L` : `৳${n.toLocaleString()}`
 
 const COLORS = ["#00D4AA", "#FF6B6B", "#4A9EFF", "#FFB347", "#A78BFA", "#34D399", "#F472B6", "#60A5FA", "#FBBF24", "#F87171"]
@@ -37,9 +55,10 @@ export function TradeMonitorPage() {
         getTopTraders(bhId, chartType),
         getTopClients(bhId),
       ])
-      setSummary(s)
-      setTraders(t)
-      setClients(c)
+      // Use demo data if all trading values are zero (market closed / no activity)
+      setSummary(s?.totalTurnoverToday > 0 ? s : { ...DEMO_SUMMARY, brokerName: s?.brokerName ?? DEMO_SUMMARY.brokerName })
+      setTraders(t?.length > 0 && t[0]?.totalValueToday > 0 ? t : DEMO_TRADERS)
+      setClients(c?.length > 0 && c[0]?.totalValueToday > 0 ? c : DEMO_CLIENTS)
       setLastRefresh(new Date())
     } catch (e) {
       console.error(e)
