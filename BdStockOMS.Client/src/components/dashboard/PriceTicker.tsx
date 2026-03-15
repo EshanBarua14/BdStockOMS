@@ -11,7 +11,7 @@ const SETTINGS_KEY = 'bd_oms_ticker_v2'
 
 const DEFAULT: TickerSettings = {
   enabled: true, speed: 50, direction: 'rtl',
-  exchange: 'DSE', dualTicker: false,
+  exchange: 'Both', dualTicker: true,
   sortBy: 'ltp', showVolume: false, showChange: true,
 }
 
@@ -280,8 +280,8 @@ const DEMO_STOCKS = [
     </div>
   )
 
-  const isDual = settings.exchange === 'Both' && settings.dualTicker
-  const tickerH = isDual ? 52 : 26
+  const isDual = settings.exchange === 'Both'
+  const tickerH = isDual ? 54 : 28
 
   const dseVisible = settings.exchange === 'DSE' || settings.exchange === 'Both'
   const cseVisible = settings.exchange === 'CSE' || settings.exchange === 'Both'

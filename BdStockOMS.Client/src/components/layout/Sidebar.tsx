@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Portfolio', path: '/portfolio', Icon: Icon.Portfolio, roles: ['Investor','Trader','Admin','SuperAdmin','BrokerageHouse','BrokerageAdmin'] },
   { label: 'Market',    path: '/market',    Icon: Icon.Market },
   { label: 'Trade Monitor', path: '/trade-monitor', Icon: Icon.Market, roles: ['SuperAdmin','Admin','BrokerageAdmin','CCD','Trader','Investor'] },
+  { label: 'Risk Management', path: '/rms', Icon: Icon.Admin, roles: ['SuperAdmin','Admin','BrokerageAdmin'] },
   { label: 'Admin Panel',    path: '/admin',   Icon: Icon.Admin,   roles: ['SuperAdmin','Admin'], section: 'Admin' },
   { label: 'Tenant Manager', path: '/tenants', Icon: Icon.Tenants, roles: ['SuperAdmin'], section: 'Admin' },
   { label: 'RBAC & Roles',   path: '/rbac',    Icon: Icon.RBAC,    roles: ['SuperAdmin'], section: 'Admin' },

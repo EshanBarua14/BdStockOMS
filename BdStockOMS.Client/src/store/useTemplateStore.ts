@@ -124,7 +124,20 @@ function nextInstanceId(page: DashboardPage, widgetId: string): string {
 // Find a free grid position (bottom of current layout)
 function findFreePosition(layout: LayoutItem[], w: number, h: number): { x: number; y: number } {
   if (layout.length === 0) return { x: 0, y: 0 }
-  const maxY = Math.max(...layout.map(l => l.y + l.h))
+  const COLS = 48
+  // Try to find an empty rectangular region
+  const maxY = Math.max(...layout.map(l => l.y + l.h), 0)
+  for (let y = 0; y <= maxY; y++) {
+    for (let x = 0; x <= COLS - w; x++) {
+      // Check if rect (x,y,w,h) is free
+      const occupied = layout.some(l =>
+        x < l.x + l.w && x + w > l.x &&
+        y < l.y + l.h && y + h > l.y
+      )
+      if (!occupied) return { x, y }
+    }
+  }
+  // Fallback: append at bottom
   return { x: 0, y: maxY }
 }
 
@@ -279,8 +292,8 @@ export const useTemplateStore = create<TemplateStore>()(
             newId = instanceId
             const minW = reg.minW ?? 4
             const minH = reg.minH ?? 6
-            const w = minW   // start at minimum size, user resizes
-            const h = minH
+            const w = Math.min(reg.defaultW ?? minW, 8)
+            const h = Math.min(reg.defaultH ?? minH, 10)
             const pos = findFreePosition(p.layout, w, h)
             const newLayout: LayoutItem = { i: instanceId, x: pos.x, y: pos.y, w, h, minW, minH }
             const newInstance: WidgetInstance = { instanceId, widgetId, colorGroup: null }
@@ -388,27 +401,45 @@ export const useTemplateStore = create<TemplateStore>()(
     },
     {
       name: 'bd_oms_templates_v1',
-      onRehydrateStorage: () => (state) => {
-        if (!state) return
-        if (state.templates.length === 0) {
+      onRehydrateStorage: () => (state, error) => {
+        // Guard: clear corrupted storage and reset to default
+        if (error || !state) {
+          console.warn('[TemplateStore] Rehydration failed, resetting storage', error)
+          try { localStorage.removeItem('bd-oms-templates') } catch {}
+          return
+        }
+        try {
+          if (!Array.isArray(state.templates) || state.templates.length === 0) {
+            const def = createDefaultTemplate()
+            state.templates = [def]
+            state.activeTemplateId = def.id
+            return
+          }
+          if (!state.activeTemplateId || !state.templates.find(t => t.id === state.activeTemplateId)) {
+            state.activeTemplateId = state.templates[0].id
+          }
+          // Migrate pages that have widgets[] (old format) to instances[]
+          state.templates = state.templates.map(t => ({
+            ...t,
+            pages: (t.pages ?? []).map(p => {
+              if (!p.instances) {
+                return { ...p, instances: layoutToInstances(p.layout ?? []) }
+              }
+              // Guard: ensure layout items have required fields
+              return {
+                ...p,
+                layout: (p.layout ?? []).filter(l => l && l.i && typeof l.x === 'number'),
+                instances: (p.instances ?? []).filter(i => i && i.instanceId && i.widgetId),
+              }
+            })
+          }))
+        } catch (e) {
+          console.warn('[TemplateStore] Migration error, resetting', e)
+          try { localStorage.removeItem('bd-oms-templates') } catch {}
           const def = createDefaultTemplate()
           state.templates = [def]
           state.activeTemplateId = def.id
-          return
         }
-        if (!state.activeTemplateId) {
-          state.activeTemplateId = state.templates[0].id
-        }
-        // Migrate pages that have widgets[] (old format) to instances[]
-        state.templates = state.templates.map(t => ({
-          ...t,
-          pages: t.pages.map(p => {
-            if (!p.instances) {
-              return { ...p, instances: layoutToInstances(p.layout) }
-            }
-            return p
-          })
-        }))
       },
     }
   )

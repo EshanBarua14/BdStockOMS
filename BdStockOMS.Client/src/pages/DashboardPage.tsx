@@ -223,7 +223,22 @@ function PageTab({ page, isActive, onSelect, onRename, onDelete, onDuplicate, on
           {[
             { label: '✏️ Rename', action: () => { setRenaming(true); setMenu(null) } },
             { label: '📋 Duplicate', action: () => { onDuplicate(); setMenu(null) } },
-            { label: '🔖 Save layout', action: () => { setMenu(null) } },
+            { label: '🔖 Save as template', action: () => {
+              const cur = store.getActivePage()
+              const name = window.prompt('Template name:', page?.name ?? 'My Template')
+              if (name?.trim()) {
+                const tid = store.createTemplate(name.trim())
+                store.setActiveTemplate(tid)
+                if (cur?.layout) store.updateLayout(cur.layout)
+                setMenu(null)
+                const toast = document.createElement('div')
+                toast.textContent = '✅ Saved as template: ' + name
+                toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00D4AA;color:#000;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:99999;font-family:monospace'
+                document.body.appendChild(toast)
+                setTimeout(() => toast.remove(), 2500)
+              }
+              setMenu(null)
+            } },
             { label: '🗑️ Delete page', action: () => { onDelete(); setMenu(null) }, danger: true },
           ].map(item => (
             <button key={item.label} onClick={item.action} style={{
@@ -258,9 +273,10 @@ export default function DashboardPage() {
   const gridRef = useRef(null)
 
   useEffect(() => {
-    if (!store.activeTemplateId && store.templates.length > 0)
+    if (!store.activeTemplateId && store.templates.length > 0) {
       store.setActiveTemplate(store.templates[0].id)
-  }, [])
+    }
+  }, [store.activeTemplateId, store.templates.length])
 
   useEffect(() => {
     const el = document.getElementById('grid-container')
@@ -274,11 +290,40 @@ export default function DashboardPage() {
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
   }, [])
 
+  // Guard: if no template loaded yet, show loading or reset
+  if (!template && store.templates.length === 0) {
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100vh', gap:16, background:'var(--t-bg)' }}>
+        <div style={{ fontSize:48, opacity:0.3 }}>📊</div>
+        <div style={{ fontSize:14, color:'var(--t-text2)', fontFamily:"'JetBrains Mono',monospace" }}>No dashboard found</div>
+        <button onClick={() => { localStorage.removeItem('bd_oms_templates_v1'); window.location.reload() }}
+          style={{ padding:'10px 24px', fontSize:12, fontWeight:700, borderRadius:8, border:'1px solid var(--t-accent)', cursor:'pointer', background:'transparent', color:'var(--t-accent)', fontFamily:"'JetBrains Mono',monospace" }}>
+          ↺ Reset Dashboard
+        </button>
+      </div>
+    )
+  }
+
   const sharedProps = { market, orders }
   const pages = template?.pages ?? []
 
   const handleLayoutChange = useCallback((newLayout) => {
-    store.updateLayout(newLayout)
+    // Merge with existing layout to preserve w/h set by user
+    // react-grid-layout can fire onLayoutChange with incomplete items on mount
+    const existing = store.getActivePage()?.layout ?? []
+    const merged = newLayout.map(nl => {
+      const prev = existing.find(e => e.i === nl.i)
+      if (!prev) return nl
+      // Keep the larger of the two sizes to avoid shrinking on re-render
+      return {
+        ...nl,
+        w: nl.w ?? prev.w,
+        h: nl.h ?? prev.h,
+        minW: nl.minW ?? prev.minW,
+        minH: nl.minH ?? prev.minH,
+      }
+    })
+    store.updateLayout(merged)
   }, [store])
 
   const handleAddWidget = useCallback((widgetId) => {
@@ -311,7 +356,7 @@ export default function DashboardPage() {
               onSelect={() => store.setActivePage(p.id)}
               onRename={(name) => store.renamePage(p.id, name)}
               onDelete={() => { if (pages.length > 1) store.deletePage(p.id) }}
-              onDuplicate={() => store.addPage(`${p.name} Copy`, p.layout, p.instances)}
+              onDuplicate={() => { const cur = store.getActivePage(); store.addPage(`${p.name} Copy`, 'Trading', cur?.layout, cur?.instances) }}
               onIconChange={(icon) => store.setPageIcon(p.id, icon)}
             />
           ))}
@@ -351,10 +396,14 @@ export default function DashboardPage() {
         {layout.length > 0 ? (
           <GridLayout layout={layout} cols={48} rowHeight={10} width={gridWidth}
             compactType={null} preventCollision={false} isDraggable isResizable
-            onLayoutChange={handleLayoutChange} draggableHandle=".widget-drag-handle"
+            resizeHandles={["se","sw","ne","nw","e","w","n","s"]}
+            onLayoutChange={handleLayoutChange}
+            onResizeStop={(layout) => store.updateLayout(layout)}
+            onDragStop={(layout) => store.updateLayout(layout)}
+            draggableHandle=".widget-drag-handle"
             margin={[4, 4]} containerPadding={[4, 4]}
           >
-            {layout.map(l => {
+            {layout.filter(l => l && l.i).map(l => {
               const instance = page?.instances?.find(i => i.instanceId === l.i)
               const widgetId = instance?.widgetId ?? l.i.replace(/-\d+$/, '')
               const reg = WIDGET_REGISTRY[widgetId]

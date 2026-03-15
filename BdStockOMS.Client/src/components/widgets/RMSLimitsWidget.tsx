@@ -7,6 +7,7 @@ const DEMO_RMS = {
 }
 // @ts-nocheck
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { rmsApi } from "@/api/rms"
 
 function GaugeBar({ label, used, total, color }: any) {
@@ -30,6 +31,7 @@ function GaugeBar({ label, used, total, color }: any) {
 }
 
 export function RMSLimitsWidget() {
+  const navigate = useNavigate()
   const [limits, setLimits] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -94,6 +96,11 @@ export function RMSLimitsWidget() {
                 </div>
               ))}
             </div>
+          <button onClick={() => navigate('/rms')} style={{
+            margin: '8px 12px 4px', width: 'calc(100% - 24px)', padding: '7px 0', fontSize: 10, fontWeight: 700,
+            border: '1px solid var(--t-accent)', borderRadius: 6, cursor: 'pointer',
+            background: 'transparent', color: 'var(--t-accent)', fontFamily: "'Space Mono',monospace",
+          }}>VIEW FULL RMS →</button>
           </div>
         )
       }

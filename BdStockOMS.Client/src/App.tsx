@@ -6,6 +6,7 @@ import { DashboardLayout }   from '@/components/layout/DashboardLayout'
 import DashboardPage         from "@/pages/DashboardPage"
 import { BuySellConsole }    from '@/components/trading/BuySellConsole'
 import { TradeMonitorPage } from '@/pages/TradeMonitorPage'
+import { RMSPage } from '@/pages/PlaceholderPages'
 import {
   OrdersPage, PortfolioPage, MarketPage,
   SuperAdminPage, RbacPage, TenantPage,
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/portfolio"  element={<PortfolioPage />} />
             <Route path="/market"     element={<MarketPage />} />
             <Route path="/trade-monitor" element={<TradeMonitorPage />} />
+            <Route path="/rms" element={<RMSPage />} />
           </Route>
         </Route>
 

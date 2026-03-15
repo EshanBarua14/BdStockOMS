@@ -58,3 +58,22 @@ export function NotFoundPage() {
     </div>
   )
 }
+
+export function RMSPage() {
+  return (
+    <div style={{ padding: 32, color: 'var(--t-text1)' }}>
+      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Risk Management System</div>
+      <div style={{ fontSize: 13, color: 'var(--t-text3)', marginBottom: 24 }}>Configure credit limits, board limits, trading code limits and sector limits per entity.</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        {['Client','User','BO Group','Basket','Branch','Broker'].map(entity => (
+          <div key={entity} style={{ background: 'var(--t-surface)', border: '1px solid var(--t-border)', borderRadius: 10, padding: '16px 20px', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--t-accent)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--t-border)'}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{entity}</div>
+            <div style={{ fontSize: 11, color: 'var(--t-text3)' }}>Credit · Board · Trading Code · Sector · Category</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

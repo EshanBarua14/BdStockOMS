@@ -127,3 +127,23 @@
   .delay-350{animation-delay:350ms!important} .delay-400{animation-delay:400ms!important} .delay-500{animation-delay:500ms!important}
   .delay-600{animation-delay:600ms!important} .delay-700{animation-delay:700ms!important}
 }
+
+/* Ensure react-grid-layout resize handles are visible */
+.react-resizable-handle {
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.react-grid-item:hover .react-resizable-handle {
+  opacity: 1;
+}
+.react-resizable-handle::after {
+  border-color: var(--t-accent) !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+.react-grid-item.react-grid-placeholder {
+  background: var(--t-accent) !important;
+  opacity: 0.15 !important;
+  border-radius: 8px !important;
+}
