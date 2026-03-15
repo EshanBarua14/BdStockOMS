@@ -9,12 +9,11 @@ export default defineConfig({
     server: {
         port: 5173,
         headers: {
-            'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; connect-src 'self' http://localhost:5289 ws://localhost:5173 ws://localhost:5289; default-src 'self' 'unsafe-inline' data: blob: https:;",
+            'Content-Security-Policy': "default-src 'self' 'unsafe-inline' data: blob: https:; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https:; connect-src 'self' https://localhost:* http://localhost:* ws://localhost:*; worker-src blob: 'self';",
         },
         proxy: {
-            '/api': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
-            '/auth': { target: 'http://localhost:5289', changeOrigin: true, secure: false },
-            '/hubs': { target: 'http://localhost:5289', changeOrigin: true, secure: false, ws: true },
+            '/api': { target: 'https://localhost:7219', changeOrigin: true, secure: false },
+            '/hubs': { target: 'https://localhost:7219', changeOrigin: true, secure: false, ws: true },
         },
     },
     test: {

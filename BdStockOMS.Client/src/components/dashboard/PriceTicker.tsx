@@ -241,17 +241,33 @@ export function PriceTicker() {
     })
   }, [])
 
+
+const DEMO_STOCKS = [
+  { tradingCode:'GP',        lastTradePrice:380.50,  change:2.30,  changePercent:0.61,  volume:1823400, exchange:'DSE' },
+  { tradingCode:'BATBC',     lastTradePrice:615.92,  change:-4.10, changePercent:-0.66, volume:432100,  exchange:'DSE' },
+  { tradingCode:'BERGERPBL', lastTradePrice:1131.95, change:11.20, changePercent:1.00,  volume:98200,   exchange:'DSE' },
+  { tradingCode:'BRACBANK',  lastTradePrice:48.30,   change:0.80,  changePercent:1.68,  volume:3241000, exchange:'DSE' },
+  { tradingCode:'DUTCHBANGL',lastTradePrice:182.40,  change:-1.60, changePercent:-0.87, volume:654300,  exchange:'DSE' },
+  { tradingCode:'SQURPHARMA',lastTradePrice:242.10,  change:3.40,  changePercent:1.42,  volume:876500,  exchange:'DSE' },
+  { tradingCode:'ISLAMIBANK',lastTradePrice:35.60,   change:0.40,  changePercent:1.14,  volume:4123000, exchange:'DSE' },
+  { tradingCode:'RENATA',    lastTradePrice:1243.00, change:-8.50, changePercent:-0.68, volume:76400,   exchange:'DSE' },
+  { tradingCode:'MARICO',    lastTradePrice:98.70,   change:1.20,  changePercent:1.23,  volume:234500,  exchange:'CSE' },
+  { tradingCode:'CITYBANK',  lastTradePrice:28.40,   change:-0.30, changePercent:-1.05, volume:2341000, exchange:'CSE' },
+  { tradingCode:'NBL',       lastTradePrice:14.20,   change:0.10,  changePercent:0.71,  volume:5432000, exchange:'CSE' },
+  { tradingCode:'BXPHARMA',  lastTradePrice:67.80,   change:2.10,  changePercent:3.19,  volume:432100,  exchange:'CSE' },
+]
+
   const dseStocks = useMemo(() => {
-    const src = ticksArray.length > 0 ? ticksArray : []
+    const src = ticksArray.length > 0 ? ticksArray : DEMO_STOCKS
     return sortStocks(src.filter(t => (t.exchange ?? '').toUpperCase() === 'DSE'), settings.sortBy)
   }, [ticksArray, settings.sortBy])
 
   const cseStocks = useMemo(() => {
-    const src = ticksArray.length > 0 ? ticksArray : []
+    const src = ticksArray.length > 0 ? ticksArray : DEMO_STOCKS
     return sortStocks(src.filter(t => (t.exchange ?? '').toUpperCase() === 'CSE'), settings.sortBy)
   }, [ticksArray, settings.sortBy])
 
-  const allStocks = useMemo(() => sortStocks(ticksArray.length > 0 ? ticksArray : [], settings.sortBy), [ticksArray, settings.sortBy])
+  const allStocks = useMemo(() => sortStocks(ticksArray.length > 0 ? ticksArray : DEMO_STOCKS, settings.sortBy), [ticksArray, settings.sortBy])
 
   if (!settings.enabled || !tickerEnabled) return (
     <div style={{ height: 0, overflow: 'visible', position: 'relative', zIndex: 10 }}>
