@@ -121,7 +121,7 @@ export function ScoreBoardWidget({ onSymbolClick }: { onSymbolClick?: (sym: stri
       </div>
 
       {/* ── Summary bar ── */}
-      <div style={{ display: "flex", gap: 0, padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", gap: 12, padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, flexWrap: "wrap" }}>
         {[
           { label: "Gainers",   val: totals.gainers,   color: "var(--t-buy)"  },
           { label: "Losers",    val: totals.losers,    color: "var(--t-sell)" },

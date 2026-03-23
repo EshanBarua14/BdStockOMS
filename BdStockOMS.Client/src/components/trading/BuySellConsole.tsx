@@ -76,7 +76,6 @@ function StyledSelect({ value, onChange, options, tabIndex }: { value: string; o
         backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
         paddingRight: 28,
       }}
-      onFocus={e => e.currentTarget.style.borderColor = 'var(--t-accent)'}
       onBlur={e => e.currentTarget.style.borderColor = 'var(--t-border)'}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -151,7 +150,6 @@ function BOSearch({ clients, query, setQuery, onSelect }: any) {
         onFocus={() => setOpen(true)} onKeyDown={onKey}
         placeholder="BO Number or Client Name" tabIndex={1}
         style={{ width: '100%', boxSizing: 'border-box', background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 6, padding: '7px 10px', color: 'var(--t-text1)', fontSize: 12, fontFamily: mono, outline: 'none' }}
-        onFocus={e => e.currentTarget.style.borderColor = 'var(--t-accent)'}
         onBlur={e => e.currentTarget.style.borderColor = 'var(--t-border)'}
       />
       {open && matches.length > 0 && (
@@ -212,7 +210,6 @@ function SymbolSearch({ value, onChange, onSelect, stocks }: any) {
         onFocus={() => setOpen(true)} onKeyDown={onKey} tabIndex={4}
         placeholder="e.g. GP, BATBC, RENATA"
         style={{ width: '100%', boxSizing: 'border-box', background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 6, padding: '7px 10px', color: 'var(--t-text1)', fontSize: 13, fontWeight: 700, fontFamily: mono, outline: 'none' }}
-        onFocus={e => e.currentTarget.style.borderColor = 'var(--t-accent)'}
         onBlur={e => e.currentTarget.style.borderColor = 'var(--t-border)'}
       />
       {open && matches.length > 0 && (
