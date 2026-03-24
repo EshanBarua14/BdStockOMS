@@ -9,7 +9,7 @@ namespace BdStockOMS.API.Controllers;
 
 [ApiController]
 [Route("api/ccd")]
-[Authorize(Roles = "CCD,Admin,BrokerageHouse")]
+[Authorize(Roles = "CCD,Admin,BrokerageHouse,SuperAdmin,Trader")]
 public class CCDController : ControllerBase
 {
     private readonly ICCDService _ccdService;

@@ -163,7 +163,7 @@ public class AuthService : IAuthService
         {
             Token               = accessToken,
             RefreshToken        = refreshToken.Token,
-            ExpiresAt           = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt           = DateTime.UtcNow.AddHours(8),
             UserId              = user.Id,
             FullName            = user.FullName,
             Email               = user.Email,
@@ -274,7 +274,7 @@ public class AuthService : IAuthService
             issuer:             _config["JwtSettings:Issuer"],
             audience:           _config["JwtSettings:Audience"],
             claims:             claims,
-            expires:            DateTime.UtcNow.AddMinutes(15),
+            expires:            DateTime.UtcNow.AddHours(8),
             signingCredentials: creds
         );
 
@@ -360,7 +360,7 @@ public class AuthService : IAuthService
         {
             Token               = token,
             RefreshToken        = refreshToken.Token,
-            ExpiresAt           = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt           = DateTime.UtcNow.AddHours(8),
             UserId              = user.Id,
             FullName            = user.FullName,
             Email               = user.Email,

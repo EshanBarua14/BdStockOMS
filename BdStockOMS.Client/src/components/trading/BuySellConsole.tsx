@@ -425,6 +425,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
 
   const validate = () => {
     if (!symbol)               { setWarn('Symbol is required'); return false }
+    if (!live?.stockId)        { setWarn('Select a valid symbol from the list'); return false }
     if (!qty || numQty <= 0)   { setWarn('Quantity must be positive'); return false }
     if (priceType === 'Limit' && (!price || numPrice <= 0)) { setWarn('Price required for Limit orders'); return false }
     if (live?.circuitBreakerHigh && numPrice > live.circuitBreakerHigh) { setWarn(`Price exceeds circuit breaker high ৳${live.circuitBreakerHigh}`); return false }
