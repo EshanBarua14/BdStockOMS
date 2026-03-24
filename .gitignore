@@ -486,3 +486,4 @@ $RECYCLE.BIN/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+fix_day62.sh
