@@ -1,7 +1,7 @@
 // @ts-nocheck
 // src/pages/DashboardPage.tsx — Day 56
 
-import React, { useCallback, useState, useEffect, useRef } from "react"
+import React, { useCallback, useState, useEffect, useRef, useMemo } from "react"
 import GridLayout from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
@@ -33,7 +33,7 @@ class WidgetErrorBoundary extends React.Component {
 }
 
 // ── Widget Drawer ───────────────────────────────────────────────────────────
-function WidgetDrawer({ open, onClose, onAdd }) {
+function WidgetDrawer({ open, onClose, onAdd, onDragStart }) {
   const [search, setSearch] = useState('')
   const categories = [...new Set(Object.values(WIDGET_REGISTRY).map(r => r.category).filter(Boolean))]
   const filtered = Object.entries(WIDGET_REGISTRY).filter(([id, reg]) =>
@@ -67,7 +67,7 @@ function WidgetDrawer({ open, onClose, onAdd }) {
               {items.map(([id, reg]) => (
                   <div key={id}
                     draggable={true}
-                    onDragStart={e => e.dataTransfer.setData('widgetId', id)}
+                    onDragStart={e => { e.dataTransfer.setData('widgetId', id); onDragStart?.(id); setTimeout(onClose, 50) }}
                     onClick={() => { onAdd(id); onClose() }}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 7, cursor: 'pointer', border: '1px solid transparent', background: 'transparent', marginBottom: 2, transition: 'all 0.1s' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--t-hover)'; e.currentTarget.style.borderColor = 'var(--t-border)' }}
@@ -182,7 +182,7 @@ function PageDrawer({ open, onClose, pages, activePageId, onSelect, onAdd, onRen
 // ── Main Dashboard ──────────────────────────────────────────────────────────
 
 // ── Inline page tab with right-click menu ─────────────────────────────────
-function PageTab({ page, isActive, onSelect, onRename, onDelete, onDuplicate, onIconChange }: any) {
+function PageTab({ page, isActive, onSelect, onRename, onDelete, onDuplicate, onIconChange, onUndo, canUndo, onSaveAs }: any) {
   const [menu, setMenu] = useState<{x:number,y:number}|null>(null)
   const [renaming, setRenaming] = useState(false)
   const [renameVal, setRenameVal] = useState(page.name)
@@ -223,30 +223,18 @@ function PageTab({ page, isActive, onSelect, onRename, onDelete, onDuplicate, on
           {[
             { label: '✏️ Rename', action: () => { setRenaming(true); setMenu(null) } },
             { label: '📋 Duplicate', action: () => { onDuplicate(); setMenu(null) } },
-            { label: '🔖 Save as template', action: () => {
-              const cur = store.getActivePage()
-              const name = window.prompt('Template name:', page?.name ?? 'My Template')
-              if (name?.trim()) {
-                const tid = store.createTemplate(name.trim())
-                store.setActiveTemplate(tid)
-                if (cur?.layout) store.updateLayout(cur.layout)
-                setMenu(null)
-                const toast = document.createElement('div')
-                toast.textContent = '✅ Saved as template: ' + name
-                toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00D4AA;color:#000;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:99999;font-family:monospace'
-                document.body.appendChild(toast)
-                setTimeout(() => toast.remove(), 2500)
-              }
-              setMenu(null)
-            } },
+            { label: '🔖 Save as template', action: () => { setMenu(null); onSaveAs?.() } },
+            { label: '↩ Undo layout', action: () => { setMenu(null); onUndo?.() }, disabled: !canUndo },
             { label: '🗑️ Delete page', action: () => { onDelete(); setMenu(null) }, danger: true },
           ].map(item => (
-            <button key={item.label} onClick={item.action} style={{
+            <button key={item.label} onClick={item.disabled ? undefined : item.action} style={{
               display: 'block', width: '100%', textAlign: 'left', padding: '7px 14px',
-              fontSize: 11, fontFamily: mono, background: 'none', border: 'none', cursor: 'pointer',
-              color: item.danger ? 'var(--t-sell)' : 'var(--t-text1)',
+              fontSize: 11, fontFamily: mono, background: 'none', border: 'none',
+              cursor: item.disabled ? 'not-allowed' : 'pointer',
+              color: item.danger ? 'var(--t-sell)' : item.disabled ? 'var(--t-text3)' : 'var(--t-text1)',
+              opacity: item.disabled ? 0.4 : 1,
             }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--t-hover)'}
+              onMouseEnter={e => { if (!item.disabled) e.currentTarget.style.background = 'var(--t-hover)' }}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >{item.label}</button>
           ))}
@@ -260,8 +248,23 @@ export default function DashboardPage() {
   const store    = useTemplateStore()
   const template = store.getActiveTemplate()
   const page     = store.getActivePage()
-  const layout   = store.getVisibleLayout()
   const market   = useMarketData()
+
+  const layout   = store.getVisibleLayout()
+
+  // Measure actual grid container width (not window width)
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width
+      if (w && w > 0) setGridWidth(w)
+    })
+    ro.observe(el)
+    const w = el.getBoundingClientRect().width
+    if (w > 0) setGridWidth(w)
+    return () => ro.disconnect()
+  }, [])
   const orders   = useOrders()
 
   const [fullscreen, setFullscreen]       = useState(null)
@@ -269,8 +272,10 @@ export default function DashboardPage() {
   const [showWidgets, setShowWidgets]     = useState(false)
   const [showPages, setShowPages]         = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
-  const [gridWidth, setGridWidth]         = useState(window.innerWidth)
-  const gridRef = useRef(null)
+  const [saveAsModal, setSaveAsModal] = useState(false)
+  const [saveAsName, setSaveAsName] = useState('')
+  const [gridWidth, setGridWidth]         = useState(0)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!store.activeTemplateId && store.templates.length > 0) {
@@ -296,7 +301,7 @@ export default function DashboardPage() {
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100vh', gap:16, background:'var(--t-bg)' }}>
         <div style={{ fontSize:48, opacity:0.3 }}>📊</div>
         <div style={{ fontSize:14, color:'var(--t-text2)', fontFamily:"'JetBrains Mono',monospace" }}>No dashboard found</div>
-        <button onClick={() => { localStorage.removeItem('bd_oms_templates_v1'); window.location.reload() }}
+        <button onClick={() => { localStorage.removeItem('bd_oms_templates_v2'); window.location.reload() }}
           style={{ padding:'10px 24px', fontSize:12, fontWeight:700, borderRadius:8, border:'1px solid var(--t-accent)', cursor:'pointer', background:'transparent', color:'var(--t-accent)', fontFamily:"'JetBrains Mono',monospace" }}>
           ↺ Reset Dashboard
         </button>
@@ -304,26 +309,17 @@ export default function DashboardPage() {
     )
   }
 
-  const sharedProps = { market, orders }
+  const sharedProps = useMemo(() => ({ market, orders, ordersData: orders }), [market, orders])
   const pages = template?.pages ?? []
 
+
   const handleLayoutChange = useCallback((newLayout) => {
-    // Merge with existing layout to preserve w/h set by user
-    // react-grid-layout can fire onLayoutChange with incomplete items on mount
+    // Only called for add/remove — onDragStop/onResizeStop handle user resizes
+    // Guard: skip if layout is identical to stored (prevents mount overwrite)
     const existing = store.getActivePage()?.layout ?? []
-    const merged = newLayout.map(nl => {
-      const prev = existing.find(e => e.i === nl.i)
-      if (!prev) return nl
-      // Keep the larger of the two sizes to avoid shrinking on re-render
-      return {
-        ...nl,
-        w: nl.w ?? prev.w,
-        h: nl.h ?? prev.h,
-        minW: nl.minW ?? prev.minW,
-        minH: nl.minH ?? prev.minH,
-      }
-    })
-    store.updateLayout(merged)
+    if (newLayout.length !== existing.length) {
+      store.updateLayout(newLayout)
+    }
   }, [store])
 
   const handleAddWidget = useCallback((widgetId) => {
@@ -332,7 +328,7 @@ export default function DashboardPage() {
   }, [store])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--t-bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'visible', background: 'var(--t-bg)' }}>
       <PriceTicker ticks={market.ticksArray} />
 
       {/* TOOLBAR */}
@@ -358,6 +354,9 @@ export default function DashboardPage() {
               onDelete={() => { if (pages.length > 1) store.deletePage(p.id) }}
               onDuplicate={() => { const cur = store.getActivePage(); store.addPage(`${p.name} Copy`, 'Trading', cur?.layout, cur?.instances) }}
               onIconChange={(icon) => store.setPageIcon(p.id, icon)}
+              onUndo={() => { store.undoLayout() }}
+              canUndo={store.canUndo()}
+              onSaveAs={() => { setSaveAsName(p.name ?? 'My Template'); setSaveAsModal(true) }}
             />
           ))}
           <button onClick={() => store.addPage(`Page ${pages.length + 1}`)}
@@ -378,6 +377,16 @@ export default function DashboardPage() {
           cursor: 'pointer', fontFamily: mono, flexShrink: 0, transition: 'all 0.1s',
         }}>⊞ Widgets</button>
 
+        <button onClick={() => { store.undoLayout(); setLocalLayout(store.getVisibleLayout()) }}
+          disabled={!store.canUndo()}
+          title="Undo last layout change"
+          style={{ padding: '4px 8px', fontSize: 10, borderRadius: 6, fontWeight: 600, border: '1px solid var(--t-border)', cursor: store.canUndo() ? 'pointer' : 'not-allowed', fontFamily: mono, flexShrink: 0, background: 'transparent', color: store.canUndo() ? 'var(--t-text2)' : 'var(--t-text3)', opacity: store.canUndo() ? 1 : 0.4, transition: 'all 0.1s' }}>↩ Undo</button>
+        <button onClick={() => { setSaveAsName(page?.name ?? 'My Template'); setSaveAsModal(true) }}
+          title="Save current layout as template"
+          style={{ padding: '4px 8px', fontSize: 10, borderRadius: 6, fontWeight: 600, border: '1px solid var(--t-border)', cursor: 'pointer', fontFamily: mono, flexShrink: 0, background: 'transparent', color: 'var(--t-text3)', transition: 'all 0.1s' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--t-buy)'; e.currentTarget.style.borderColor = 'var(--t-buy)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--t-text3)'; e.currentTarget.style.borderColor = 'var(--t-border)' }}
+        >💾 Save</button>
         <button onClick={() => setShowTemplates(true)} style={{
           padding: '4px 8px', fontSize: 10, borderRadius: 6, fontWeight: 600,
           border: '1px solid var(--t-border)', cursor: 'pointer', fontFamily: mono, flexShrink: 0,
@@ -389,44 +398,8 @@ export default function DashboardPage() {
       </div>
 
       {/* GRID */}
-      <div id="grid-container" ref={gridRef} style={{ flex: 1, overflow: 'auto', position: 'relative' }}
-        onDragOver={e => e.preventDefault()}
-        onDrop={e => { e.preventDefault(); const id = e.dataTransfer.getData('widgetId'); if (id) handleAddWidget(id) }}
-      >
-        {layout.length > 0 ? (
-          <GridLayout layout={layout} cols={48} rowHeight={10} width={gridWidth}
-            compactType={null} preventCollision={false} isDraggable isResizable
-            resizeHandles={["se","sw","ne","nw","e","w","n","s"]}
-            onLayoutChange={handleLayoutChange}
-            onResizeStop={(layout) => store.updateLayout(layout)}
-            onDragStop={(layout) => store.updateLayout(layout)}
-            draggableHandle=".widget-drag-handle"
-            margin={[4, 4]} containerPadding={[4, 4]}
-          >
-            {layout.filter(l => l && l.i).map(l => {
-              const instance = page?.instances?.find(i => i.instanceId === l.i)
-              const widgetId = instance?.widgetId ?? l.i.replace(/-\d+$/, '')
-              const reg = WIDGET_REGISTRY[widgetId]
-              if (!reg) return null
-              const colorGroup = instance?.colorGroup ?? null
-              return (
-                <div key={l.i}>
-                  <WidgetErrorBoundary>
-                    <WidgetPanel id={l.i} title={reg.title} colorGroup={colorGroup}
-                      onColorChange={c => store.setWidgetColor(l.i, c)}
-                      onFullscreen={() => setFullscreen(l.i)}
-                      onClose={() => store.removeWidgetInstance(l.i)}
-                      menuOpen={menuOpen === l.i}
-                      onMenuToggle={() => setMenuOpen(p => p === l.i ? null : l.i)}
-                    >
-                      <reg.component {...sharedProps} colorGroup={colorGroup} />
-                    </WidgetPanel>
-                  </WidgetErrorBoundary>
-                </div>
-              )
-            })}
-          </GridLayout>
-        ) : (
+      <div id="grid-container" ref={gridRef} style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+        {layout.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, padding: 40 }}>
             <div style={{ fontSize: 48, opacity: 0.2 }}>📊</div>
             <div style={{ fontSize: 14, color: 'var(--t-text3)', fontWeight: 700, fontFamily: mono }}>This page is empty</div>
@@ -436,7 +409,41 @@ export default function DashboardPage() {
               ⊞ Open Widget Drawer
             </button>
           </div>
-        )}
+        ) : gridWidth > 0 ? (
+          <GridLayout key={page?.id} layout={layout} cols={48} rowHeight={6} width={gridWidth}
+            compactType={null} preventCollision={false} isDraggable isResizable
+            isDroppable={true}
+            droppingItem={{ i: '__dropping__', w: 8, h: 12 }}
+            onDrop={(_l, _item, e) => { const id = (e as any).dataTransfer?.getData('widgetId'); if (id) handleAddWidget(id) }}
+            resizeHandles={["se","s","e"]}
+            onLayoutChange={(newLayout) => { console.log('[LC]', newLayout.map((l:any)=>({i:l.i,w:l.w,h:l.h}))); store.updateLayout(newLayout) }}
+            draggableHandle=".widget-drag-handle"
+            margin={[4, 4]} containerPadding={[4, 4]}
+          >
+            {layout.filter((l:any) => l && l.i).map((l:any) => {
+              const instance = page?.instances?.find((i:any) => i.instanceId === l.i)
+              const widgetId = instance?.widgetId ?? l.i.replace(/-\d+$/, '')
+              const reg = WIDGET_REGISTRY[widgetId]
+              if (!reg) return null
+              const colorGroup = instance?.colorGroup ?? null
+              return (
+                <div key={l.i} style={{ height: '100%' }}>
+                  <WidgetErrorBoundary>
+                    <WidgetPanel id={l.i} title={reg.title} colorGroup={colorGroup}
+                      onColorChange={c => store.setWidgetColor(l.i, c)}
+                      onFullscreen={() => setFullscreen(l.i)}
+                      onClose={() => store.removeWidgetInstance(l.i)}
+                      menuOpen={menuOpen === l.i}
+                      onMenuToggle={() => setMenuOpen((p:any) => p === l.i ? null : l.i)}
+                    >
+                      <reg.component {...sharedProps} colorGroup={colorGroup} />
+                    </WidgetPanel>
+                  </WidgetErrorBoundary>
+                </div>
+              )
+            })}
+          </GridLayout>
+        ) : null}
       </div>
 
       <WidgetDrawer open={showWidgets} onClose={() => setShowWidgets(false)} onAdd={handleAddWidget} />
@@ -471,6 +478,27 @@ export default function DashboardPage() {
         )
       })()}
 
+      {/* Save As Template Modal */}
+      {saveAsModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:99999, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={() => setSaveAsModal(false)}>
+          <div style={{ background:'var(--t-surface)', border:'1px solid var(--t-border)', borderRadius:12, padding:24, minWidth:320, boxShadow:'0 16px 48px rgba(0,0,0,0.5)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--t-text)', marginBottom:16, fontFamily:mono }}>💾 Save as Template</div>
+            <input value={saveAsName} onChange={e => setSaveAsName(e.target.value)}
+              placeholder="Template name..."
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') { if (saveAsName.trim()) { const tid = store.createTemplate(saveAsName.trim()); store.setActiveTemplate(tid); store.updateLayout(layout); setSaveAsModal(false); setShowTemplates(true) } } if (e.key === 'Escape') setSaveAsModal(false) }}
+              style={{ width:'100%', background:'var(--t-bg)', border:'1px solid var(--t-border)', borderRadius:6, padding:'8px 12px', color:'var(--t-text)', fontSize:12, fontFamily:mono, outline:'none', boxSizing:'border-box', marginBottom:16 }} />
+            <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+              <button onClick={() => setSaveAsModal(false)}
+                style={{ padding:'6px 16px', fontSize:11, borderRadius:6, border:'1px solid var(--t-border)', background:'transparent', color:'var(--t-text2)', cursor:'pointer', fontFamily:mono }}>Cancel</button>
+              <button onClick={() => { if (saveAsName.trim()) { const tid = store.createTemplate(saveAsName.trim()); store.setActiveTemplate(tid); store.updateLayout(layout); setSaveAsModal(false); setShowTemplates(true) } }}
+                style={{ padding:'6px 16px', fontSize:11, borderRadius:6, border:'none', background:'var(--t-accent)', color:'#000', cursor:'pointer', fontWeight:700, fontFamily:mono }}>Save & Open</button>
+            </div>
+          </div>
+        </div>
+      )}
       <TemplateManager open={showTemplates} onClose={() => setShowTemplates(false)} />
     </div>
   )

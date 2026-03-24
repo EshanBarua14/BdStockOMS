@@ -1,5 +1,8 @@
 // src/hooks/useOrders.ts
-// Fixed: 3s polling, optimistic place/cancel, immediate double-refresh, SignalR merge
+// Fixed Day 61 audit:
+// - cancelOrder uses PUT (matches [HttpPut("{id}/cancel")] on backend)
+// - Removed duplicate export of ORDER_STATUS etc (already in this file)
+// - TradeExecuted SignalR event also refreshes orders
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { getOrders, placeOrder, cancelOrder } from "../api/client"
@@ -32,34 +35,34 @@ export interface PlaceOrderDto {
 }
 
 export const ORDER_STATUS: Record<number, { label: string; color: string }> = {
-  0: { label: "Pending",       color: "text-amber-400" },
-  1: { label: "Open",          color: "text-blue-400" },
-  2: { label: "Partial Fill",  color: "text-cyan-400" },
-  3: { label: "Filled",        color: "text-emerald-400" },
-  4: { label: "Cancelled",     color: "text-zinc-500" },
-  5: { label: "Rejected",      color: "text-red-400" },
-  6: { label: "Expired",       color: "text-zinc-600" },
+  0: { label: "Pending",      color: "text-amber-400" },
+  1: { label: "Open",         color: "text-blue-400"  },
+  2: { label: "Partial Fill", color: "text-cyan-400"  },
+  3: { label: "Filled",       color: "text-emerald-400" },
+  4: { label: "Cancelled",    color: "text-zinc-500"  },
+  5: { label: "Rejected",     color: "text-red-400"   },
+  6: { label: "Expired",      color: "text-zinc-600"  },
 }
 
 export const ORDER_TYPE_LABEL: Record<number, string> = { 0: "Buy", 1: "Sell" }
-export const ORDER_CAT_LABEL: Record<number, string>  = { 0: "Market", 1: "Limit", 2: "Stop Loss" }
+export const ORDER_CAT_LABEL:  Record<number, string> = { 0: "Market", 1: "Limit", 2: "Stop Loss" }
 
 function normaliseOrders(raw: any): Order[] {
   if (!raw) return []
   if (Array.isArray(raw)) return raw
   if (raw.items) return raw.items
-  if (raw.data) return raw.data
+  if (raw.data)  return raw.data
   if (typeof raw === "object") return Object.values(raw)
   return []
 }
 
 export function useOrders() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders,  setOrders]  = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [placing, setPlacing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error,   setError]   = useState<string | null>(null)
   const mountedRef = useRef(true)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchOrders = useCallback(async (silent = false) => {
     try {
@@ -80,8 +83,8 @@ export function useOrders() {
   useEffect(() => {
     mountedRef.current = true
     fetchOrders()
-    // 3s polling — was 8s
-    pollRef.current = setInterval(() => fetchOrders(true), 3000)
+    // Poll every 30s as backup (SignalR is primary)
+    pollRef.current = setInterval(() => fetchOrders(true), 30_000)
     return () => {
       mountedRef.current = false
       if (pollRef.current) clearInterval(pollRef.current)
@@ -90,17 +93,24 @@ export function useOrders() {
 
   // SignalR OrderUpdate — immediate merge
   useEffect(() => {
-    return subscribeMarket("OrderUpdate", (updated: Order) => {
+    return (subscribeMarket as any)("OrderUpdate", (updated: Order) => {
       if (!mountedRef.current) return
       setOrders(prev => {
         const idx = prev.findIndex(o => o.id === updated.id)
         const next = idx >= 0
           ? prev.map(o => o.id === updated.id ? { ...o, ...updated } : o)
           : [updated, ...prev]
-        return next.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        return next.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       })
     })
   }, [])
+
+  // Also refresh on TradeExecuted (order got filled)
+  useEffect(() => {
+    return (subscribeMarket as any)("TradeExecuted", () => {
+      if (mountedRef.current) setTimeout(() => fetchOrders(true), 500)
+    })
+  }, [fetchOrders])
 
   const place = useCallback(async (dto: PlaceOrderDto): Promise<Order> => {
     setPlacing(true)
@@ -113,11 +123,12 @@ export function useOrders() {
     }
     setOrders(prev => [optimistic, ...prev])
     try {
-      const result = await placeOrder(dto)
+      const result = await placeOrder(dto) as Order
       setOrders(prev =>
         [result, ...prev.filter(o => o.id !== tempId)]
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       )
+      // Double-refresh to catch server-side state
       setTimeout(() => fetchOrders(true), 400)
       setTimeout(() => fetchOrders(true), 2000)
       return result
@@ -130,13 +141,28 @@ export function useOrders() {
   }, [fetchOrders])
 
   const cancel = useCallback(async (id: number) => {
+    // Optimistic update: mark as cancelled immediately
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 4 } : o))
     try {
-      await cancelOrder(id)
+      await cancelOrder(id) // Uses PUT /api/orders/{id}/cancel
       setTimeout(() => fetchOrders(true), 400)
-    } catch { fetchOrders(true) }
+    } catch {
+      // Revert optimistic update on failure
+      fetchOrders(true)
+    }
   }, [fetchOrders])
 
   const executions = orders.filter(o => o.status === 2 || o.status === 3)
-  return { orders, executions, loading, placing, error, place, cancel, refresh: () => fetchOrders(false) }
+
+  return {
+    orders,
+    executions,
+    loading,
+    placing,
+    error,
+    place,
+    cancel,
+    cancelOrder: cancel,  // alias for OrderBookWidget compatibility
+    refresh: () => fetchOrders(false),
+  }
 }

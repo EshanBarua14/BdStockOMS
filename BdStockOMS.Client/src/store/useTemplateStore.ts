@@ -170,6 +170,8 @@ interface TemplateStore {
 
   // Layout
   updateLayout: (layout: LayoutItem[]) => void
+  undoLayout: () => void
+  canUndo: () => boolean
   applyPreset: (presetKey: string) => void
 
   // Export / Import
@@ -211,6 +213,17 @@ export const useTemplateStore = create<TemplateStore>()(
         createTemplate: (name, description = '') => {
           const t = createDefaultTemplate()
           t.name = name; t.description = description
+          // Copy current active page layout and instances into the new template
+          const activePage = get().getActivePage()
+          if (activePage && t.pages.length > 0) {
+            t.pages[0] = {
+              ...t.pages[0],
+              name: activePage.name,
+              icon: activePage.icon,
+              layout: JSON.parse(JSON.stringify(activePage.layout ?? [])),
+              instances: JSON.parse(JSON.stringify(activePage.instances ?? [])),
+            }
+          }
           set(s => ({ templates: [...s.templates, t], activeTemplateId: t.id }))
           return t.id
         },
@@ -292,8 +305,8 @@ export const useTemplateStore = create<TemplateStore>()(
             newId = instanceId
             const minW = reg.minW ?? 4
             const minH = reg.minH ?? 6
-            const w = Math.min(reg.defaultW ?? minW, 8)
-            const h = Math.min(reg.defaultH ?? minH, 10)
+            const w = Math.min(reg.defaultW ?? minW, 16)
+            const h = Math.min(reg.defaultH ?? minH, 20)
             const pos = findFreePosition(p.layout, w, h)
             const newLayout: LayoutItem = { i: instanceId, x: pos.x, y: pos.y, w, h, minW, minH }
             const newInstance: WidgetInstance = { instanceId, widgetId, colorGroup: null }
@@ -336,7 +349,32 @@ export const useTemplateStore = create<TemplateStore>()(
 
         // ── Layout ────────────────────────────────────────────
         updateLayout: (layout) => {
+          // Push current layout to undo stack before updating
+          const cur = get().getActivePage()
+          if (cur) {
+            const key = `undo_${cur.id}`
+            const stack = (get() as any)._undoStacks?.[key] ?? []
+            const newStack = [...stack.slice(-19), cur.layout] // keep last 20
+            set(s => ({ ...s, _undoStacks: { ...(s as any)._undoStacks, [key]: newStack } }))
+          }
           updateActivePage(p => ({ ...p, layout }))
+        },
+        undoLayout: () => {
+          const cur = get().getActivePage()
+          if (!cur) return
+          const key = `undo_${cur.id}`
+          const stack = (get() as any)._undoStacks?.[key] ?? []
+          if (stack.length === 0) return
+          const prev = stack[stack.length - 1]
+          const newStack = stack.slice(0, -1)
+          set(s => ({ ...s, _undoStacks: { ...(s as any)._undoStacks, [key]: newStack } }))
+          updateActivePage(p => ({ ...p, layout: prev }))
+        },
+        canUndo: () => {
+          const cur = get().getActivePage()
+          if (!cur) return false
+          const key = `undo_${cur.id}`
+          return ((get() as any)._undoStacks?.[key] ?? []).length > 0
         },
 
         applyPreset: (presetKey) => {
@@ -400,7 +438,7 @@ export const useTemplateStore = create<TemplateStore>()(
       }
     },
     {
-      name: 'bd_oms_templates_v1',
+      name: 'bd_oms_templates_v2',
       onRehydrateStorage: () => (state, error) => {
         // Guard: clear corrupted storage and reset to default
         if (error || !state) {
@@ -422,14 +460,31 @@ export const useTemplateStore = create<TemplateStore>()(
           state.templates = state.templates.map(t => ({
             ...t,
             pages: (t.pages ?? []).map(p => {
-              if (!p.instances) {
-                return { ...p, instances: layoutToInstances(p.layout ?? []) }
+              let instances = p.instances
+              if (!instances) {
+                instances = layoutToInstances(p.layout ?? [])
               }
               // Guard: ensure layout items have required fields
+              // Also cap oversized widgets to max 8x10 so they don't fill the page
+              const layout = (p.layout ?? [])
+                .filter(l => l && l.i && typeof l.x === 'number')
+                .map(l => {
+                  const widgetId = l.i.replace(/-\d+$/, '')
+                  const reg = WIDGET_REGISTRY[widgetId]
+                  const minW = reg?.minW ?? 4
+                  const minH = reg?.minH ?? 6
+                  return {
+                    ...l,
+                    w: Math.min(l.w, 16),
+                    h: Math.min(l.h, 20),
+                    minW,
+                    minH,
+                  }
+                })
               return {
                 ...p,
-                layout: (p.layout ?? []).filter(l => l && l.i && typeof l.x === 'number'),
-                instances: (p.instances ?? []).filter(i => i && i.instanceId && i.widgetId),
+                layout,
+                instances: instances.filter(i => i && i.instanceId && i.widgetId),
               }
             })
           }))

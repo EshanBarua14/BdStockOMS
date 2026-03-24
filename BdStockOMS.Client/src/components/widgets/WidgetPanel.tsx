@@ -60,7 +60,7 @@ export function WidgetPanel({
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100%',
       background: 'var(--t-surface)', border: `1px solid ${gc ? gc + '35' : 'var(--t-border)'}`,
-      borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.15s, box-shadow 0.15s',
+      borderRadius: 10, overflow: 'visible', transition: 'border-color 0.15s, box-shadow 0.15s',
       boxShadow: gc ? `0 0 12px ${gc}12` : 'none', position: 'relative',
     }}>
       {/* Neon top line */}
@@ -147,7 +147,7 @@ export function WidgetPanel({
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>{children}</div>
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0, borderRadius: '0 0 10px 10px' }}>{children}</div>
     </div>
   )
 }

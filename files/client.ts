@@ -1,9 +1,17 @@
 // src/api/client.ts
-// All endpoints — cache: no-store, Bearer auth, clean error handling
-
-const BASE = ""
+// Fixed Day 61 audit:
+// - Removed hardcoded BASE "https://localhost:7219" → use relative URLs (Vite proxy handles it)
+// - searchStocks fixed: ?q= (matches backend /api/stocks/search?query=... via proxy rewrite)
+// - cancelOrder fixed: uses PUT not POST (matches backend HttpPut("{id}/cancel"))
 
 function token() {
+  try {
+    const raw = localStorage.getItem("bd_oms_auth_v2")
+    if (raw) {
+      const t = JSON.parse(raw)?.state?.user?.token
+      if (t) return t
+    }
+  } catch {}
   return localStorage.getItem("token") ?? sessionStorage.getItem("token") ?? ""
 }
 
@@ -22,26 +30,101 @@ async function handle<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-// Orders
-export const getOrders     = () => fetch(`${BASE}/api/orders`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const placeOrder    = (dto: any) => fetch(`${BASE}/api/orders`, { method: "POST", headers: headers(), body: JSON.stringify(dto), cache: "no-store" }).then(r => handle(r))
-export const cancelOrder   = (id: number) => fetch(`${BASE}/api/orders/${id}/cancel`, { method: "POST", headers: headers(), cache: "no-store" }).then(r => handle<void>(r))
+// ─── Orders ──────────────────────────────────────────────────────────────────
+export const getOrders   = () =>
+  fetch(`/api/orders`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
 
-// Market
-export const getMarketDepth    = (code: string) => fetch(`${BASE}/api/marketdepth/${code}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const getMarketPressure = (code: string) => fetch(`${BASE}/api/marketdepth/pressure/${code}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+export const placeOrder  = (dto: any) =>
+  fetch(`/api/orders`, { method: "POST", headers: headers(), body: JSON.stringify(dto), cache: "no-store" }).then(r => handle(r))
 
-// Portfolio
-export const getPortfolioSnapshot = (uid: number) => fetch(`${BASE}/api/portfoliosnapshot/latest/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const getPortfolioROI      = (uid: number) => fetch(`${BASE}/api/portfoliosnapshot/roi/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const getPortfolioHistory  = (uid: number) => fetch(`${BASE}/api/portfoliosnapshot/history/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+// Backend: [HttpPut("{id:int}/cancel")] — use PUT not POST
+export const cancelOrder = (id: number) =>
+  fetch(`/api/orders/${id}/cancel`, { method: "PUT", headers: headers(), cache: "no-store" }).then(r => handle<void>(r))
 
-// RMS
-export const getRmsLimits    = () => fetch(`${BASE}/api/rms/my-limits`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const validateOrder   = (dto: any) => fetch(`${BASE}/api/rms/validate-order`, { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r))
+// ─── Market ───────────────────────────────────────────────────────────────────
+export const getMarketDepth    = (code: string) =>
+  fetch(`/api/marketdepth/${code}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
 
-// Watchlist / News / Stocks
-export const getWatchlists = () => fetch(`${BASE}/api/watchlists`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const getNews       = (count = 20) => fetch(`${BASE}/api/news?count=${count}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
-export const getStocks     = () => fetch(`${BASE}/api/stocks`, { headers: headers() }).then(r => handle(r))
-export const searchStocks  = (q: string) => fetch(`${BASE}/api/stocks/search?q=${encodeURIComponent(q)}`, { headers: headers() }).then(r => handle(r))
+export const getMarketPressure = (code: string) =>
+  fetch(`/api/marketdepth/pressure/${code}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+// ─── Portfolio ────────────────────────────────────────────────────────────────
+export const getPortfolioSnapshot = (uid: number) =>
+  fetch(`/api/PortfolioSnapshot/latest/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getPortfolioROI      = (uid: number) =>
+  fetch(`/api/PortfolioSnapshot/roi/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getPortfolioHistory  = (uid: number) =>
+  fetch(`/api/PortfolioSnapshot/history/${uid}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+// ─── RMS ──────────────────────────────────────────────────────────────────────
+export const getRmsLimits  = () =>
+  fetch(`/api/rms/my-limits`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const validateOrder = (dto: any) =>
+  fetch(`/api/rms/validate-order`, { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r))
+
+// ─── Watchlist / News / Stocks ────────────────────────────────────────────────
+export const getWatchlists = () =>
+  fetch(`/api/watchlists`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getNews = (count = 20) =>
+  fetch(`/api/news?count=${count}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getStocks = () =>
+  fetch(`/api/stocks`, { headers: headers() }).then(r => handle(r))
+
+// Fixed: backend uses ?query= param
+export const searchStocks = (q: string) =>
+  fetch(`/api/stocks/search?query=${encodeURIComponent(q)}`, { headers: headers() }).then(r => handle(r))
+
+// ─── Investors / BO Accounts (for Buy/Sell Console) ──────────────────────────
+export const getMyInvestors = (traderId: number) =>
+  fetch(`/api/traders/${traderId}/investors`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getBOAccounts  = () =>
+  fetch(`/api/ccd/bo-accounts`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+
+export const getStockByCode = (code: string) =>
+  fetch(`/api/stocks/search?query=${encodeURIComponent(code)}`, { headers: headers() }).then(r => handle(r))
+
+// ─── Axios-compatible shim ────────────────────────────────────────────────────
+// Keeps old api/*.ts files working without changes
+const _h = () => {
+  const t = token()
+  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) }
+}
+
+async function _fetch(url: string, opts: RequestInit = {}) {
+  // Ensure all URLs go through Vite proxy — strip any absolute base if present
+  const relUrl = url.startsWith("http") ? url.replace(/^https?:\/\/[^/]+/, "") : url
+  const res = await fetch(relUrl, { ...opts, headers: { ..._h(), ...(opts.headers ?? {}) }, cache: "no-store" })
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`
+    try { const b = await res.json(); msg = b?.message ?? b?.title ?? msg } catch {}
+    throw new Error(msg)
+  }
+  const data = res.status === 204 ? undefined : await res.json()
+  return { data }
+}
+
+export const apiClient = {
+  get: (url: string, opts?: { params?: Record<string, unknown> }) => {
+    let u = url
+    if (opts?.params) {
+      const qs = new URLSearchParams(
+        Object.entries(opts.params)
+          .filter(([, v]) => v != null)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+      if (qs) u += (u.includes("?") ? "&" : "?") + qs
+    }
+    return _fetch(u)
+  },
+  post:   (url: string, body?: unknown, config?: { withCredentials?: boolean }) =>
+    _fetch(url, { method: "POST", body: JSON.stringify(body ?? {}), credentials: config?.withCredentials ? "include" : "same-origin" }),
+  put:    (url: string, body?: unknown) => _fetch(url, { method: "PUT",    body: JSON.stringify(body ?? {}) }),
+  delete: (url: string)                 => _fetch(url, { method: "DELETE" }),
+  patch:  (url: string, body?: unknown) => _fetch(url, { method: "PATCH",  body: JSON.stringify(body ?? {}) }),
+}
