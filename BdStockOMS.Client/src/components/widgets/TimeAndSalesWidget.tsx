@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { subscribeMarket } from '../../hooks/useSignalR';
-import { apiClient } from '../api/client';
+import { subscribeMarket } from '@/hooks/useSignalR';
+import { apiClient } from '@/api/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AggressorSide = 0 | 1 | -1; // Unknown | Buy | Sell

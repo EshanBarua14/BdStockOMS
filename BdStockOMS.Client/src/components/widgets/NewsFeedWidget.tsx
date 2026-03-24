@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as signalR from '@microsoft/signalr';
-import { apiClient } from '../api/client';
+import { apiClient } from '@/api/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NewsItem {

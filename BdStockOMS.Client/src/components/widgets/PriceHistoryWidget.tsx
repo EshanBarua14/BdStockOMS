@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient } from '@/api/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OhlcEntry {
