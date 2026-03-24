@@ -1,255 +1,272 @@
-// @ts-nocheck
-// src/components/widgets/TimeAndSalesWidget.tsx
-// Day 61 — Time & Sales: chronological trade log, Buy/Sell pressure indicators, symbol filter
-// Matches XFL reference widget #13. SignalR live trades, demo fallback, auto-scroll.
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { subscribeMarket } from '../../hooks/useSignalR';
+import { apiClient } from '../api/client';
 
-import { useState, useEffect, useRef, useMemo } from "react"
-import { useMarketData } from "@/hooks/useMarketData"
-import { subscribeMarket } from "@/hooks/useSignalR"
-import { BuySellConsoleEvents } from "@/components/trading/BuySellConsole"
+// ─── Types ────────────────────────────────────────────────────────────────────
+type AggressorSide = 0 | 1 | -1; // Unknown | Buy | Sell
 
-const mono = "'JetBrains Mono', monospace"
-
-// ─── Demo trade data ──────────────────────────────────────────────────────────
-function makeDemoTrades() {
-  const syms = ["GP","BATBC","BRACBANK","SQURPHARMA","BERGERPBL","ISLAMIBANK","RENATA","DUTCHBANGL","CITYBANK","NBL"]
-  const trades = []
-  const now = Date.now()
-  for (let i = 0; i < 60; i++) {
-    const sym = syms[Math.floor(Math.random() * syms.length)]
-    const price = 50 + Math.random() * 1200
-    const qty = (Math.floor(Math.random() * 20) + 1) * 100
-    const side = Math.random() > 0.5 ? "B" : "S"
-    trades.push({
-      id: i,
-      time: new Date(now - i * 4000).toLocaleTimeString("en-BD", { hour12: false }),
-      symbol: sym,
-      exchange: Math.random() > 0.4 ? "DSE" : "CSE",
-      price: parseFloat(price.toFixed(2)),
-      qty,
-      value: parseFloat((price * qty / 1e6).toFixed(3)),
-      side,
-    })
-  }
-  return trades
+interface TimeAndSalesEntry {
+  id: number;
+  tradeMatchId: string;
+  tradingCode: string;
+  price: number;
+  volume: number;
+  value: number;
+  executedAt: string;
+  aggressor: AggressorSide;
+  priceChange: number;
+  previousClose?: number;
+  changeFromClose?: number;
+  changeFromClosePct?: number;
 }
 
-const DEMO_TRADES = makeDemoTrades()
+// ─── Aggressor indicator ──────────────────────────────────────────────────────
+function AggressorBadge({ side }: { side: AggressorSide }) {
+  if (side === 1)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
+        ▲ BUY
+      </span>
+    );
+  if (side === -1)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-mono">
+        ▼ SELL
+      </span>
+    );
+  return <span className="text-[9px] text-slate-600 font-mono">—</span>;
+}
 
-export function TimeAndSalesWidget({ onSymbolClick }: { onSymbolClick?: (sym: string) => void }) {
-  const { ticksArray, connected } = useMarketData()
-  const [trades, setTrades] = useState<any[]>(DEMO_TRADES)
-  const [symFilter, setSymFilter] = useState("")
-  const [exch, setExch] = useState<"All" | "DSE" | "CSE">("All")
-  const [sideFilter, setSideFilter] = useState<"All" | "B" | "S">("All")
-  const [autoScroll, setAutoScroll] = useState(true)
-  const [paused, setPaused] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
-  const pausedRef = useRef(false)
+// ─── Formatters ───────────────────────────────────────────────────────────────
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString('en-GB', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+}
 
-  pausedRef.current = paused
+function formatVol(vol: number): string {
+  if (vol >= 1_000_000) return `${(vol / 1_000_000).toFixed(2)}M`;
+  if (vol >= 1_000) return `${(vol / 1_000).toFixed(1)}K`;
+  return vol.toLocaleString();
+}
 
-  // Subscribe to SignalR TradeExecuted events
+// ─── Component ────────────────────────────────────────────────────────────────
+interface Props {
+  defaultTradingCode?: string;
+}
+
+export function TimeAndSalesWidget({ defaultTradingCode = 'BRACBANK' }: Props) {
+  const [tradingCode, setTradingCode] = useState(defaultTradingCode);
+  const [inputCode, setInputCode] = useState(defaultTradingCode);
+  const [entries, setEntries] = useState<TimeAndSalesEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showMatchId, setShowMatchId] = useState(false);
+  const [aggressorFilter, setAggressorFilter] = useState<AggressorSide | 'all'>('all');
+  const [connected, setConnected] = useState(false);
+  const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
+
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  // ── Fetch history ──────────────────────────────────────────────────────────
+  const fetchData = useCallback(async (code: string) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ count: '80' });
+      if (aggressorFilter !== 'all') params.set('aggressorFilter', String(aggressorFilter));
+      const res = await apiClient.get(`/api/timeandsales/${code}?${params}`).then(r => r.data as TimeAndSalesEntry[]);
+      setEntries(res);
+    } catch (err) {
+      console.error('Failed to fetch T&S', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [aggressorFilter]);
+
+  useEffect(() => { fetchData(tradingCode); }, [tradingCode, fetchData]);
+
+  // ── SignalR — reuses global market hub (started in main.tsx) ──────────────────
   useEffect(() => {
-    return subscribeMarket("TradeExecuted", (data: any) => {
-      if (pausedRef.current) return
-      const trade = {
-        id: Date.now() + Math.random(),
-        time: new Date().toLocaleTimeString("en-BD", { hour12: false }),
-        symbol:   data.tradingCode ?? data.symbol ?? "—",
-        exchange: data.exchange ?? "DSE",
-        price:    data.price ?? data.executionPrice ?? 0,
-        qty:      data.quantity ?? data.qty ?? 0,
-        value:    ((data.price ?? 0) * (data.quantity ?? 0) / 1e6).toFixed(3),
-        side:     data.side ?? (Math.random() > 0.5 ? "B" : "S"),
-      }
-      setTrades(prev => [trade, ...prev].slice(0, 500))
-    })
-  }, [])
+    const unsub = subscribeMarket("ReceiveTimeAndSales", (entry: TimeAndSalesEntry) => {
+      if (entry.tradingCode !== tradingCode) return;
+      if (aggressorFilter !== "all" && entry.aggressor !== aggressorFilter) return;
+      setFlashIds(s => new Set([...s, entry.id]));
+      setTimeout(() => setFlashIds(s => { const n = new Set(s); n.delete(entry.id); return n; }), 800);
+      setEntries(prev => [entry, ...prev.slice(0, 199)]);
+      tableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    setConnected(true);
+    return () => unsub();
+  }, [tradingCode, aggressorFilter]);
 
-  // Simulate live trades from ticks when no SignalR trade events
-  useEffect(() => {
-    if (connected || paused) return
-    const interval = setInterval(() => {
-      const stocks = ticksArray.length > 0 ? ticksArray : []
-      if (stocks.length === 0) return
-      const s = stocks[Math.floor(Math.random() * stocks.length)]
-      if (!s) return
-      const qty = (Math.floor(Math.random() * 10) + 1) * 100
-      setTrades(prev => { const t = {
-        id: Date.now() + Math.random(),
-        time: new Date().toLocaleTimeString("en-BD", { hour12: false }),
-        symbol: s.tradingCode,
-        exchange: s.exchange ?? "DSE",
-        price: s.lastPrice ?? 0,
-        qty,
-        value: parseFloat(((s.lastPrice ?? 0) * qty / 1e6).toFixed(3)),
-        side: Math.random() > 0.5 ? "B" : "S",
-      }; return [t, ...prev].slice(0, 500); })
-    }, 2500)
-    return () => clearInterval(interval)
-  }, [connected, ticksArray, paused])
+  const handleSearch = () => {
+    const code = inputCode.trim().toUpperCase();
+    if (code) setTradingCode(code);
+  };
 
-  // Auto scroll to top (newest)
-  useEffect(() => {
-    if (autoScroll && listRef.current) listRef.current.scrollTop = 0
-  }, [trades, autoScroll])
+  const filteredEntries = aggressorFilter === 'all'
+    ? entries
+    : entries.filter(e => e.aggressor === aggressorFilter);
 
-  const filtered = useMemo(() => {
-    let t = trades
-    if (symFilter)       t = t.filter(x => x.symbol.includes(symFilter.toUpperCase()))
-    if (exch !== "All")  t = t.filter(x => x.exchange === exch)
-    if (sideFilter !== "All") t = t.filter(x => x.side === sideFilter)
-    return t
-  }, [trades, symFilter, exch, sideFilter])
-
-  // Buy/Sell pressure from filtered trades
-  const pressure = useMemo(() => {
-    const total = filtered.length
-    if (total === 0) return { buy: 50, sell: 50 }
-    const buy = filtered.filter(t => t.side === "B").length
-    return { buy: Math.round((buy / total) * 100), sell: Math.round(((total - buy) / total) * 100) }
-  }, [filtered])
+  // ── Stats ──────────────────────────────────────────────────────────────────
+  const buyCount = entries.filter(e => e.aggressor === 1).length;
+  const sellCount = entries.filter(e => e.aggressor === -1).length;
+  const totalVol = entries.reduce((s, e) => s + e.volume, 0);
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
+    <div className="flex flex-col h-full bg-[#0f1117] rounded-lg border border-slate-800 overflow-hidden">
 
-      {/* ── Toolbar ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-panel)", flexWrap: "wrap" }}>
-        {/* Symbol filter */}
-        <input
-          value={symFilter}
-          onChange={e => setSymFilter(e.target.value)}
-          placeholder="Symbol…"
-          style={{ width: 72, background: "var(--t-hover)", border: "1px solid var(--t-border)", borderRadius: 4, padding: "3px 6px", color: "var(--t-text1)", fontSize: 10, outline: "none", fontFamily: mono }}
-          onFocus={e => e.currentTarget.style.borderColor = "var(--t-accent)"}
-          onBlur={e => e.currentTarget.style.borderColor = "var(--t-border)"}
-        />
-        {/* Exchange tabs */}
-        {(["All","DSE","CSE"] as const).map(e => (
-          <button key={e} onClick={() => setExch(e)} style={{
-            padding: "2px 7px", fontSize: 9, fontFamily: mono, cursor: "pointer", borderRadius: 4,
-            border: `1px solid ${exch === e ? "var(--t-accent)" : "var(--t-border)"}`,
-            background: exch === e ? "var(--t-accent)" : "transparent",
-            color: exch === e ? "#000" : "var(--t-text3)", fontWeight: exch === e ? 700 : 400,
-          }}>{e}</button>
-        ))}
-        {/* Side filter */}
-        {([["All","ALL"],["B","BUY"],["S","SELL"]] as const).map(([val,label]) => (
-          <button key={val} onClick={() => setSideFilter(val)} style={{
-            padding: "2px 7px", fontSize: 9, fontFamily: mono, cursor: "pointer", borderRadius: 4,
-            border: `1px solid ${sideFilter === val ? (val === "B" ? "var(--t-buy)" : val === "S" ? "var(--t-sell)" : "var(--t-accent)") : "var(--t-border)"}`,
-            background: sideFilter === val ? (val === "B" ? "rgba(0,212,170,0.15)" : val === "S" ? "rgba(255,107,107,0.15)" : "var(--t-accent)") : "transparent",
-            color: sideFilter === val ? (val === "B" ? "var(--t-buy)" : val === "S" ? "var(--t-sell)" : "#000") : "var(--t-text3)",
-            fontWeight: sideFilter === val ? 700 : 400,
-          }}>{label}</button>
-        ))}
-        <div style={{ flex: 1 }} />
-        {/* Pause / auto-scroll */}
-        <button onClick={() => setPaused(p => !p)} title={paused ? "Resume" : "Pause"} style={{
-          padding: "2px 7px", fontSize: 9, fontFamily: mono, cursor: "pointer", borderRadius: 4,
-          border: `1px solid ${paused ? "var(--t-sell)" : "var(--t-border)"}`,
-          background: paused ? "rgba(255,107,107,0.1)" : "transparent",
-          color: paused ? "var(--t-sell)" : "var(--t-text3)",
-        }}>{paused ? "▶ Resume" : "⏸ Pause"}</button>
-        <span style={{ color: connected ? "var(--t-buy)" : "var(--t-sell)", fontSize: 9, fontFamily: mono }}>
-          {connected ? "● LIVE" : "○ DEMO"}
-        </span>
-      </div>
-
-      {/* ── Pressure bar ── */}
-      <div style={{ padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-          <span style={{ fontSize: 9, color: "var(--t-buy)", fontFamily: mono, fontWeight: 700 }}>BUY {pressure.buy}%</span>
-          <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>{filtered.length} trades</span>
-          <span style={{ fontSize: 9, color: "var(--t-sell)", fontFamily: mono, fontWeight: 700 }}>SELL {pressure.sell}%</span>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[#141620]">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-4 rounded-sm bg-gradient-to-b from-cyan-400 to-blue-500" />
+          <span className="text-sm font-semibold text-slate-100 tracking-wide">Time & Sales</span>
+          <span className="text-xs font-mono font-bold text-cyan-400">{tradingCode}</span>
         </div>
-        <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden" }}>
-          <div style={{ width: `${pressure.buy}%`, background: "var(--t-buy)", transition: "width 0.4s ease", borderRadius: "3px 0 0 3px" }} />
-          <div style={{ flex: 1, background: "var(--t-sell)", borderRadius: "0 3px 3px 0" }} />
-        </div>
-      </div>
-
-      {/* ── Column headers ── */}
-      <div style={{ display: "flex", background: "var(--t-panel)", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
-        {[["TIME","52px"],["SYM","72px"],["EXCH","40px"],["SIDE","36px"],["PRICE","80px"],["QTY","64px"],["VAL(mn)","68px"]].map(([h,w]) => (
-          <div key={h} style={{ width: w, minWidth: w, padding: "4px 6px" }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: "var(--t-text3)", fontFamily: mono }}>{h}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMatchId(v => !v)}
+            title="Toggle Trade Match ID column"
+            className={`text-[9px] px-1.5 py-0.5 rounded border transition-all font-mono
+              ${showMatchId
+                ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
+                : 'bg-slate-800/40 text-slate-500 border-slate-700/40 hover:text-slate-300'}`}
+          >
+            ID
+          </button>
+          <div className={`flex items-center gap-1 text-[10px] ${connected ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+            LIVE
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* ── Trade rows ── */}
-      <div ref={listRef} style={{ flex: 1, overflowY: "auto" }}
-        onScroll={e => {
-          const el = e.currentTarget
-          setAutoScroll(el.scrollTop < 40)
-        }}
-      >
-        {filtered.slice(0, 200).map((t, i) => {
-          const isBuy = t.side === "B"
-          return (
-            <div key={t.id} style={{
-              display: "flex", alignItems: "center",
-              borderBottom: "1px solid var(--t-border)",
-              background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.012)",
-              transition: "background 0.08s",
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--t-hover)"}
-              onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.012)"}
+      {/* ── Search + Filter Bar ─────────────────────────────────────────── */}
+      <div className="px-3 py-2 border-b border-slate-800/60 bg-[#12151d] flex items-center gap-2">
+        <input
+          type="text"
+          value={inputCode}
+          onChange={e => setInputCode(e.target.value.toUpperCase())}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          placeholder="Trading code…"
+          className="w-28 bg-slate-800/50 border border-slate-700/50 rounded text-xs font-mono text-slate-300
+                     placeholder-slate-600 px-2 py-1 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+        />
+        <button
+          onClick={handleSearch}
+          className="text-xs px-2.5 py-1 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-600/30 transition-colors"
+        >
+          Go
+        </button>
+
+        <div className="flex gap-1 ml-auto">
+          {(['all', 1, -1] as const).map(side => (
+            <button
+              key={String(side)}
+              onClick={() => setAggressorFilter(side)}
+              className={`text-[9px] px-2 py-0.5 rounded border font-semibold transition-all
+                ${aggressorFilter === side
+                  ? side === 1 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : side === -1 ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                    : 'bg-slate-600/30 text-slate-300 border-slate-500/40'
+                  : 'bg-slate-800/30 text-slate-600 border-slate-700/30 hover:text-slate-400'}`}
             >
-              {/* Time */}
-              <div style={{ width: "52px", minWidth: "52px", padding: "4px 6px" }}>
-                <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>{t.time}</span>
-              </div>
-              {/* Symbol */}
-              <div style={{ width: "72px", minWidth: "72px", padding: "4px 6px" }}>
-                <span onClick={() => onSymbolClick?.(t.symbol)}
-                  style={{ fontSize: 10, fontWeight: 700, color: "var(--t-accent)", fontFamily: mono, cursor: "pointer" }}
-                  onContextMenu={e => { e.preventDefault(); BuySellConsoleEvents.open("BUY", t.symbol) }}
-                >{t.symbol}</span>
-              </div>
-              {/* Exchange */}
-              <div style={{ width: "40px", minWidth: "40px", padding: "4px 6px" }}>
-                <span style={{ fontSize: 9, color: t.exchange === "DSE" ? "#60a5fa" : "#a78bfa", fontFamily: mono }}>{t.exchange}</span>
-              </div>
-              {/* Side */}
-              <div style={{ width: "36px", minWidth: "36px", padding: "4px 6px" }}>
-                <span style={{
-                  fontSize: 9, fontWeight: 700, fontFamily: mono,
-                  color: isBuy ? "var(--t-buy)" : "var(--t-sell)",
-                  background: isBuy ? "rgba(0,212,170,0.1)" : "rgba(255,107,107,0.1)",
-                  padding: "1px 4px", borderRadius: 3,
-                }}>{isBuy ? "B" : "S"}</span>
-              </div>
-              {/* Price */}
-              <div style={{ width: "80px", minWidth: "80px", padding: "4px 6px", textAlign: "right" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: isBuy ? "var(--t-buy)" : "var(--t-sell)", fontFamily: mono }}>
-                  ৳{t.price.toFixed(2)}
-                </span>
-              </div>
-              {/* Qty */}
-              <div style={{ width: "64px", minWidth: "64px", padding: "4px 6px", textAlign: "right" }}>
-                <span style={{ fontSize: 10, color: "var(--t-text2)", fontFamily: mono }}>{t.qty.toLocaleString()}</span>
-              </div>
-              {/* Value */}
-              <div style={{ width: "68px", minWidth: "68px", padding: "4px 6px", textAlign: "right" }}>
-                <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>{t.value}</span>
-              </div>
-            </div>
-          )
-        })}
+              {side === 'all' ? 'ALL' : side === 1 ? '▲ BUY' : '▼ SELL'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── Footer ── */}
-      <div style={{ borderTop: "1px solid var(--t-border)", padding: "3px 8px", display: "flex", justifyContent: "space-between", flexShrink: 0, background: "var(--t-panel)" }}>
-        <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>
-          Showing {Math.min(filtered.length, 200)} of {filtered.length}
-        </span>
-        <button onClick={() => setTrades(DEMO_TRADES)} style={{
-          fontSize: 9, color: "var(--t-text3)", background: "none", border: "none", cursor: "pointer", fontFamily: mono,
-        }}>↺ reset</button>
+      {/* ── Stats Bar ─────────────────────────────────────────────────── */}
+      {entries.length > 0 && (
+        <div className="flex items-center gap-4 px-4 py-1.5 border-b border-slate-800/40 bg-[#10131a] text-[10px]">
+          <span className="text-slate-500">
+            Vol: <span className="text-slate-300 font-mono">{formatVol(totalVol)}</span>
+          </span>
+          <span className="text-emerald-400/80">
+            ▲ {buyCount} <span className="text-slate-600">buys</span>
+          </span>
+          <span className="text-red-400/80">
+            ▼ {sellCount} <span className="text-slate-600">sells</span>
+          </span>
+          <span className="text-slate-500 ml-auto">
+            {filteredEntries.length} trades
+          </span>
+        </div>
+      )}
+
+      {/* ── Table ────────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Column Headers */}
+        <div className={`grid text-[9px] text-slate-500 font-semibold uppercase tracking-wider
+                         border-b border-slate-800/60 px-3 py-1.5 bg-[#0d1016]
+                         ${showMatchId ? 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem_4.5rem]' : 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem]'}`}>
+          <span>Time</span>
+          {showMatchId && <span>Match ID</span>}
+          <span className="text-right">Price</span>
+          <span className="text-right">Volume</span>
+          <span className="text-right">Value</span>
+          <span className="text-center">Side</span>
+        </div>
+
+        <div ref={tableRef} className="flex-1 overflow-y-auto">
+          {loading && entries.length === 0 && (
+            <div className="flex items-center justify-center h-20 text-slate-600 text-xs">Loading…</div>
+          )}
+          {filteredEntries.map(entry => {
+            const isUp = entry.priceChange > 0;
+            const isDown = entry.priceChange < 0;
+            const isFlash = flashIds.has(entry.id);
+
+            return (
+              <div
+                key={entry.id}
+                className={`grid items-center px-3 py-[4px] border-b border-slate-800/20 text-[11px] font-mono
+                             transition-all duration-500
+                             ${isFlash ? 'bg-cyan-500/10' : 'hover:bg-slate-800/20'}
+                             ${showMatchId
+                               ? 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem_4.5rem]'
+                               : 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem]'}`}
+              >
+                {/* Time */}
+                <span className="text-slate-500 text-[9px]">{formatTime(entry.executedAt)}</span>
+
+                {/* Trade Match ID */}
+                {showMatchId && (
+                  <span
+                    className="text-[8px] text-slate-600 truncate"
+                    title={entry.tradeMatchId}
+                  >
+                    {entry.tradeMatchId.split('-')[1]}
+                  </span>
+                )}
+
+                {/* Price */}
+                <span className={`text-right font-bold
+                  ${isUp ? 'text-emerald-400' : isDown ? 'text-red-400' : 'text-slate-300'}`}>
+                  {entry.price.toFixed(2)}
+                  {isUp && <span className="ml-0.5 text-[8px]">▲</span>}
+                  {isDown && <span className="ml-0.5 text-[8px]">▼</span>}
+                </span>
+
+                {/* Volume */}
+                <span className="text-right text-slate-400">{formatVol(entry.volume)}</span>
+
+                {/* Value (in BDT thousand) */}
+                <span className="text-right text-slate-500 text-[9px]">
+                  {(entry.value / 1000).toFixed(1)}K
+                </span>
+
+                {/* Aggressor */}
+                <div className="flex justify-center">
+                  <AggressorBadge side={entry.aggressor} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
-  )
+  );
 }
+
+export default TimeAndSalesWidget;

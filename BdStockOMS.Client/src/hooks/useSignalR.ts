@@ -77,6 +77,7 @@ type MarketEventMap = {
   PressureUpdate:   (list: any[])    => void
   IndexUpdate:      (indices: any)   => void
   NewsUpdate:       (item: any)      => void
+  ReceiveTimeAndSales: (entry: any) => void
 }
 
 const _listeners: Partial<Record<keyof MarketEventMap, Set<Function>>> = {}
@@ -103,7 +104,7 @@ export async function startGlobalMarketHub(token: string) {
     .build()
 
   const events: (keyof MarketEventMap)[] = [
-    "BulkPriceUpdate","PriceUpdate","DepthUpdate","PressureUpdate","IndexUpdate","NewsUpdate"
+    "BulkPriceUpdate","PriceUpdate","DepthUpdate","PressureUpdate","IndexUpdate","NewsUpdate","ReceiveTimeAndSales"
   ]
   events.forEach(ev => {
     _globalConn!.on(ev, (...args) => {

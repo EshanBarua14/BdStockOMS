@@ -72,8 +72,15 @@ export const validateOrder = (dto: any) =>
 export const getWatchlists = () =>
   fetch(`/api/watchlists`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
 
-export const getNews = (count = 20) =>
-  fetch(`/api/news?count=${count}`, { headers: headers(), cache: "no-store" }).then(r => handle(r))
+export const getNews = (params?: { keyword?: string; board?: string; category?: string; page?: number; pageSize?: number }) => {
+  const qs = new URLSearchParams();
+  if (params?.keyword)  qs.set("keyword",  params.keyword);
+  if (params?.board)    qs.set("board",    params.board);
+  if (params?.category) qs.set("category", params.category);
+  qs.set("page",     String(params?.page     ?? 1));
+  qs.set("pageSize", String(params?.pageSize ?? 20));
+  return fetch(`/api/news?${qs}`, { headers: headers(), cache: "no-store" }).then(r => handle(r));
+}
 
 export const getStocks = () =>
   fetch(`/api/stocks`, { headers: headers() }).then(r => handle(r))

@@ -20,6 +20,7 @@ import { BuySellConsole, BuySellConsoleEvents, BuySellConsoleInline } from "@/co
 import { ScoreBoardWidget }    from "./ScoreBoardWidget"
 import { TimeAndSalesWidget }  from "./TimeAndSalesWidget"
 import { MostActiveWidget }    from "./MostActiveWidget"
+import { PriceHistoryWidget }   from "./PriceHistoryWidget"
 
 export interface WidgetDef {
   id:         string
@@ -56,6 +57,7 @@ export const WIDGET_REGISTRY_LIST: WidgetDef[] = [
   { id:"scoreboard", title:"Score Board",       label:"Score Board",       icon:"🏆", minW:2, minH:2, defaultW:14, defaultH:16, category:"Analytics", component: ScoreBoardWidget },
   { id:"timesales",  title:"Time & Sales",      label:"Time & Sales",      icon:"⏱",  minW:2, minH:2, defaultW:10, defaultH:16, category:"Analytics", component: TimeAndSalesWidget },
   { id:"mostactive", title:"Most Active",       label:"Most Active",       icon:"🔥", minW:2, minH:2, defaultW:10, defaultH:16, category:"Analytics", component: MostActiveWidget },
+  { id:"pricehistory", title:"Price History", label:"Price History", icon:"📅", minW:3, minH:3, defaultW:14, defaultH:18, category:"Analytics", component: PriceHistoryWidget },
 ]
 
 // Object map keyed by id — used by DashboardPage
