@@ -147,7 +147,7 @@ export function WidgetPanel({
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0, borderRadius: '0 0 10px 10px' }}>{children}</div>
+      <div style={{ flex: 1, overflow: 'clip', minHeight: 0, borderRadius: '0 0 10px 10px' }}>{children}</div>
     </div>
   )
 }
