@@ -27,38 +27,97 @@ public class NewsController : ControllerBase
         "Circuit breaker triggered for {0} on high volatility",
     ];
 
+    private static readonly string[] Categories =
+        ["price-sensitive", "regulatory", "corporate", "general"];
+
+    private static readonly string[] Boards =
+        ["A", "B", "N", "Z", "SME"];
+
     public NewsController(AppDbContext db) => _db = db;
 
+    /// <summary>
+    /// Paginated + filtered news feed
+    /// GET /api/news?page=1&pageSize=15&keyword=bank&board=A&category=price-sensitive
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetLatest([FromQuery] int count = 20)
+    public async Task<IActionResult> GetNews(
+        [FromQuery] string?  keyword  = null,
+        [FromQuery] string?  board    = null,
+        [FromQuery] string?  category = null,
+        [FromQuery] string?  tradingCode = null,
+        [FromQuery] int      page     = 1,
+        [FromQuery] int      pageSize = 20,
+        // Legacy param — kept for backward compat
+        [FromQuery] int      count    = 0)
     {
+        if (count > 0 && page == 1 && pageSize == 20) pageSize = Math.Min(count, 50);
+        if (page < 1) page = 1;
+        if (pageSize < 1 || pageSize > 100) pageSize = 20;
+
         var stocks = await _db.Stocks
             .Where(s => s.IsActive)
             .OrderByDescending(s => s.Volume)
-            .Take(30)
+            .Take(50)
             .ToListAsync();
 
-        var news = Enumerable.Range(0, Math.Min(count, 20)).Select(i =>
+        if (stocks.Count == 0)
+            return Ok(new { items = Array.Empty<object>(), totalCount = 0, page, pageSize, totalPages = 0 });
+
+        // Generate a stable seed pool of news items
+        var allNews = Enumerable.Range(0, 40).Select(i =>
         {
-            var stock   = stocks[_rng.Next(stocks.Count)];
-            var tmpl    = Templates[i % Templates.Length];
-            var quarter = ((DateTime.UtcNow.Month - 1) / 3) + 1;
-            var title   = string.Format(tmpl,
+            var stock    = stocks[i % stocks.Count];
+            var tmpl     = Templates[i % Templates.Length];
+            var cat      = Categories[i % Categories.Length];
+            var brd      = Boards[i % Boards.Length];
+            var priceSens = cat == "price-sensitive";
+            var title    = string.Format(tmpl,
                 stock.TradingCode,
                 _rng.Next(5, 150),
                 DateTime.UtcNow.Year);
 
             return new
             {
-                id         = Guid.NewGuid(),
+                id             = i + 1,
                 title,
-                tag        = stock.TradingCode,
-                importance = _rng.NextDouble() switch { < 0.2 => "high", < 0.6 => "medium", _ => "low" },
-                time       = DateTime.UtcNow.AddMinutes(-i * 15).ToString("hh:mm tt"),
-                timestamp  = DateTime.UtcNow.AddMinutes(-i * 15),
+                summary        = $"{title}. Market participants are closely monitoring developments as trading activity picks up.",
+                category       = cat,
+                board          = brd,
+                tradingCode    = stock.TradingCode,
+                source         = "DSE Market Feed",
+                sourceUrl      = (string?)null,
+                isPriceSensitive = priceSens,
+                publishedAt    = DateTime.UtcNow.AddMinutes(-(i * 18)),
+                keywords       = new[] { stock.TradingCode.ToLower(), cat },
             };
         }).ToList();
 
-        return Ok(news);
+        // Apply filters
+        var filtered = allNews.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            filtered = filtered.Where(n =>
+                n.title.ToLower().Contains(kw) ||
+                n.tradingCode.ToLower().Contains(kw) ||
+                n.keywords.Any(k => k.Contains(kw)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(board) && board != "ALL")
+            filtered = filtered.Where(n => n.board == board);
+
+        if (!string.IsNullOrWhiteSpace(category) && category != "all")
+            filtered = filtered.Where(n => n.category == category);
+
+        if (!string.IsNullOrWhiteSpace(tradingCode))
+            filtered = filtered.Where(n => n.tradingCode == tradingCode.ToUpper());
+
+        var list       = filtered.ToList();
+        var totalCount = list.Count;
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        var items      = list.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        return Ok(new { items, totalCount, page, pageSize, totalPages });
     }
 }
