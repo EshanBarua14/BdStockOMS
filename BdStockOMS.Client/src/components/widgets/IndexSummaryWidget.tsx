@@ -38,7 +38,7 @@ export function IndexSummaryWidget() {
   const unchanged = stocks.length - advancers - decliners
 
   return (
-    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"var(--t-surface)", overflow:"hidden" }}>
       <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
         <span style={{ color:"rgba(255,255,255,0.5)", fontSize:10, fontFamily:"'Space Mono',monospace" }}>MARKET INDICES</span>
         <span style={{ color: connected ? "#00D4AA" : "#FF6B6B", fontSize:9, fontFamily:"'Space Mono',monospace" }}>{connected ? "● LIVE" : "○ offline"}</span>

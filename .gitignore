@@ -491,3 +491,4 @@ files/
 files.zip
 dump.rdb
 e.currentTarget.style.background
+fix_pre63.sh

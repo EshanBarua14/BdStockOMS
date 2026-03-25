@@ -1,3 +1,4 @@
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 // @ts-nocheck
 // src/components/widgets/MostActiveWidget.tsx
 // Day 61 — Most Active: parameter-based ranking (Value/Volume/Trades/Change%)

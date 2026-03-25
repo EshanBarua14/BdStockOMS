@@ -49,7 +49,7 @@ export function BuySellPressureWidget({ linkedSymbol }) {
   const barH    = 80
 
   return (
-    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"#0D1320", overflow:"hidden" }}>
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", background:"var(--t-surface)", overflow:"hidden" }}>
       <div style={{ padding:"5px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
         <input value={symbol} onChange={e=>setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"
           style={{ width:80, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:5, padding:"4px 8px", color:"#fff", fontSize:11, outline:"none", fontFamily:"'Space Mono',monospace" }} />
