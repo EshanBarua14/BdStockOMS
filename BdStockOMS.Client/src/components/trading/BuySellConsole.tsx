@@ -734,9 +734,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
       </div>
 
       {/* ── Confirm popup ── */}
-      {showConfirm && (
-        {createPortal(<ConfirmPopup order={confirmOrder} onConfirm={handleConfirm} onCancel={() => setShowConfirm(false)} placing={placing} />, document.body)}
-      )}
+      {showConfirm && createPortal(<ConfirmPopup order={confirmOrder} onConfirm={handleConfirm} onCancel={() => setShowConfirm(false)} placing={placing} />, document.body)}
     </>
   )
 }
