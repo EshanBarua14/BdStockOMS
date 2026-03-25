@@ -7,6 +7,7 @@ import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
 export function PriceChartWidget({ linkedSymbol, onSymbolClick, colorGroup }: { linkedSymbol?: string; onSymbolClick?: (c: string) => void; colorGroup?: string | null }) {
   const { stocks: _s } = useMarketData()
   const stocks = _s ?? []
+  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
   const [symbol, setSymbol]   = useState(linkedSymbol ?? "")
   const [chartType, setChartType] = useState("line")
   const [period, setPeriod]   = useState("1D")
