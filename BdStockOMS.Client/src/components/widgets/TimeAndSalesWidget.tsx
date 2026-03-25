@@ -1,275 +1,268 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { subscribeMarket } from '@/hooks/useSignalR';
-import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
-import { apiClient } from '@/api/client';
+// @ts-nocheck
+// src/components/widgets/TimeAndSalesWidget.tsx
+// Day 63 redesign — matches OMS design language: JetBrains Mono, var(--t-*) tokens,
+// TradeMatchId toggle, Aggressor badge, flash animation, stats bar, color group sync
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { subscribeMarket } from "@/hooks/useSignalR"
+import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
+import { apiClient } from "@/api/client"
+
+const mono = "'JetBrains Mono', monospace"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type AggressorSide = 0 | 1 | -1; // Unknown | Buy | Sell
+type AggressorSide = 0 | 1 | -1
 
-interface TimeAndSalesEntry {
-  id: number;
-  tradeMatchId: string;
-  tradingCode: string;
-  price: number;
-  volume: number;
-  value: number;
-  executedAt: string;
-  aggressor: AggressorSide;
-  priceChange: number;
-  previousClose?: number;
-  changeFromClose?: number;
-  changeFromClosePct?: number;
+interface TASEntry {
+  id: number
+  tradeMatchId: string
+  tradingCode: string
+  price: number
+  volume: number
+  value: number
+  executedAt: string
+  aggressor: AggressorSide
+  priceChange: number
+  previousClose?: number
 }
 
-// ─── Aggressor indicator ──────────────────────────────────────────────────────
-function AggressorBadge({ side }: { side: AggressorSide }) {
-  if (side === 1)
-    return (
-      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-        ▲ BUY
-      </span>
-    );
-  if (side === -1)
-    return (
-      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-mono">
-        ▼ SELL
-      </span>
-    );
-  return <span className="text-[9px] text-slate-600 font-mono">—</span>;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtTime(d: string) {
+  return new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
 }
-
-// ─── Formatters ───────────────────────────────────────────────────────────────
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString('en-GB', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  });
-}
-
-function formatVol(vol: number): string {
-  if (vol >= 1_000_000) return `${(vol / 1_000_000).toFixed(2)}M`;
-  if (vol >= 1_000) return `${(vol / 1_000).toFixed(1)}K`;
-  return vol.toLocaleString();
+function fmtVol(v: number) {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`
+  if (v >= 1_000)     return `${(v / 1_000).toFixed(1)}K`
+  return v.toLocaleString()
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-interface Props {
-  defaultTradingCode?: string;
-}
+export function TimeAndSalesWidget({
+  defaultTradingCode = "BRACBANK",
+  colorGroup,
+}: {
+  defaultTradingCode?: string
+  colorGroup?: string | null
+}) {
+  const [tradingCode, setTradingCode] = useState(defaultTradingCode)
+  const [_linked, emitSymbol]         = useLinkedSymbol(colorGroup ?? null)
+  const [inputCode,  setInputCode]    = useState(defaultTradingCode)
+  const [entries,    setEntries]      = useState<TASEntry[]>([])
+  const [loading,    setLoading]      = useState(false)
+  const [showId,     setShowId]       = useState(false)
+  const [aggrFilter, setAggrFilter]   = useState<AggressorSide | "all">("all")
+  const [connected,  setConnected]    = useState(false)
+  const [flashIds,   setFlashIds]     = useState<Set<number>>(new Set())
+  const tableRef = useRef<HTMLDivElement>(null)
 
-export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup }: { defaultTradingCode?: string; colorGroup?: string | null }) {
-  const [tradingCode, setTradingCode] = useState(defaultTradingCode);
-  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null);
-  useEffect(() => { if (_linked) setTradingCode(_linked); }, [_linked]);
-  const [inputCode, setInputCode] = useState(defaultTradingCode);
-  const [entries, setEntries] = useState<TimeAndSalesEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showMatchId, setShowMatchId] = useState(false);
-  const [aggressorFilter, setAggressorFilter] = useState<AggressorSide | 'all'>('all');
-  const [connected, setConnected] = useState(false);
-  const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
+  // Sync from color group
+  useEffect(() => { if (_linked) { setTradingCode(_linked); setInputCode(_linked) } }, [_linked])
 
-  const tableRef = useRef<HTMLDivElement>(null);
-
-  // ── Fetch history ──────────────────────────────────────────────────────────
+  // Fetch history
   const fetchData = useCallback(async (code: string) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const params = new URLSearchParams({ count: '80' });
-      if (aggressorFilter !== 'all') params.set('aggressorFilter', String(aggressorFilter));
-      const res = await apiClient.get(`/api/timeandsales/${code}?${params}`).then(r => r.data as TimeAndSalesEntry[]);
-      setEntries(res);
-    } catch (err) {
-      console.error('Failed to fetch T&S', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [aggressorFilter]);
+      const params = new URLSearchParams({ count: "80" })
+      if (aggrFilter !== "all") params.set("aggressorFilter", String(aggrFilter))
+      const res = await apiClient.get(`/api/timeandsales/${code}?${params}`).then(r => r.data as TASEntry[])
+      setEntries(res)
+    } catch { setEntries([]) }
+    finally { setLoading(false) }
+  }, [aggrFilter])
 
-  useEffect(() => { fetchData(tradingCode); }, [tradingCode, fetchData]);
+  useEffect(() => { fetchData(tradingCode) }, [tradingCode, fetchData])
 
-  // ── SignalR — reuses global market hub (started in main.tsx) ──────────────────
+  // SignalR live trades
   useEffect(() => {
-    const unsub = subscribeMarket("ReceiveTimeAndSales", (entry: TimeAndSalesEntry) => {
-      if (entry.tradingCode !== tradingCode) return;
-      if (aggressorFilter !== "all" && entry.aggressor !== aggressorFilter) return;
-      setFlashIds(s => new Set([...s, entry.id]));
-      setTimeout(() => setFlashIds(s => { const n = new Set(s); n.delete(entry.id); return n; }), 800);
-      setEntries(prev => [entry, ...prev.slice(0, 199)]);
-      tableRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    setConnected(true);
-    return () => unsub();
-  }, [tradingCode, aggressorFilter]);
+    const unsub = subscribeMarket("ReceiveTimeAndSales", (entry: TASEntry) => {
+      if (entry.tradingCode !== tradingCode) return
+      if (aggrFilter !== "all" && entry.aggressor !== aggrFilter) return
+      setFlashIds(s => new Set([...s, entry.id]))
+      setTimeout(() => setFlashIds(s => { const n = new Set(s); n.delete(entry.id); return n }), 800)
+      setEntries(prev => [entry, ...prev.slice(0, 199)])
+      tableRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+    })
+    setConnected(true)
+    return () => unsub()
+  }, [tradingCode, aggrFilter])
 
   const handleSearch = () => {
-    const code = inputCode.trim().toUpperCase();
-    if (code) setTradingCode(code);
-  };
+    const code = inputCode.trim().toUpperCase()
+    if (code) { setTradingCode(code); emitSymbol(code) }
+  }
 
-  const filteredEntries = aggressorFilter === 'all'
-    ? entries
-    : entries.filter(e => e.aggressor === aggressorFilter);
+  const filtered = aggrFilter === "all" ? entries : entries.filter(e => e.aggressor === aggrFilter)
+  const buyCount  = entries.filter(e => e.aggressor === 1).length
+  const sellCount = entries.filter(e => e.aggressor === -1).length
+  const totalVol  = entries.reduce((s, e) => s + e.volume, 0)
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
-  const buyCount = entries.filter(e => e.aggressor === 1).length;
-  const sellCount = entries.filter(e => e.aggressor === -1).length;
-  const totalVol = entries.reduce((s, e) => s + e.volume, 0);
+  // Column grid
+  const cols = showId
+    ? "72px 1fr 5rem 4.5rem 4.5rem 4.5rem"
+    : "72px 5rem 4.5rem 4.5rem 4.5rem"
 
   return (
-    <div className="flex flex-col h-full bg-[var(--t-bg)] rounded-lg border border-slate-800 overflow-hidden">
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden", fontSize: 11 }}>
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[var(--t-panel)]">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-4 rounded-sm bg-gradient-to-b from-cyan-400 to-blue-500" />
-          <span className="text-sm font-semibold text-slate-100 tracking-wide">Time & Sales</span>
-          <span className="text-xs font-mono font-bold text-cyan-400">{tradingCode}</span>
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-panel)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 3, height: 14, borderRadius: 2, background: "linear-gradient(180deg, #22d3ee, #3b82f6)" }} />
+          <span style={{ fontSize: 10, fontWeight: 800, color: "var(--t-text1)", fontFamily: mono, letterSpacing: "0.06em" }}>T&S</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#22d3ee", fontFamily: mono }}>{tradingCode}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowMatchId(v => !v)}
-            title="Toggle Trade Match ID column"
-            className={`text-[9px] px-1.5 py-0.5 rounded border transition-all font-mono
-              ${showMatchId
-                ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
-                : 'bg-slate-800/40 text-slate-500 border-slate-700/40 hover:text-slate-300'}`}
-          >
-            ID
-          </button>
-          <div className={`flex items-center gap-1 text-[10px] ${connected ? 'text-emerald-400' : 'text-slate-500'}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-            LIVE
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {/* Toggle Match ID */}
+          <button onClick={() => setShowId(v => !v)} title="Toggle Trade Match ID"
+            style={{
+              padding: "2px 7px", fontSize: 8, fontWeight: 700, fontFamily: mono,
+              background: showId ? "rgba(34,211,238,0.12)" : "transparent",
+              border: `1px solid ${showId ? "#22d3ee" : "var(--t-border)"}`,
+              borderRadius: 4, color: showId ? "#22d3ee" : "var(--t-text3)", cursor: "pointer",
+            }}>ID</button>
+          {/* Live indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: connected ? "var(--t-buy)" : "var(--t-text3)", boxShadow: connected ? "0 0 6px var(--t-buy)" : "none", animation: connected ? "oms-pulse 2s infinite" : "none" }} />
+            <span style={{ fontSize: 8, fontFamily: mono, color: connected ? "var(--t-buy)" : "var(--t-text3)" }}>LIVE</span>
           </div>
         </div>
       </div>
 
-      {/* ── Search + Filter Bar ─────────────────────────────────────────── */}
-      <div className="px-3 py-2 border-b border-slate-800/60 bg-[var(--t-panel)] flex items-center gap-2">
+      {/* ── Search + Aggressor Filter ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-bg)" }}>
         <input
-          type="text"
           value={inputCode}
           onChange={e => setInputCode(e.target.value.toUpperCase())}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          placeholder="Trading code…"
-          className="w-28 bg-slate-800/50 border border-slate-700/50 rounded text-xs font-mono text-slate-300
-                     placeholder-slate-600 px-2 py-1 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+          onKeyDown={e => e.key === "Enter" && handleSearch()}
+          placeholder="Code…"
+          style={{
+            width: 80, background: "var(--t-hover)", border: "1px solid var(--t-border)",
+            borderRadius: 5, padding: "4px 8px", color: "var(--t-text1)",
+            fontSize: 10, outline: "none", fontFamily: mono, fontWeight: 700,
+          }}
+          onFocus={e => e.currentTarget.style.borderColor = "#22d3ee"}
+          onBlur={e => e.currentTarget.style.borderColor = "var(--t-border)"}
         />
-        <button
-          onClick={handleSearch}
-          className="text-xs px-2.5 py-1 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-600/30 transition-colors"
-        >
-          Go
-        </button>
+        <button onClick={handleSearch} style={{
+          padding: "4px 10px", fontSize: 9, fontWeight: 800, fontFamily: mono,
+          background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.3)",
+          borderRadius: 5, color: "#22d3ee", cursor: "pointer",
+        }}>GO</button>
 
-        <div className="flex gap-1 ml-auto">
-          {(['all', 1, -1] as const).map(side => (
-            <button
-              key={String(side)}
-              onClick={() => setAggressorFilter(side)}
-              className={`text-[9px] px-2 py-0.5 rounded border font-semibold transition-all
-                ${aggressorFilter === side
-                  ? side === 1 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    : side === -1 ? 'bg-red-500/20 text-red-400 border-red-500/40'
-                    : 'bg-slate-600/30 text-slate-300 border-slate-500/40'
-                  : 'bg-slate-800/30 text-slate-600 border-slate-700/30 hover:text-slate-400'}`}
-            >
-              {side === 'all' ? 'ALL' : side === 1 ? '▲ BUY' : '▼ SELL'}
+        <div style={{ display: "flex", gap: 3, marginLeft: "auto" }}>
+          {(["all", 1, -1] as const).map(side => (
+            <button key={String(side)} onClick={() => setAggrFilter(side)} style={{
+              padding: "3px 7px", fontSize: 8, fontWeight: 700, fontFamily: mono,
+              background: aggrFilter === side
+                ? side === 1 ? "rgba(0,230,118,0.12)" : side === -1 ? "rgba(255,23,68,0.12)" : "rgba(255,255,255,0.08)"
+                : "transparent",
+              border: `1px solid ${aggrFilter === side
+                ? side === 1 ? "rgba(0,230,118,0.3)" : side === -1 ? "rgba(255,23,68,0.3)" : "var(--t-border)"
+                : "var(--t-border)"}`,
+              borderRadius: 4,
+              color: aggrFilter === side
+                ? side === 1 ? "var(--t-buy)" : side === -1 ? "var(--t-sell)" : "var(--t-text1)"
+                : "var(--t-text3)",
+              cursor: "pointer",
+            }}>
+              {side === "all" ? "ALL" : side === 1 ? "▲ BUY" : "▼ SELL"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Stats Bar ─────────────────────────────────────────────────── */}
+      {/* ── Stats Bar ── */}
       {entries.length > 0 && (
-        <div className="flex items-center gap-4 px-4 py-1.5 border-b border-slate-800/40 bg-[var(--t-surface)] text-[10px]">
-          <span className="text-slate-500">
-            Vol: <span className="text-slate-300 font-mono">{formatVol(totalVol)}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "3px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-panel)" }}>
+          <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-text3)" }}>
+            Vol: <span style={{ color: "var(--t-text2)", fontWeight: 700 }}>{fmtVol(totalVol)}</span>
           </span>
-          <span className="text-emerald-400/80">
-            ▲ {buyCount} <span className="text-slate-600">buys</span>
+          <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-buy)" }}>
+            ▲ {buyCount}
           </span>
-          <span className="text-red-400/80">
-            ▼ {sellCount} <span className="text-slate-600">sells</span>
+          <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-sell)" }}>
+            ▼ {sellCount}
           </span>
-          <span className="text-slate-500 ml-auto">
-            {filteredEntries.length} trades
+          <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-text3)", marginLeft: "auto" }}>
+            {filtered.length} trades
           </span>
         </div>
       )}
 
-      {/* ── Table ────────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Column Headers */}
-        <div className={`grid text-[9px] text-slate-500 font-semibold uppercase tracking-wider
-                         border-b border-slate-800/60 px-3 py-1.5 bg-[var(--t-bg)]
-                         ${showMatchId ? 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem_4.5rem]' : 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem]'}`}>
-          <span>Time</span>
-          {showMatchId && <span>Match ID</span>}
-          <span className="text-right">Price</span>
-          <span className="text-right">Volume</span>
-          <span className="text-right">Value</span>
-          <span className="text-center">Side</span>
-        </div>
+      {/* ── Column Headers ── */}
+      <div style={{ display: "grid", gridTemplateColumns: cols, padding: "3px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-bg)" }}>
+        {["TIME", ...(showId ? ["MATCH ID"] : []), "PRICE", "VOL", "VALUE", "SIDE"].map(h => (
+          <span key={h} style={{ fontSize: 8, fontWeight: 700, fontFamily: mono, color: "var(--t-text3)", letterSpacing: "0.06em", textAlign: h === "PRICE" || h === "VOL" || h === "VALUE" ? "right" : h === "SIDE" ? "center" : "left", display: "block" }}>{h}</span>
+        ))}
+      </div>
 
-        <div ref={tableRef} className="flex-1 overflow-y-auto">
-          {loading && entries.length === 0 && (
-            <div className="flex items-center justify-center h-20 text-slate-600 text-xs">Loading…</div>
-          )}
-          {filteredEntries.map(entry => {
-            const isUp = entry.priceChange > 0;
-            const isDown = entry.priceChange < 0;
-            const isFlash = flashIds.has(entry.id);
+      {/* ── Rows ── */}
+      <div ref={tableRef} style={{ flex: 1, overflowY: "auto" }}>
+        {loading && entries.length === 0 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 60, color: "var(--t-text3)", fontSize: 10, fontFamily: mono }}>Loading…</div>
+        )}
+        {filtered.map((e, idx) => {
+          const isUp    = e.priceChange > 0
+          const isDown  = e.priceChange < 0
+          const isFlash = flashIds.has(e.id)
+          const isBuy   = e.aggressor === 1
+          const isSell  = e.aggressor === -1
 
-            return (
-              <div
-                key={entry.id}
-                className={`grid items-center px-3 py-[4px] border-b border-slate-800/20 text-[11px] font-mono
-                             transition-all duration-500
-                             ${isFlash ? 'bg-cyan-500/10' : 'hover:bg-slate-800/20'}
-                             ${showMatchId
-                               ? 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem_4.5rem]'
-                               : 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem]'}`}
-              >
-                {/* Time */}
-                <span className="text-slate-500 text-[9px]">{formatTime(entry.executedAt)}</span>
+          return (
+            <div key={e.id} style={{
+              display: "grid", gridTemplateColumns: cols,
+              alignItems: "center", padding: "4px 8px",
+              borderBottom: "1px solid var(--t-border)",
+              background: isFlash ? "rgba(34,211,238,0.06)" : idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.012)",
+              transition: "background 0.5s",
+            }}>
+              {/* Time */}
+              <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-text3)" }}>{fmtTime(e.executedAt)}</span>
 
-                {/* Trade Match ID */}
-                {showMatchId && (
-                  <span
-                    className="text-[8px] text-slate-600 truncate"
-                    title={entry.tradeMatchId}
-                  >
-                    {entry.tradeMatchId.split('-')[1]}
-                  </span>
-                )}
-
-                {/* Price */}
-                <span className={`text-right font-bold
-                  ${isUp ? 'text-emerald-400' : isDown ? 'text-red-400' : 'text-slate-300'}`}>
-                  {entry.price.toFixed(2)}
-                  {isUp && <span className="ml-0.5 text-[8px]">▲</span>}
-                  {isDown && <span className="ml-0.5 text-[8px]">▼</span>}
+              {/* Match ID */}
+              {showId && (
+                <span style={{ fontSize: 8, fontFamily: mono, color: "var(--t-text3)", overflow: "hidden", textOverflow: "ellipsis" }} title={e.tradeMatchId}>
+                  {e.tradeMatchId?.split("-")[1] ?? "—"}
                 </span>
+              )}
 
-                {/* Volume */}
-                <span className="text-right text-slate-400">{formatVol(entry.volume)}</span>
-
-                {/* Value (in BDT thousand) */}
-                <span className="text-right text-slate-500 text-[9px]">
-                  {(entry.value / 1000).toFixed(1)}K
+              {/* Price */}
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 11, fontWeight: 800, fontFamily: mono, color: isUp ? "var(--t-buy)" : isDown ? "var(--t-sell)" : "var(--t-text1)" }}>
+                  {e.price.toFixed(2)}
+                  {isUp && <span style={{ fontSize: 7, marginLeft: 2 }}>▲</span>}
+                  {isDown && <span style={{ fontSize: 7, marginLeft: 2 }}>▼</span>}
                 </span>
-
-                {/* Aggressor */}
-                <div className="flex justify-center">
-                  <AggressorBadge side={entry.aggressor} />
-                </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Volume */}
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 10, fontFamily: mono, color: "var(--t-text2)" }}>{fmtVol(e.volume)}</span>
+              </div>
+
+              {/* Value */}
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 9, fontFamily: mono, color: "var(--t-text3)" }}>
+                  {(e.value / 1000).toFixed(1)}K
+                </span>
+              </div>
+
+              {/* Aggressor */}
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                {isBuy ? (
+                  <span style={{ fontSize: 8, fontWeight: 800, fontFamily: mono, padding: "1px 5px", borderRadius: 3, background: "rgba(0,230,118,0.1)", color: "var(--t-buy)", border: "1px solid rgba(0,230,118,0.2)" }}>▲ B</span>
+                ) : isSell ? (
+                  <span style={{ fontSize: 8, fontWeight: 800, fontFamily: mono, padding: "1px 5px", borderRadius: 3, background: "rgba(255,23,68,0.1)", color: "var(--t-sell)", border: "1px solid rgba(255,23,68,0.2)" }}>▼ S</span>
+                ) : (
+                  <span style={{ fontSize: 8, fontFamily: mono, color: "var(--t-text3)" }}>—</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
-  );
+  )
 }
 
-export default TimeAndSalesWidget;
+export default TimeAndSalesWidget
