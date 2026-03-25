@@ -4,6 +4,7 @@
 // F1=Buy F2=Sell, all BD market fields, BO lookup, circuit breaker, keyboard nav
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useOrders } from '../../hooks/useOrders'
 import { useMarketData } from '../../hooks/useMarketData'
 import { getBOAccounts } from '../../api/client'
@@ -734,7 +735,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
 
       {/* ── Confirm popup ── */}
       {showConfirm && (
-        <ConfirmPopup order={confirmOrder} onConfirm={handleConfirm} onCancel={() => setShowConfirm(false)} placing={placing} />
+        {createPortal(<ConfirmPopup order={confirmOrder} onConfirm={handleConfirm} onCancel={() => setShowConfirm(false)} placing={placing} />, document.body)}
       )}
     </>
   )
