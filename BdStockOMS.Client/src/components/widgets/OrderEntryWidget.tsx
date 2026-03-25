@@ -44,8 +44,8 @@ export function OrderEntryWidget() {
   )
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", padding: "10px 12px", gap: 8, overflowY: "auto" }}>
-      <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>ORDER ENTRY</div>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: 'var(--t-surface)', padding: "10px 12px", gap: 8, overflowY: "auto" }}>
+      <div style={{ color: 'var(--t-text2)', fontSize: 10, fontFamily: "'Space Mono',monospace", letterSpacing: "0.1em" }}>ORDER ENTRY</div>
 
       {/* Buy/Sell toggle */}
       <div style={{ display: "flex", gap: 6 }}>
@@ -57,12 +57,12 @@ export function OrderEntryWidget() {
       <div style={{ position: "relative" }}>
         <input value={searchQ || symbol} onChange={e => { setSearchQ(e.target.value); setSymbol(""); setShowDrop(true) }}
           onFocus={() => setShowDrop(true)} onBlur={() => setTimeout(() => setShowDrop(false), 150)}
-          placeholder="Symbol e.g. BATBC" style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "8px 10px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+          placeholder="Symbol e.g. BATBC" style={{ width: "100%", boxSizing: "border-box", background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 6, padding: "8px 10px", color: 'var(--t-text1)', fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
         {showDrop && filtered.length > 0 && (
-          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#151D2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, zIndex: 20 }}>
+          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: 'var(--t-elevated)', border: '1px solid var(--t-border)', borderRadius: 6, zIndex: 20 }}>
             {filtered.map(s => (
               <button key={s.id} onMouseDown={() => { setSymbol(s.tradingCode); setSearchQ(""); setShowDrop(false); setPrice((s.lastTradePrice ?? 0).toFixed(2)) }}
-                style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", color: "#fff", fontSize: 11, cursor: "pointer", textAlign: "left", fontFamily: "'Space Mono',monospace" }}>
+                style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", color: 'var(--t-text1)', fontSize: 11, cursor: "pointer", textAlign: "left", fontFamily: "'Space Mono',monospace" }}>
                 <span style={{ color: "#00D4AA" }}>{s.tradingCode}</span> <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>৳{(s.lastTradePrice ?? 0).toFixed(2)}</span>
               </button>
             ))}
@@ -88,28 +88,28 @@ export function OrderEntryWidget() {
       {/* Qty + Price */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
         <div>
-          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>QTY</div>
-          <input type="number" value={qty} onChange={e => setQty(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+          <div style={{ color: 'var(--t-text3)', fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>QTY</div>
+          <input type="number" value={qty} onChange={e => setQty(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 5, padding: "7px 8px", color: 'var(--t-text1)', fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
         </div>
         {type !== "Market" && (
           <div>
-            <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>PRICE ৳</div>
-            <input type="number" value={price} onChange={e => setPrice(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+            <div style={{ color: 'var(--t-text3)', fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>PRICE ৳</div>
+            <input type="number" value={price} onChange={e => setPrice(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 5, padding: "7px 8px", color: 'var(--t-text1)', fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
           </div>
         )}
       </div>
       {type === "StopLoss" && (
         <div>
-          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>STOP PRICE ৳</div>
-          <input type="number" value={stop} onChange={e => setStop(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "7px 8px", color: "#fff", fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
+          <div style={{ color: 'var(--t-text3)', fontSize: 10, marginBottom: 3, fontFamily: "'Space Mono',monospace" }}>STOP PRICE ৳</div>
+          <input type="number" value={stop} onChange={e => setStop(e.target.value)} style={{ width: "100%", boxSizing: "border-box", background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 5, padding: "7px 8px", color: 'var(--t-text1)', fontSize: 12, outline: "none", fontFamily: "'Space Mono',monospace" }} />
         </div>
       )}
 
       {/* Order value */}
       {qty && price && (
         <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 5, padding: "5px 8px", display: "flex", justifyContent: "space-between" }}>
-          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>ORDER VALUE</span>
-          <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(Number(qty) * Number(price)).toLocaleString()}</span>
+          <span style={{ color: 'var(--t-text3)', fontSize: 10, fontFamily: "'Space Mono',monospace" }}>ORDER VALUE</span>
+          <span style={{ color: 'var(--t-text1)', fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(Number(qty) * Number(price)).toLocaleString()}</span>
         </div>
       )}
 
@@ -122,17 +122,17 @@ export function OrderEntryWidget() {
 
       {/* Confirm modal */}
       {confirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "#0D1320", border: "1px solid rgba(0,212,170,0.2)", borderRadius: 12, padding: "24px 28px", minWidth: 280 }}>
-            <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Confirm Order</div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 16, fontFamily: "'Space Mono',monospace", lineHeight: 1.8 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
+          <div style={{ background: 'var(--t-surface)', border: "1px solid rgba(0,212,170,0.2)", borderRadius: 12, padding: "24px 28px", minWidth: 280 }}>
+            <div style={{ color: 'var(--t-text1)', fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Confirm Order</div>
+            <div style={{ color: 'var(--t-text2)', fontSize: 13, marginBottom: 16, fontFamily: "'Space Mono',monospace", lineHeight: 1.8 }}>
               {side} {qty} × {symbol}<br/>
               {type !== "Market" && <>Price: ৳{price}<br/></>}
               Type: {type}
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={submit} style={{ flex: 1, padding: "9px", background: side === "Buy" ? "#00D4AA" : "#FF6B6B", border: "none", borderRadius: 7, color: "#000", fontWeight: 700, cursor: "pointer" }}>Confirm</button>
-              <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: "9px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
+              <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: "9px", background: "rgba(255,255,255,0.06)", border: '1px solid var(--t-border)', borderRadius: 7, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
             </div>
           </div>
         </div>

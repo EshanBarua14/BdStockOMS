@@ -147,10 +147,10 @@ export function NewsFeedWidget() {
   useEffect(() => { setPage(1); }, [board, category]);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f1117] rounded-lg border border-slate-800 overflow-hidden">
+    <div className="flex flex-col h-full bg-[var(--t-bg)] rounded-lg border border-slate-800 overflow-hidden">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[#141620]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[var(--t-panel)]">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-4 rounded-sm bg-gradient-to-b from-amber-400 to-orange-500" />
           <span className="text-sm font-semibold text-slate-100 tracking-wide">Market News</span>
@@ -172,7 +172,7 @@ export function NewsFeedWidget() {
       </div>
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
-      <div className="px-3 py-2 border-b border-slate-800/60 bg-[#12151d] space-y-2">
+      <div className="px-3 py-2 border-b border-slate-800/60 bg-[var(--t-panel)] space-y-2">
         {/* Keyword */}
         <div className="relative">
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,7 +309,7 @@ export function NewsFeedWidget() {
 
       {/* ── Pagination ───────────────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-800 bg-[#12151d]">
+        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-800 bg-[var(--t-panel)]">
           <button
             disabled={page <= 1}
             onClick={() => setPage(p => p - 1)}

@@ -43,7 +43,7 @@ export function PortfolioWidget() {
   const up     = pnl >= 0
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
         {[["summary","Summary"],["holdings","Holdings"],["roi","ROI"]].map(([t, l]) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "7px 0", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? "#00D4AA" : "transparent"}`, color: tab === t ? "#00D4AA" : "rgba(255,255,255,0.35)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{l}</button>

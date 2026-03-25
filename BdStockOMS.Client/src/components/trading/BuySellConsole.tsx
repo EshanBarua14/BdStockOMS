@@ -473,7 +473,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
 
   return (
     <>
-      {!embedded && <div onClick={doClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }} />}
+      {!embedded && <div onClick={doClose} style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }} />}
 
       <div style={{
         ...(embedded ? {
@@ -483,7 +483,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
           border: `1px solid ${sideColor}30`, borderRadius: 10,
           overflow: 'hidden',
         } : {
-          position: 'fixed', top: '50%', left: '50%', zIndex: 9991,
+          position: 'fixed', top: '50%', left: '50%', zIndex: 9999,
           transform: 'translate(-50%, -50%)',
           width: 540, maxWidth: '97vw', maxHeight: '94vh',
           background: 'var(--t-surface)', border: `1px solid ${sideColor}30`,

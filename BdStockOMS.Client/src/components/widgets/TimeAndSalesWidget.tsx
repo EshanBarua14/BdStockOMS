@@ -116,10 +116,10 @@ export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup
   const totalVol = entries.reduce((s, e) => s + e.volume, 0);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f1117] rounded-lg border border-slate-800 overflow-hidden">
+    <div className="flex flex-col h-full bg-[var(--t-bg)] rounded-lg border border-slate-800 overflow-hidden">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[#141620]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[var(--t-panel)]">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-4 rounded-sm bg-gradient-to-b from-cyan-400 to-blue-500" />
           <span className="text-sm font-semibold text-slate-100 tracking-wide">Time & Sales</span>
@@ -144,7 +144,7 @@ export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup
       </div>
 
       {/* ── Search + Filter Bar ─────────────────────────────────────────── */}
-      <div className="px-3 py-2 border-b border-slate-800/60 bg-[#12151d] flex items-center gap-2">
+      <div className="px-3 py-2 border-b border-slate-800/60 bg-[var(--t-panel)] flex items-center gap-2">
         <input
           type="text"
           value={inputCode}
@@ -181,7 +181,7 @@ export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup
 
       {/* ── Stats Bar ─────────────────────────────────────────────────── */}
       {entries.length > 0 && (
-        <div className="flex items-center gap-4 px-4 py-1.5 border-b border-slate-800/40 bg-[#10131a] text-[10px]">
+        <div className="flex items-center gap-4 px-4 py-1.5 border-b border-slate-800/40 bg-[var(--t-surface)] text-[10px]">
           <span className="text-slate-500">
             Vol: <span className="text-slate-300 font-mono">{formatVol(totalVol)}</span>
           </span>
@@ -201,7 +201,7 @@ export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Column Headers */}
         <div className={`grid text-[9px] text-slate-500 font-semibold uppercase tracking-wider
-                         border-b border-slate-800/60 px-3 py-1.5 bg-[#0d1016]
+                         border-b border-slate-800/60 px-3 py-1.5 bg-[var(--t-bg)]
                          ${showMatchId ? 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem_4.5rem]' : 'grid-cols-[1fr_5rem_4.5rem_4.5rem_4.5rem]'}`}>
           <span>Time</span>
           {showMatchId && <span>Match ID</span>}

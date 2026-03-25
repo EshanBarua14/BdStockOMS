@@ -125,10 +125,10 @@ export function PriceHistoryWidget({ defaultTradingCode = "BRACBANK", colorGroup
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#0f1117] rounded-lg border border-slate-800 overflow-hidden">
+    <div className="flex flex-col h-full bg-[var(--t-bg)] rounded-lg border border-slate-800 overflow-hidden">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[#141620]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[var(--t-panel)]">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-4 rounded-sm bg-gradient-to-b from-violet-400 to-indigo-500" />
           <span className="text-sm font-semibold text-slate-100 tracking-wide">Price History</span>
@@ -142,7 +142,7 @@ export function PriceHistoryWidget({ defaultTradingCode = "BRACBANK", colorGroup
       </div>
 
       {/* ── Controls ─────────────────────────────────────────────────────── */}
-      <div className="px-3 py-2 border-b border-slate-800/60 bg-[#12151d] space-y-2">
+      <div className="px-3 py-2 border-b border-slate-800/60 bg-[var(--t-panel)] space-y-2">
         {/* Code search + interval */}
         <div className="flex items-center gap-2">
           <input
@@ -213,7 +213,7 @@ export function PriceHistoryWidget({ defaultTradingCode = "BRACBANK", colorGroup
 
       {/* ── 52W Stats Bar ────────────────────────────────────────────────── */}
       {result && (
-        <div className="flex items-center gap-5 px-4 py-1.5 border-b border-slate-800/40 bg-[#10131a] text-[10px] font-mono">
+        <div className="flex items-center gap-5 px-4 py-1.5 border-b border-slate-800/40 bg-[var(--t-surface)] text-[10px] font-mono">
           <span className="text-slate-500">
             52W H: <span className="text-emerald-400">{result.fiftyTwoWeekHigh?.toFixed(2) ?? '—'}</span>
           </span>
@@ -234,7 +234,7 @@ export function PriceHistoryWidget({ defaultTradingCode = "BRACBANK", colorGroup
         {/* Headers */}
         <div className="grid grid-cols-[5rem_4.5rem_4.5rem_4.5rem_4.5rem_5rem_4rem_4rem]
                         text-[9px] text-slate-500 font-semibold uppercase tracking-wider
-                        border-b border-slate-800/60 px-3 py-1.5 bg-[#0d1016]">
+                        border-b border-slate-800/60 px-3 py-1.5 bg-[var(--t-bg)]">
           {([
             ['date', 'Date'],
             ['open', 'Open'],

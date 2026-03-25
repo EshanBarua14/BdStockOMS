@@ -31,7 +31,7 @@ export function WidgetToolbar({ activeIds, onToggle, onReset, onSave }: Props) {
 
       {/* Dropdown panel */}
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 340, background: "#0D1320", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, boxShadow: "0 24px 48px rgba(0,0,0,0.6)", zIndex: 200, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 340, background: "var(--t-surface)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, boxShadow: "0 24px 48px rgba(0,0,0,0.6)", zIndex: 200, overflow: "hidden" }}>
           {/* Search */}
           <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search widgets…"

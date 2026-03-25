@@ -50,7 +50,7 @@ export function PriceChartWidget({ linkedSymbol, onSymbolClick, colorGroup }: { 
   const firstP = history[0]?.price
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       {/* Toolbar */}
       <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
         <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"
@@ -80,7 +80,7 @@ export function PriceChartWidget({ linkedSymbol, onSymbolClick, colorGroup }: { 
               <LineChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <XAxis dataKey="t" tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "Space Mono" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
                 <YAxis domain={[minP * 0.999, maxP * 1.001]} tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontFamily: "Space Mono" }} width={50} axisLine={false} tickLine={false} tickFormatter={v => `৳${v.toFixed(1)}`} />
-                <Tooltip contentStyle={{ background: "#0D1320", border: `1px solid ${color}44`, borderRadius: 6, fontSize: 11, fontFamily: "Space Mono" }} labelStyle={{ color: "rgba(255,255,255,0.4)" }} itemStyle={{ color }} formatter={v => [`৳${v}`, "Price"]} />
+                <Tooltip contentStyle={{ background: "var(--t-surface)", border: `1px solid ${color}44`, borderRadius: 6, fontSize: 11, fontFamily: "Space Mono" }} labelStyle={{ color: "rgba(255,255,255,0.4)" }} itemStyle={{ color }} formatter={v => [`৳${v}`, "Price"]} />
                 {firstP && <ReferenceLine y={firstP} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />}
                 <Line type="monotone" dataKey="price" stroke={color} strokeWidth={1.5} dot={false} isAnimationActive={false} />
               </LineChart>

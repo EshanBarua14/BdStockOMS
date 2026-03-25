@@ -1,3 +1,4 @@
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 // @ts-nocheck
 import { useMemo, useState } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
@@ -21,7 +22,7 @@ export function TopMoversWidget({ onSymbolClick }) {
   const exchanges = ["All", ...new Set(stocks.map(s => s.exchange).filter(Boolean))]
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
         {[["gainers","▲ Gainers","#00D4AA"],["losers","▼ Losers","#FF6B6B"]].map(([t, l, c]) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "7px 0", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? c : "transparent"}`, color: tab === t ? c : "rgba(255,255,255,0.35)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{l}</button>
@@ -32,7 +33,7 @@ export function TopMoversWidget({ onSymbolClick }) {
         {exchanges.slice(0,4).map(e => (
           <button key={e} onClick={() => setExch(e)} style={{ padding: "3px 7px", background: exch === e ? "rgba(255,255,255,0.08)" : "none", border: `1px solid ${exch === e ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`, borderRadius: 4, color: exch === e ? "#fff" : "rgba(255,255,255,0.3)", fontSize: 10, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{e}</button>
         ))}
-        <select value={count} onChange={e => setCount(Number(e.target.value))} style={{ marginLeft: "auto", background: "#0D1320", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "2px 4px", cursor: "pointer" }}>
+        <select value={count} onChange={e => setCount(Number(e.target.value))} style={{ marginLeft: "auto", background: "var(--t-surface)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "2px 4px", cursor: "pointer" }}>
           {[5,10,15,20].map(n => <option key={n} value={n}>Top {n}</option>)}
         </select>
       </div>

@@ -29,7 +29,7 @@ export function MarketMapWidget({ onSymbolClick }) {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0A0F1C", overflow: "hidden" }}>
       <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-        <select value={sector} onChange={e => setSector(e.target.value)} style={{ background: "#0D1320", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.6)", fontSize: 10, padding: "3px 6px", cursor: "pointer", maxWidth: 120 }}>
+        <select value={sector} onChange={e => setSector(e.target.value)} style={{ background: "var(--t-surface)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, color: "rgba(255,255,255,0.6)", fontSize: 10, padding: "3px 6px", cursor: "pointer", maxWidth: 120 }}>
           {sectors.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>

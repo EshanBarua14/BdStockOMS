@@ -1,3 +1,4 @@
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 // @ts-nocheck
 import { useState, useEffect, useMemo } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
@@ -76,7 +77,7 @@ export function AIPredictionWidget() {
   }
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
         <span style={{ color: "#8B5CF6", fontSize: 10, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>⬡ AI SIGNAL</span>
         <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol…"

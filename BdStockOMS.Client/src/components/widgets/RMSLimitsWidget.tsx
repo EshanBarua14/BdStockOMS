@@ -58,7 +58,7 @@ export function RMSLimitsWidget() {
   const riskLabel = riskScore > 80 ? "HIGH RISK" : riskScore > 60 ? "MODERATE" : "LOW RISK"
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0D1320", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
         <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>RMS LIMITS</span>
         <span style={{ color: riskColor, fontSize: 10, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{riskLabel}</span>
