@@ -3,15 +3,17 @@ import { useState, useEffect, useCallback } from "react"
 import { apiClient } from "@/api/client"
 import { subscribeMarket } from "@/hooks/useSignalR"
 import { useMarketData } from "@/hooks/useMarketData"
+import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
 
-export function MarketDepthWidget({ linkedSymbol, onSymbolClick }) {
+export function MarketDepthWidget({ linkedSymbol, onSymbolClick, colorGroup }: { linkedSymbol?: string; onSymbolClick?: (c: string) => void; colorGroup?: string | null }) {
   const { stocks: _s } = useMarketData()
   const stocks = _s ?? []
+  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
   const [symbol, setSymbol] = useState(linkedSymbol ?? "")
   const [depth,  setDepth]  = useState(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { if (linkedSymbol) setSymbol(linkedSymbol) }, [linkedSymbol])
+  useEffect(() => { if (_linked) setSymbol(_linked); else if (linkedSymbol) setSymbol(linkedSymbol) }, [_linked, linkedSymbol])
 
   // REST load on symbol change
   const load = useCallback(async (sym) => {

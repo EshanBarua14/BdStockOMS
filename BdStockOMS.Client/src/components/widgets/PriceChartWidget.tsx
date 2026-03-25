@@ -2,8 +2,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { useMarketData } from "@/hooks/useMarketData"
+import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
 
-export function PriceChartWidget({ linkedSymbol, onSymbolClick }) {
+export function PriceChartWidget({ linkedSymbol, onSymbolClick, colorGroup }: { linkedSymbol?: string; onSymbolClick?: (c: string) => void; colorGroup?: string | null }) {
   const { stocks: _s } = useMarketData()
   const stocks = _s ?? []
   const [symbol, setSymbol]   = useState(linkedSymbol ?? "")
@@ -11,7 +12,7 @@ export function PriceChartWidget({ linkedSymbol, onSymbolClick }) {
   const [period, setPeriod]   = useState("1D")
   const [history, setHistory] = useState([])
 
-  useEffect(() => { if (linkedSymbol) setSymbol(linkedSymbol) }, [linkedSymbol])
+  useEffect(() => { if (_linked) setSymbol(_linked); else if (linkedSymbol) setSymbol(linkedSymbol) }, [_linked, linkedSymbol])
 
   const stock = stocks.find(s => s.tradingCode === symbol)
 

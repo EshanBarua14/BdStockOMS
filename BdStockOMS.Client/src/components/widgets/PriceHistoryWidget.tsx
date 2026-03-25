@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/api/client';
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OhlcEntry {
@@ -69,8 +70,10 @@ interface Props {
   defaultTradingCode?: string;
 }
 
-export function PriceHistoryWidget({ defaultTradingCode = 'BRACBANK' }: Props) {
+export function PriceHistoryWidget({ defaultTradingCode = "BRACBANK", colorGroup }: { defaultTradingCode?: string; colorGroup?: string | null }) {
   const [tradingCode, setTradingCode] = useState(defaultTradingCode);
+  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null);
+  useEffect(() => { if (_linked) setTradingCode(_linked); }, [_linked]);
   const [inputCode, setInputCode] = useState(defaultTradingCode);
   const [interval, setInterval] = useState<Interval>('daily');
   const [fromDate, setFromDate] = useState(toInputDate(new Date(Date.now() - 90 * 86400000)));

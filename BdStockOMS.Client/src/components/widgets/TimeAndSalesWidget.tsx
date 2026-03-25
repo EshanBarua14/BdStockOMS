@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { subscribeMarket } from '@/hooks/useSignalR';
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 import { apiClient } from '@/api/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,8 +56,10 @@ interface Props {
   defaultTradingCode?: string;
 }
 
-export function TimeAndSalesWidget({ defaultTradingCode = 'BRACBANK' }: Props) {
+export function TimeAndSalesWidget({ defaultTradingCode = "BRACBANK", colorGroup }: { defaultTradingCode?: string; colorGroup?: string | null }) {
   const [tradingCode, setTradingCode] = useState(defaultTradingCode);
+  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null);
+  useEffect(() => { if (_linked) setTradingCode(_linked); }, [_linked]);
   const [inputCode, setInputCode] = useState(defaultTradingCode);
   const [entries, setEntries] = useState<TimeAndSalesEntry[]>([]);
   const [loading, setLoading] = useState(false);

@@ -8,6 +8,7 @@ import { watchlistApi } from "@/api/watchlist"
 import { marketApi } from "@/api/market"
 import { useMarketData } from "@/hooks/useMarketData"
 import { BuySellConsoleEvents } from "@/components/trading/BuySellConsole"
+import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
 
 const DEMO_WATCHLIST_STOCKS = [
   { tradingCode:'GP',         stockId:1,  exchange:'DSE', category:'A', lastTradePrice:380.50,  change:2.30,  changePercent:0.61,  volume:1823400, highPrice:383.00, lowPrice:376.00, closePrice:378.20 },
@@ -328,8 +329,9 @@ function ContextMenu({ x, y, stock, lists, activeListId, onClose, onAddToList, o
 }
 
 // ─── Main Widget ──────────────────────────────────────────────────────────────
-export function WatchlistWidget() {
+export function WatchlistWidget({ colorGroup }: { colorGroup?: string | null }) {
   const { ticksArray } = useMarketData()
+  const [, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
 
   // Watchlist state
   const [lists, setLists]   = useState<any[]>([])
@@ -625,6 +627,7 @@ export function WatchlistWidget() {
           const up = (s.changePercent ?? 0) >= 0
           return (
             <div key={s.stockId ?? s.tradingCode}
+              onClick={() => emitSymbol(s.tradingCode)}
               onContextMenu={e => handleContextMenu(e, s)}
               style={{
                 display: "flex", alignItems: "center",
