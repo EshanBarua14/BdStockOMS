@@ -489,3 +489,5 @@ $RECYCLE.BIN/
 fix_day62.sh
 files/
 files.zip
+dump.rdb
+e.currentTarget.style.background
