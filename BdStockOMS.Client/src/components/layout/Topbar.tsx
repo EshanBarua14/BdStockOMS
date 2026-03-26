@@ -1,4 +1,6 @@
 import { TopbarIconBtn } from "./TopbarIconBtn";
+import { NotificationsPanel } from "./NotificationsPanel";
+import { SettingsPanel } from "./SettingsPanel";
 // @ts-nocheck
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { AppSettingsBtn } from "./AppSettingsBtn";
@@ -56,6 +58,8 @@ export function Topbar() {
   const sr = useSignalRStatus()
 
   const [searchFocused, setSearchFocused] = useState(false)
+  const [showNotifs, setShowNotifs] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -159,7 +163,7 @@ export function Topbar() {
       </div>
 
       {/* ── CENTER: Search ── */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, padding: '0 8px' }}>
+      <div style={{ display: 'none' }}>
         <div style={{
           width: '100%', maxWidth: 300,
           display: 'flex', alignItems: 'center', gap: 8,
@@ -221,7 +225,7 @@ export function Topbar() {
         <TopbarIconBtn icon="🔔" title="Notifications" count={3} onClick={() => {}} />
 
         {/* ── App Settings ── */}
-        <AppSettingsBtn />
+        <TopbarIconBtn icon="⚙" title="Settings" count={0} onClick={() => { setShowSettings(v => !v); setShowNotifs(false) }} />
 
         <Div />
         <ThemeMenu variant="compact" />
@@ -244,6 +248,8 @@ export function Topbar() {
           </>
         )}
       </div>
+          {showNotifs   && <NotificationsPanel onClose={() => setShowNotifs(false)} />}
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
     </header>
   )
 }

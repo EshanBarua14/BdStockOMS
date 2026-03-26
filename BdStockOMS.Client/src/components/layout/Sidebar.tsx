@@ -30,6 +30,16 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Admin Panel',    path: '/admin',   Icon: Icon.Admin,   roles: ['SuperAdmin','Admin'], section: 'Admin' },
   { label: 'Tenant Manager', path: '/tenants', Icon: Icon.Tenants, roles: ['SuperAdmin'], section: 'Admin' },
   { label: 'RBAC & Roles',   path: '/rbac',    Icon: Icon.RBAC,    roles: ['SuperAdmin'], section: 'Admin' },
+  { label: 'Trade Monitor',    path: '/trade-monitor', Icon: Icon.Market,     roles: ['SuperAdmin','Admin','BrokerageAdmin','Trader'], section: 'Monitor' },
+  { label: 'Market Watch',     path: '/market',        Icon: Icon.Market,     section: 'Market'  },
+  { label: 'News & Research', path: '/news',          Icon: Icon.Portfolio,  section: 'Market'  },
+  { label: 'Risk Management',  path: '/rms',           Icon: Icon.Admin,      roles: ['SuperAdmin','Admin','BrokerageAdmin'], section: 'Risk' },
+  { label: 'Reports',          path: '/reports',       Icon: Icon.Orders,     roles: ['SuperAdmin','Admin','BrokerageAdmin','Trader'], section: 'Reports' },
+  { label: 'Audit Log',        path: '/audit',         Icon: Icon.Orders,     roles: ['SuperAdmin','Admin'], section: 'Reports' },
+  { label: 'KYC',              path: '/kyc',           Icon: Icon.RBAC,       roles: ['SuperAdmin','Admin','BrokerageAdmin'], section: 'Compliance' },
+  { label: 'Settlements',      path: '/settlements',   Icon: Icon.Orders,     roles: ['SuperAdmin','Admin','BrokerageAdmin'], section: 'Compliance' },
+  { label: 'System Settings',  path: '/settings',      Icon: Icon.Admin,      roles: ['SuperAdmin','Admin'], section: 'System' },
+
 ]
 
 export function Sidebar() {
