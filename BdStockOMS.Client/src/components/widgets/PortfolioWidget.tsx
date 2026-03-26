@@ -5,12 +5,7 @@ import { apiClient } from "@/api/client"
 import { useAuthStore } from "@/store/authStore"
 
 $1
-  const [search, setSearch] = useState("")
-  const user = useAuthStore(s => s.user)
-  const [data, setData]     = useState(null)
-  const [roi,  setRoi]      = useState(null)
-  const [tab,  setTab]      = useState("summary")
-  const [search, setSearch] = useState("")
+  $1
   const [loading, setLoading] = useState(true)
   const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
 
