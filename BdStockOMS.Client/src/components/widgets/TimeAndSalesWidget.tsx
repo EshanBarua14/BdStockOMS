@@ -237,7 +237,8 @@ export function TimeAndSalesWidget({
 }) {
   const [tradingCode, setTradingCode] = useState(defaultTradingCode)
   const [_linked, emitSymbol]         = useLinkedSymbol(colorGroup ?? null)
-  const [inputCode,  setInputCode]    = useState(defaultTradingCode)
+  const [inputCode, setInputCode] = useState(defaultTradingCode)
+  const [exchange, setExchange] = useState<'ALL'|'DSE'|'CSE'>('ALL')
   const [entries,    setEntries]      = useState<TASEntry[]>([])
   const [loading,    setLoading]      = useState(false)
   const [showId,     setShowId]       = useState(false)

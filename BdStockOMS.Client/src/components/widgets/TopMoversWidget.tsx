@@ -3,8 +3,9 @@ import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 import { useMemo, useState } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
 
-export function TopMoversWidget({ onSymbolClick }) {
+export function TopMoversWidget({ onSymbolClick, colorGroup }: { onSymbolClick?: (s: string) => void; colorGroup?: string | null }) {
   const { stocks: _s, connected } = useMarketData()
+  const [_linked2, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
   const stocks = _s ?? []
   const [tab, setTab]   = useState("gainers")
   const [count, setCount] = useState(10)
@@ -49,7 +50,7 @@ export function TopMoversWidget({ onSymbolClick }) {
           const up = (s.changePercent ?? 0) >= 0
           const barW = Math.min(100, Math.abs(s.changePercent ?? 0) * 10)
           return (
-            <div key={s.id} onClick={() => onSymbolClick?.(s.tradingCode)}
+            <div key={s.id} onClick={() => { emitSymbol(s.tradingCode); onSymbolClick?.(s.tradingCode) }}
               style={{ display: "grid", gridTemplateColumns: "24px 1fr 80px 70px 60px", gap: 4, padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.03)", cursor: "pointer", position: "relative", overflow: "hidden" }}>
               {/* background bar */}
               <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${barW}%`, background: up ? "rgba(0,212,170,0.04)" : "rgba(255,107,107,0.04)", pointerEvents: "none" }} />

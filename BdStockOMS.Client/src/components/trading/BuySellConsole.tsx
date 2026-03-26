@@ -149,7 +149,7 @@ function BOSearch({ clients, query, setQuery, onSelect }: any) {
     <div ref={ref} style={{ position: 'relative' }}>
       <input value={query} onChange={e => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)} onKeyDown={onKey}
-        placeholder="BO Number or Client Name" tabIndex={1}
+        placeholder="BO Number or Client Name *REQUIRED" tabIndex={1}
         style={{ width: '100%', boxSizing: 'border-box', background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 6, padding: '7px 10px', color: 'var(--t-text1)', fontSize: 12, fontFamily: mono, outline: 'none' }}
         onBlur={e => e.currentTarget.style.borderColor = 'var(--t-border)'}
       />

@@ -1,14 +1,18 @@
 // @ts-nocheck
 import { useState, useEffect } from "react"
+import { useLinkedSymbol } from '@/hooks/useColorGroupSync'
 import { apiClient } from "@/api/client"
 import { useAuthStore } from "@/store/authStore"
 
-export function PortfolioWidget() {
+$1
+  const [search, setSearch] = useState("")
   const user = useAuthStore(s => s.user)
   const [data, setData]     = useState(null)
   const [roi,  setRoi]      = useState(null)
   const [tab,  setTab]      = useState("summary")
+  const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
+  const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
 
   useEffect(() => {
     if (!user) return
@@ -78,16 +82,16 @@ export function PortfolioWidget() {
                   {(data.holdings ?? []).length === 0
                     ? <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, textAlign: "center", padding: 16, fontFamily: "'Space Mono',monospace" }}>No holdings</div>
                     : (data.holdings ?? []).map((h, i) => {
-                        const up = (h.unrealizedPnl ?? 0) >= 0
+                        const up = (h.unrealizedPnl ?? h.pnl ?? 0) >= 0
                         return (
                           <div key={i} style={{ padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
-                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{h.symbol}</span>
-                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(h.currentValue ?? 0).toLocaleString()}</span>
+                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{h.tradingCode ?? h.symbol}</span>
+                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(h.currentValue ?? h.value ?? 0).toLocaleString()}</span>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{h.quantity} @ ৳{h.avgCostPrice?.toFixed(2)}</span>
-                              <span style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{up ? "+" : ""}৳{(h.unrealizedPnl ?? 0).toLocaleString()}</span>
+                              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{h.quantity} @ ৳{h.avgCostPrice ?? h.avgBuy?.toFixed(2)}</span>
+                              <span style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{up ? "+" : ""}৳{(h.unrealizedPnl ?? h.pnl ?? 0).toLocaleString()}</span>
                             </div>
                           </div>
                         )

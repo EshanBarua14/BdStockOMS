@@ -103,7 +103,8 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
           <div style={{ textAlign: "center", color: "var(--t-text3)", fontSize: 11, padding: 16, fontFamily: mono }}>No orders</div>
         ) : filtered.map(o => {
           const isBuy = o.orderType === 0
-          const statusInfo = ORDER_STATUS[o.status] ?? { label: String(o.status), color: "text-zinc-500" } ?? { label: String(o.status), color: "text-zinc-500" }
+          const statusNum = typeof o.status === 'string' ? parseInt(o.status) : o.status
+          const statusInfo = ORDER_STATUS[statusNum] ?? { label: String(o.status), color: "text-zinc-500" } ?? { label: String(o.status), color: "text-zinc-500" }
           const isLinked = linkedSymbol && linkedSymbol === o.tradingCode
           return (
             <div key={o.id}
@@ -141,7 +142,7 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
               </span>
               {/* Status */}
               <span style={{ color: STATUS_COLORS[o.status] ?? "var(--t-text2)", fontSize: 10, fontFamily: mono }}>
-                {statusInfo?.label ?? "Unknown"}
+                {statusInfo?.label ?? `Status ${o.status}`}
               </span>
               {/* Cancel button — only for Pending(0) or Open(1) */}
               <div>
