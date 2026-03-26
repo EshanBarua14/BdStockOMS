@@ -35,13 +35,13 @@ export interface PlaceOrderDto {
 }
 
 export const ORDER_STATUS: Record<number, { label: string; color: string }> = {
-  0: { label: "Pending",      color: "text-amber-400" },
-  1: { label: "Open",         color: "text-blue-400"  },
-  2: { label: "Partial Fill", color: "text-cyan-400"  },
-  3: { label: "Filled",       color: "text-emerald-400" },
-  4: { label: "Cancelled",    color: "text-zinc-500"  },
-  5: { label: "Rejected",     color: "text-red-400"   },
-  6: { label: "Expired",      color: "text-zinc-600"  },
+  0: { label: "Pending",         color: "text-amber-400"   },
+  1: { label: "Open",            color: "text-blue-400"    },
+  2: { label: "Partial Fill",    color: "text-purple-400"  },
+  3: { label: "Filled",          color: "text-emerald-400" },
+  4: { label: "Completed",       color: "text-cyan-400"    },
+  5: { label: "Cancelled",       color: "text-zinc-500"    },
+  6: { label: "Rejected",        color: "text-red-400"     },
 }
 
 export const ORDER_TYPE_LABEL: Record<number, string> = { 0: "Buy", 1: "Sell" }

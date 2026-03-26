@@ -10,13 +10,13 @@ import { useState, useMemo } from "react"
 import { useOrders, ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "@/hooks/useOrders"
 
 const STATUS_COLORS: Record<number, string> = {
-  0: "#F59E0B",
-  1: "#3B82F6",
-  2: "#22D3EE",
-  3: "#00D4AA",
-  4: "rgba(255,255,255,0.25)",
-  5: "#FF6B6B",
-  6: "rgba(255,255,255,0.2)",
+  0: "#F59E0B",                    // Pending
+  1: "#3B82F6",                    // Open
+  2: "#8B5CF6",                    // PartiallyFilled
+  3: "#00D4AA",                    // Filled
+  4: "#22D3EE",                    // Completed
+  5: "rgba(255,255,255,0.25)",     // Cancelled
+  6: "#FF6B6B",                    // Rejected
 }
 
 const STATUS_LABELS: Record<string, number> = {

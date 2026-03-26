@@ -18,11 +18,13 @@ public enum OrderCategory
 
 public enum OrderStatus
 {
-    Pending,    // Just placed — waiting for exchange
-    Executed,   // Trade confirmed by exchange
-    Completed,  // Settlement done by CCD
-    Cancelled,  // Cancelled before execution
-    Rejected    // Failed system validation
+    Pending,         // 0 — Just placed, awaiting exchange
+    Open,            // 1 — Accepted by exchange, in queue
+    PartiallyFilled, // 2 — Some qty filled
+    Filled,          // 3 — Fully executed
+    Completed,       // 4 — Settlement done by CCD
+    Cancelled,       // 5 — Cancelled before fill
+    Rejected         // 6 — Failed validation
 }
 
 public enum SettlementType

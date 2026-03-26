@@ -46,7 +46,7 @@ public class SimulatedOrderFillService : BackgroundService
         var pending = await db.Orders
             .Include(o => o.Stock)
             .Include(o => o.Investor)
-            .Where(o => o.Status == OrderStatus.Pending)
+            .Where(o => o.Status == OrderStatus.Pending || o.Status == OrderStatus.Open)
             .Take(20)
             .ToListAsync(ct);
 
@@ -59,8 +59,16 @@ public class SimulatedOrderFillService : BackgroundService
                 ? _rng.Next(1000, 3000)
                 : _rng.Next(4000, 12000);
 
-            var ageMs = (DateTime.UtcNow - order.CreatedAt).TotalMilliseconds;
-            if (ageMs < delayMs) continue;
+            $1
+
+            // First transition: Pending → Open after 500ms
+            if (order.Status == OrderStatus.Pending && ageMs > 500)
+            {
+                order.Status = OrderStatus.Open;
+                await db.SaveChangesAsync(ct);
+                continue; // process fill on next cycle
+            }
+            if (order.Status != OrderStatus.Open) continue;
 
             var stock     = order.Stock;
             var fillPrice = stock?.LastTradePrice ?? order.LimitPrice ?? order.PriceAtOrder;
@@ -76,7 +84,8 @@ public class SimulatedOrderFillService : BackgroundService
 
             // Fill with tiny slippage ±0.1%
             order.ExecutionPrice = Math.Round(fillPrice * (decimal)(1 + (_rng.NextDouble() - 0.5) * 0.002), 2);
-            order.Status         = OrderStatus.Executed;
+            // Transition: Pending → Open → Filled
+            order.Status = OrderStatus.Filled;
             order.ExecutedAt     = DateTime.UtcNow;
 
             // Update portfolio for BUY
