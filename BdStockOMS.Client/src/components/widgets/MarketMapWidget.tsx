@@ -3,7 +3,7 @@ import { useMemo, useState } from "react"
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function MarketMapWidget({ onSymbolClick }) {
-  const { stocks: _s } = useMarketData()
+  const { ticksArray: _s } = useMarketData()
   const stocks = _s ?? []
   const [colorBy, setColorBy] = useState("change")
   const [sizeBy,  setSizeBy]  = useState("volume")
@@ -12,11 +12,11 @@ export function MarketMapWidget({ onSymbolClick }) {
   const sectors = useMemo(() => ["All", ...new Set(stocks.map(s => s.category).filter(Boolean))], [stocks])
 
   const tiles = useMemo(() => {
-    let s = stocks.filter(x => x.lastTradePrice > 0)
+    let s = stocks.filter(x => (x.lastPrice ?? x.lastTradePrice ?? 0) > 0)
     if (sector !== "All") s = s.filter(x => x.category === sector)
     const maxVol = Math.max(...s.map(x => x.volume ?? 1), 1)
     return s.map(x => {
-      const chg  = x.changePercent ?? 0
+      const chg = x.changePercent ?? 0
       const size = Math.max(0.3, (x.volume ?? 0) / maxVol)
       const r = chg >= 3 ? 0 : chg >= 0 ? Math.round(chg / 3 * 30) : Math.round(Math.min(1, Math.abs(chg) / 5) * 200)
       const g = chg >= 0 ? Math.round(Math.min(1, chg / 5) * 212) : 0
