@@ -43,6 +43,8 @@ namespace BdStockOMS.API.Controllers
         public async Task<IActionResult> GetLatest(int userId)
         {
             var snapshot = await _svc.GetLatestSnapshotAsync(userId);
+            if (snapshot == null)
+                snapshot = await _svc.CaptureSnapshotAsync(userId, DateTime.UtcNow);
             if (snapshot == null) return NotFound();
             return Ok(snapshot);
         }
