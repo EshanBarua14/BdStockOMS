@@ -421,7 +421,7 @@ export default function DashboardPage() {
             margin={[4, 4]} containerPadding={[4, 4]}
           >
             {layout.filter((l:any) => l && l.i).map((l:any) => {
-              const instance = page?.instances?.find((i:any) => i.instanceId === l.i)
+              const instance = page?.instances?.find((i:any) => i.instanceId === l.i) ?? page?.instances?.find((i:any) => i.widgetId === l.i)
               const widgetId = instance?.widgetId ?? l.i.replace(/-\d+$/, '')
               const reg = WIDGET_REGISTRY[widgetId]
               if (!reg) return null
@@ -430,7 +430,7 @@ export default function DashboardPage() {
                 <div key={l.i} style={{ height: '100%' }}>
                   <WidgetErrorBoundary>
                     <WidgetPanel id={l.i} title={reg.title} colorGroup={colorGroup}
-                      onColorChange={c => store.setWidgetColor(l.i, c)}
+                      onColorChange={c => store.setWidgetColor(instance?.instanceId ?? l.i, c)}
                       onFullscreen={() => setFullscreen(l.i)}
                       onClose={() => store.removeWidgetInstance(l.i)}
                       menuOpen={menuOpen === l.i}
@@ -457,7 +457,7 @@ export default function DashboardPage() {
       />
 
       {fullscreen && (() => {
-        const instance = page?.instances?.find(i => i.instanceId === fullscreen)
+        const instance = page?.instances?.find(i => i.instanceId === fullscreen) ?? page?.instances?.find(i => i.widgetId === fullscreen)
         const widgetId = instance?.widgetId ?? fullscreen.replace(/-\d+$/, '')
         const reg = WIDGET_REGISTRY[widgetId]
         if (!reg) return null

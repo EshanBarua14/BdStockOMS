@@ -39,7 +39,10 @@ export function MarketDepthWidget({ linkedSymbol, onSymbolClick, colorGroup }: {
     setLoading(false)
   }, [stocks])
 
-  useEffect(() => { load(symbol) }, [symbol])
+  useEffect(() => {
+    const t = setTimeout(() => load(symbol), 120)
+    return () => clearTimeout(t)
+  }, [symbol])
 
   // Live SignalR depth updates
   useEffect(() => {
