@@ -116,7 +116,7 @@ function NumField({ label, value, onChange, prefix = '', step = 1, min = 0, tabI
 }
 
 // ─── BO Code autocomplete ─────────────────────────────────────────────────────
-function BOSearch({ clients, query, setQuery, onSelect }: any) {
+function BOSearch({ clients, query, setQuery, onSelect, hasError }: any) {
   const [open, setOpen] = useState(false)
   const [cur, setCur]   = useState(0)
   const ref = useRef<HTMLDivElement>(null)
@@ -150,7 +150,7 @@ function BOSearch({ clients, query, setQuery, onSelect }: any) {
       <input value={query} onChange={e => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)} onKeyDown={onKey}
         placeholder="BO Number or Client Name *REQUIRED" tabIndex={1}
-        style={{ width: '100%', boxSizing: 'border-box', background: 'var(--t-hover)', border: '1px solid var(--t-border)', borderRadius: 6, padding: '7px 10px', color: 'var(--t-text1)', fontSize: 12, fontFamily: mono, outline: 'none' }}
+        style={{ width: '100%', boxSizing: 'border-box', background: 'var(--t-hover)', border: `1px solid ${hasError ? 'var(--t-sell)' : 'var(--t-border)'}`, borderRadius: 6, padding: '7px 10px', color: 'var(--t-text1)', fontSize: 12, fontFamily: mono, outline: 'none' }}
         onBlur={e => e.currentTarget.style.borderColor = 'var(--t-border)'}
       />
       {open && matches.length > 0 && (
@@ -425,6 +425,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
   }
 
   const validate = () => {
+    if (!client)               { setWarn('BO Code is required — select a client'); return false }
     if (!symbol)               { setWarn('Symbol is required'); return false }
     if (!live?.stockId)        { setWarn('Select a valid symbol from the list'); return false }
     if (!qty || numQty <= 0)   { setWarn('Quantity must be positive'); return false }
@@ -531,7 +532,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
           <div>
             <Label text="BO CODE / CLIENT" />
             <BOSearch clients={clients} query={boQuery} setQuery={setBoQuery}
-              onSelect={(c: BOClient) => { setClient(c); setBoQuery(c.boNumber) }} />
+              onSelect={(c: BOClient) => { setClient(c); setBoQuery(c.boNumber) }} hasError={warn && warn.includes("BO")} />
           </div>
 
           {/* ── Client info card ── */}
