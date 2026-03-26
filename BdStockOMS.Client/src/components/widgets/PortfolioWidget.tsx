@@ -3,11 +3,13 @@ import { useState, useEffect } from "react"
 import { apiClient } from "@/api/client"
 import { useAuthStore } from "@/store/authStore"
 import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
+import { useSelectedBOStore } from "@/store/useSelectedBOStore"
 
 const mono = "'JetBrains Mono', monospace"
 
 export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) {
   const user = useAuthStore(s => s.user)
+  const selectedBO = useSelectedBOStore(s => s.selectedBO)
   const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
   const [data,    setData]    = useState(null)
   const [roi,     setRoi]     = useState(null)
@@ -20,7 +22,7 @@ export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) 
     const load = async () => {
       try {
         const [snap, roiData] = await Promise.all([
-          apiClient.get(`/portfoliosnapshot/latest/${user.userId}`).then(r => r.data).catch(() => ({
+          apiClient.get(`/portfoliosnapshot/latest/${selectedBO?.userId ?? user.userId}`).then(r => r.data).catch(() => ({
             totalValue: 125430.50, cashBalance: 23450.00, investedAmount: 101980.50,
             totalPnl: 18430.50, totalPnlPercent: 22.08,
             holdings: [
@@ -30,7 +32,7 @@ export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) 
               { tradingCode: "SQURPHARMA",  quantity: 80,  avgCostPrice: 235.60, currentValue: 19368, unrealizedPnl: 520  },
             ]
           })),
-          apiClient.get(`/portfoliosnapshot/roi/${user.userId}`).then(r => r.data).catch(() => ({
+          apiClient.get(`/portfoliosnapshot/roi/${selectedBO?.userId ?? user.userId}`).then(r => r.data).catch(() => ({
             totalReturn: 22.08, annualizedReturn: 18.4, sharpeRatio: 1.42, maxDrawdown: -8.3,
             history: []
           })),
@@ -42,7 +44,7 @@ export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) 
     load()
     const id = setInterval(load, 30000)
     return () => clearInterval(id)
-  }, [user?.userId])
+  }, [user?.userId, selectedBO?.userId])
 
   const pnl    = data?.totalPnl ?? data?.unrealizedPnl ?? 0
   const pnlPct = data?.totalPnlPercent ?? data?.roiPercent ?? 0
@@ -56,6 +58,14 @@ export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) 
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
 
       {/* ── Tabs ── */}
+      {/* BO indicator */}
+      {selectedBO && (
+        <div style={{ padding: "4px 8px", background: "var(--t-hover)", borderBottom: "1px solid var(--t-border)", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>BO:</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--t-accent)", fontFamily: mono }}>{selectedBO.boNumber}</span>
+          <span style={{ fontSize: 9, color: "var(--t-text2)" }}>{selectedBO.fullName}</span>
+        </div>
+      )}
       <div style={{ display: "flex", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
         {[["summary","Summary"],["holdings","Holdings"],["roi","ROI"]].map(([t, l]) => (
           <button key={t} onClick={() => setTab(t)} style={{

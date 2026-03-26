@@ -9,6 +9,7 @@ import { useOrders } from '../../hooks/useOrders'
 import { useMarketData } from '../../hooks/useMarketData'
 import { getBOAccounts } from '../../api/client'
 import { useSetting } from '@/store/useSettingsStore'
+import { useSelectedBOStore } from '@/store/useSelectedBOStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Side        = 'BUY' | 'SELL'
@@ -347,6 +348,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
   // BO / Client
   const [clients, setClients]           = useState<BOClient[]>([])
   const [boQuery, setBoQuery]           = useState('')
+  const setSelectedBO = useSelectedBOStore(s => s.setSelectedBO)
   const [client, setClient]             = useState<BOClient | null>(null)
 
   // Order fields
@@ -534,7 +536,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
           <div>
             <Label text="BO CODE / CLIENT" />
             <BOSearch clients={clients} query={boQuery} setQuery={setBoQuery}
-              onSelect={(c: BOClient) => { setClient(c); setBoQuery(c.boNumber) }} hasError={warn && warn.includes("BO")} />
+              onSelect={(c: BOClient) => { setClient(c); setBoQuery(c.boNumber); setSelectedBO(c) }} hasError={warn && warn.includes("BO")} />
           </div>
 
           {/* ── Client info card ── */}
