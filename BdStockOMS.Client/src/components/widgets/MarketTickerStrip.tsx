@@ -6,13 +6,13 @@ import { useMarketData } from "@/hooks/useMarketData"
 export function MarketTickerStrip() {
   const { stocks: _stocks, connected } = useMarketData()
   const stocks = _stocks ?? []
+  const tickerSpeed = useSetting('tickerSpeed')
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
     let pos = 0
-    const tickerSpeed = useSetting('tickerSpeed')
     const speed = tickerSpeed === 'slow' ? 0.25 : tickerSpeed === 'fast' ? 1.2 : 0.5
     const tick = () => {
       pos -= speed
@@ -22,7 +22,7 @@ export function MarketTickerStrip() {
     }
     const raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [stocks.length])
+  }, [stocks.length, tickerSpeed])
 
   const items = [...stocks, ...stocks]
 
