@@ -463,7 +463,7 @@ export default function DashboardPage() {
         if (!reg) return null
         const colorGroup = instance?.colorGroup ?? null
         return (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: "var(--sidebar-actual, 0px)", zIndex: 9998, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={e => { if (e.target === e.currentTarget) setFullscreen(null) }}>
             <div style={{ width: '100%', height: '100%', maxWidth: '96vw', maxHeight: '96vh', background: 'var(--t-surface)', border: '1px solid var(--t-border)', borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 64px rgba(0,0,0,0.6)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 36, flexShrink: 0, borderBottom: '1px solid var(--t-border)' }}>

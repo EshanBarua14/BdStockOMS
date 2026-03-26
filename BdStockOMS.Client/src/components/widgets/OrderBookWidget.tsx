@@ -10,13 +10,13 @@ import { useState, useMemo } from "react"
 import { useOrders, ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "@/hooks/useOrders"
 
 const STATUS_COLORS: Record<number, string> = {
-  0: "#F59E0B",   // Pending
-  1: "#3B82F6",   // Open
-  2: "#8B5CF6",   // PartiallyFilled
-  3: "#00D4AA",   // Filled
-  4: "rgba(255,255,255,0.25)", // Cancelled
-  5: "#FF6B6B",   // Rejected
-  6: "rgba(255,255,255,0.2)", // Expired
+  0: "#F59E0B",
+  1: "#3B82F6",
+  2: "#22D3EE",
+  3: "#00D4AA",
+  4: "rgba(255,255,255,0.25)",
+  5: "#FF6B6B",
+  6: "rgba(255,255,255,0.2)",
 }
 
 const STATUS_LABELS: Record<string, number> = {
@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, number> = {
 
 export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
   const { orders, loading, cancel } = useOrders()
-  const [filter, setFilter]     = useState("Open")
+  const [filter, setFilter] = useState("All")
   const [search, setSearch]     = useState("")
   const [sideF,  setSideF]      = useState("All")
   const [cancelling, setCancelling] = useState<number | null>(null)
@@ -103,7 +103,7 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
           <div style={{ textAlign: "center", color: "var(--t-text3)", fontSize: 11, padding: 16, fontFamily: mono }}>No orders</div>
         ) : filtered.map(o => {
           const isBuy = o.orderType === 0
-          const statusInfo = ORDER_STATUS[o.status]
+          const statusInfo = ORDER_STATUS[o.status] ?? { label: String(o.status), color: "text-zinc-500" } ?? { label: String(o.status), color: "text-zinc-500" }
           const isLinked = linkedSymbol && linkedSymbol === o.tradingCode
           return (
             <div key={o.id}

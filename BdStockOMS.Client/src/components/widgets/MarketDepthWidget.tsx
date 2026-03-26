@@ -20,7 +20,7 @@ export function MarketDepthWidget({ linkedSymbol, onSymbolClick, colorGroup }: {
     if (!sym) return
     setLoading(true)
     try {
-      const r = await apiClient.get(`/marketdepth/${sym}`)
+      const r = await apiClient.get(`/api/marketdepth/${sym}`)
       setDepth(r.data)
     } catch {
       // Fallback: generate from last price

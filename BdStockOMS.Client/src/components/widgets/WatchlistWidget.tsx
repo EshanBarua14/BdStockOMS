@@ -71,9 +71,9 @@ function fmtVol(v: number)   { return v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : v >=
 function fmtVal(v: number)   { return v > 0 ? v.toFixed(2) : "—" }
 
 function catColor(cat: any) {
-  const strMap: Record<string,string> = { A:"#00e676", B:"#ffd740", G:"#60a5fa", N:"#a78bfa", Z:"#ff1744", Spot:"#ff9100" }
-  const numMap: Record<number,string> = { 0:"#00e676", 1:"#ffd740", 2:"#60a5fa", 3:"#a78bfa", 4:"#ff1744", 5:"#ff9100" }
-  return strMap[String(cat)] ?? numMap[Number(cat)] ?? "var(--t-text3)"
+  const MAP: Record<string,string> = { A:"#00e676", B:"#ffd740", G:"#60a5fa", N:"#a78bfa", Z:"#ff1744", Spot:"#ff9100", "0":"#00e676","1":"#ffd740","2":"#60a5fa","3":"#a78bfa","4":"#ff1744","5":"#ff9100" }
+  return MAP[String(cat)] ?? "var(--t-text3)"
+}
 }
 
 function getCellValue(stock: any, key: string): any {
