@@ -74,7 +74,6 @@ function catColor(cat: any) {
   const MAP: Record<string,string> = { A:"#00e676", B:"#ffd740", G:"#60a5fa", N:"#a78bfa", Z:"#ff1744", Spot:"#ff9100", "0":"#00e676","1":"#ffd740","2":"#60a5fa","3":"#a78bfa","4":"#ff1744","5":"#ff9100" }
   return MAP[String(cat)] ?? "var(--t-text3)"
 }
-}
 
 function getCellValue(stock: any, key: string): any {
   switch(key) {
