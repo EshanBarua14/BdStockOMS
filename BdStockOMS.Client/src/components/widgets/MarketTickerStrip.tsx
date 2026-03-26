@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useRef } from "react"
+import { useSetting } from '@/store/useSettingsStore'
 import { useMarketData } from "@/hooks/useMarketData"
 
 export function MarketTickerStrip() {
@@ -11,7 +12,8 @@ export function MarketTickerStrip() {
     const el = ref.current
     if (!el) return
     let pos = 0
-    const speed = 0.5
+    const tickerSpeed = useSetting('tickerSpeed')
+    const speed = tickerSpeed === 'slow' ? 0.25 : tickerSpeed === 'fast' ? 1.2 : 0.5
     const tick = () => {
       pos -= speed
       if (pos < -(el.scrollWidth / 2)) pos = 0

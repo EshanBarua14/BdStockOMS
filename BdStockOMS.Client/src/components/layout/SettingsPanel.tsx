@@ -1,40 +1,29 @@
 // @ts-nocheck
-import { useState } from 'react'
+// src/components/layout/SettingsPanel.tsx
+import { useSettingsStore } from '@/store/useSettingsStore'
 import { ThemeMenu } from '@/components/ui/ThemeMenu'
+
 const mono = "'JetBrains Mono', monospace"
 
 const SECTIONS = [
-  { id:'display',   label:'Display',        icon:'🖥' },
-  { id:'trading',   label:'Trading',        icon:'⚡' },
-  { id:'alerts',    label:'Alerts',         icon:'🔔' },
-  { id:'ticker',    label:'Ticker',         icon:'📈' },
-  { id:'keyboard',  label:'Keyboard',       icon:'⌨' },
-  { id:'data',      label:'Data & Privacy', icon:'🔒' },
+  { id:'display',  label:'Display',        icon:'🖥' },
+  { id:'trading',  label:'Trading',        icon:'⚡' },
+  { id:'alerts',   label:'Alerts',         icon:'🔔' },
+  { id:'ticker',   label:'Ticker',         icon:'📈' },
+  { id:'keyboard', label:'Keyboard',       icon:'⌨' },
+  { id:'data',     label:'Data & Privacy', icon:'🔒' },
 ]
+
+import { useState } from 'react'
 
 interface Props { onClose: () => void }
 
 export function SettingsPanel({ onClose }: Props) {
   const [activeSection, setActiveSection] = useState('display')
-  const [settings, setSettings] = useState({
-    // Display
-    showAnimations: true, compactMode: false, showVolumeBars: true,
-    // Trading
-    confirmOrders: true, boRequired: true, showRmsWarnings: true, defaultOrderType: 'Limit',
-    // Alerts
-    priceAlerts: true, orderAlerts: true, rmsAlerts: true, newsAlerts: true,
-    // Ticker
-    showTicker: true, tickerSpeed: 'normal', tickerFilter: 'all',
-    // Keyboard
-    f1Buy: true, f2Sell: true, escClose: true,
-    // Data
-    autoSaveLayout: true, analyticsEnabled: false,
-  })
-
-  const set = (key: string, val: any) => setSettings(s => ({ ...s, [key]: val }))
+  const { settings, set, reset } = useSettingsStore()
 
   const Toggle = ({ k }: { k: string }) => (
-    <div onClick={() => set(k, !(settings as any)[k])} style={{
+    <div onClick={() => set(k as any, !(settings as any)[k])} style={{
       width:34, height:18, borderRadius:9, cursor:'pointer', transition:'background 0.15s',
       background:(settings as any)[k] ? 'var(--t-accent)' : 'var(--t-hover)',
       border:'1px solid var(--t-border)', position:'relative', flexShrink:0,
@@ -53,6 +42,13 @@ export function SettingsPanel({ onClose }: Props) {
     </div>
   )
 
+  const Select = ({ k, options }: { k: string, options: {value:string, label:string}[] }) => (
+    <select value={(settings as any)[k]} onChange={e => set(k as any, e.target.value)}
+      style={{ background:'var(--t-hover)', border:'1px solid var(--t-border)', borderRadius:4, padding:'3px 8px', color:'var(--t-text1)', fontSize:10, fontFamily:mono, outline:'none' }}>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  )
+
   const renderSection = () => {
     switch (activeSection) {
       case 'display': return (
@@ -60,9 +56,7 @@ export function SettingsPanel({ onClose }: Props) {
           <Row label="Animations" desc="Widget transitions and flash effects"><Toggle k="showAnimations" /></Row>
           <Row label="Compact Mode" desc="Reduce padding for more data density"><Toggle k="compactMode" /></Row>
           <Row label="Volume Bars" desc="Show relative volume bars in tables"><Toggle k="showVolumeBars" /></Row>
-          <Row label="Theme" desc="Color scheme">
-            <ThemeMenu variant="compact" />
-          </Row>
+          <Row label="Theme" desc="Color scheme"><ThemeMenu variant="compact" /></Row>
         </>
       )
       case 'trading': return (
@@ -71,10 +65,7 @@ export function SettingsPanel({ onClose }: Props) {
           <Row label="BO Code Required" desc="Mandatory BO selection in buy/sell console"><Toggle k="boRequired" /></Row>
           <Row label="RMS Warnings" desc="Show risk management warnings"><Toggle k="showRmsWarnings" /></Row>
           <Row label="Default Order Type" desc="Pre-select order type in console">
-            <select value={settings.defaultOrderType} onChange={e => set('defaultOrderType', e.target.value)}
-              style={{ background:'var(--t-hover)', border:'1px solid var(--t-border)', borderRadius:4, padding:'3px 8px', color:'var(--t-text1)', fontSize:10, fontFamily:mono, outline:'none' }}>
-              <option>Limit</option><option>Market</option><option>Stop</option>
-            </select>
+            <Select k="defaultOrderType" options={[{value:'Limit',label:'Limit'},{value:'Market',label:'Market'},{value:'Stop',label:'Stop'}]} />
           </Row>
         </>
       )
@@ -90,19 +81,15 @@ export function SettingsPanel({ onClose }: Props) {
         <>
           <Row label="Show Ticker" desc="Display scrolling price ticker bar"><Toggle k="showTicker" /></Row>
           <Row label="Speed" desc="Ticker scroll speed">
-            <select value={settings.tickerSpeed} onChange={e => set('tickerSpeed', e.target.value)}
-              style={{ background:'var(--t-hover)', border:'1px solid var(--t-border)', borderRadius:4, padding:'3px 8px', color:'var(--t-text1)', fontSize:10, fontFamily:mono, outline:'none' }}>
-              <option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option>
-            </select>
+            <Select k="tickerSpeed" options={[{value:'slow',label:'Slow'},{value:'normal',label:'Normal'},{value:'fast',label:'Fast'}]} />
           </Row>
           <Row label="Filter" desc="Which stocks appear in ticker">
-            <select value={settings.tickerFilter} onChange={e => set('tickerFilter', e.target.value)}
-              style={{ background:'var(--t-hover)', border:'1px solid var(--t-border)', borderRadius:4, padding:'3px 8px', color:'var(--t-text1)', fontSize:10, fontFamily:mono, outline:'none' }}>
-              <option value="all">All Stocks</option>
-              <option value="watchlist">Watchlist Only</option>
-              <option value="dse">DSE Only</option>
-              <option value="cse">CSE Only</option>
-            </select>
+            <Select k="tickerFilter" options={[
+              {value:'all',label:'All Stocks'},
+              {value:'watchlist',label:'Watchlist Only'},
+              {value:'dse',label:'DSE Only'},
+              {value:'cse',label:'CSE Only'},
+            ]} />
           </Row>
         </>
       )
@@ -111,13 +98,21 @@ export function SettingsPanel({ onClose }: Props) {
           <Row label="F1 = Buy" desc="Press F1 to open Buy console"><Toggle k="f1Buy" /></Row>
           <Row label="F2 = Sell" desc="Press F2 to open Sell console"><Toggle k="f2Sell" /></Row>
           <Row label="ESC = Close" desc="Press Escape to close dialogs"><Toggle k="escClose" /></Row>
-          <Row label="Ctrl+K = Search" desc="Focus global search"><div style={{ fontSize:10, fontFamily:mono, color:'var(--t-text3)' }}>Built-in</div></Row>
+          <Row label="Ctrl+K = Search" desc="Focus global search">
+            <div style={{ fontSize:10, fontFamily:mono, color:'var(--t-text3)' }}>Built-in</div>
+          </Row>
         </>
       )
       case 'data': return (
         <>
           <Row label="Auto-save Layout" desc="Automatically save widget positions"><Toggle k="autoSaveLayout" /></Row>
           <Row label="Analytics" desc="Send anonymous usage data to improve the product"><Toggle k="analyticsEnabled" /></Row>
+          <Row label="Reset Settings" desc="Restore all settings to defaults">
+            <button onClick={reset}
+              style={{ padding:'4px 10px', fontSize:9, fontFamily:mono, background:'rgba(255,152,0,0.08)', border:'1px solid rgba(255,152,0,0.2)', borderRadius:4, color:'var(--t-accent)', cursor:'pointer' }}>
+              Reset
+            </button>
+          </Row>
           <Row label="Clear Layout Cache" desc="Reset all widget positions to default">
             <button onClick={() => { localStorage.removeItem('bd_oms_templates_v2'); window.location.reload() }}
               style={{ padding:'4px 10px', fontSize:9, fontFamily:mono, background:'rgba(255,23,68,0.08)', border:'1px solid rgba(255,23,68,0.2)', borderRadius:4, color:'var(--t-sell)', cursor:'pointer' }}>

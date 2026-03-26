@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom'
 import { useOrders } from '../../hooks/useOrders'
 import { useMarketData } from '../../hooks/useMarketData'
 import { getBOAccounts } from '../../api/client'
+import { useSetting } from '@/store/useSettingsStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Side        = 'BUY' | 'SELL'
@@ -361,6 +362,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
   const [isPrivate, setIsPrivate] = useState(false)
 
   // UI
+  const confirmOrders = useSetting('confirmOrders')
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult]           = useState<{ ok: boolean; text: string } | null>(null)
   const [warn, setWarn]               = useState<string | null>(null)
@@ -435,7 +437,7 @@ export function BuySellConsole({ embedded = false }: { embedded?: boolean } = {}
     setWarn(null); return true
   }
 
-  const handleSubmit = () => { if (validate()) setShowConfirm(true) }
+  const handleSubmit = () => { if (validate()) { if (confirmOrders) setShowConfirm(true); else handleConfirm() } }
 
   const handleConfirm = async () => {
     setShowConfirm(false)
