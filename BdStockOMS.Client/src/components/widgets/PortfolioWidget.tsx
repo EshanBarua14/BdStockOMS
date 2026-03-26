@@ -1,13 +1,19 @@
 // @ts-nocheck
 import { useState, useEffect } from "react"
-import { useLinkedSymbol } from '@/hooks/useColorGroupSync'
 import { apiClient } from "@/api/client"
 import { useAuthStore } from "@/store/authStore"
+import { useLinkedSymbol } from "@/hooks/useColorGroupSync"
 
-$1
-  $1
-  const [loading, setLoading] = useState(true)
+const mono = "'JetBrains Mono', monospace"
+
+export function PortfolioWidget({ colorGroup }: { colorGroup?: string | null }) {
+  const user = useAuthStore(s => s.user)
   const [_linked, emitSymbol] = useLinkedSymbol(colorGroup ?? null)
+  const [data,    setData]    = useState(null)
+  const [roi,     setRoi]     = useState(null)
+  const [tab,     setTab]     = useState("summary")
+  const [search,  setSearch]  = useState("")
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
@@ -15,17 +21,18 @@ $1
       try {
         const [snap, roiData] = await Promise.all([
           apiClient.get(`/portfoliosnapshot/latest/${user.userId}`).then(r => r.data).catch(() => ({
-            totalValue: 125430.50, cashBalance: 23450.00, investedValue: 101980.50,
-            dayPnl: 2340.80, dayPnlPercent: 1.87, totalPnl: 18430.50, totalPnlPercent: 22.08,
+            totalValue: 125430.50, cashBalance: 23450.00, investedAmount: 101980.50,
+            totalPnl: 18430.50, totalPnlPercent: 22.08,
             holdings: [
-              { tradingCode:'GP', qty:100, avgBuy:365.20, ltp:380.50, value:38050, pnl:1530, pnlPct:4.19 },
-              { tradingCode:'BATBC', qty:50, avgBuy:598.40, ltp:615.92, value:30796, pnl:876, pnlPct:2.93 },
-              { tradingCode:'BRACBANK', qty:500, avgBuy:44.10, ltp:48.30, value:24150, pnl:2100, pnlPct:9.52 },
-              { tradingCode:'SQURPHARMA', qty:80, avgBuy:235.60, ltp:242.10, value:19368, pnl:520, pnlPct:2.76 },
+              { tradingCode: "GP",         quantity: 100, avgCostPrice: 365.20, currentValue: 38050, unrealizedPnl: 1530 },
+              { tradingCode: "BATBC",       quantity: 50,  avgCostPrice: 598.40, currentValue: 30796, unrealizedPnl: 876  },
+              { tradingCode: "BRACBANK",    quantity: 500, avgCostPrice: 44.10,  currentValue: 24150, unrealizedPnl: 2100 },
+              { tradingCode: "SQURPHARMA",  quantity: 80,  avgCostPrice: 235.60, currentValue: 19368, unrealizedPnl: 520  },
             ]
           })),
           apiClient.get(`/portfoliosnapshot/roi/${user.userId}`).then(r => r.data).catch(() => ({
-            totalReturn: 22.08, annualizedReturn: 18.4, sharpeRatio: 1.42, maxDrawdown: -8.3
+            totalReturn: 22.08, annualizedReturn: 18.4, sharpeRatio: 1.42, maxDrawdown: -8.3,
+            history: []
           })),
         ])
         setData(snap); setRoi(roiData)
@@ -41,74 +48,139 @@ $1
   const pnlPct = data?.totalPnlPercent ?? data?.roiPercent ?? 0
   const up     = pnl >= 0
 
+  const filteredHoldings = (data?.holdings ?? []).filter((h: any) =>
+    !search || (h.tradingCode ?? h.symbol ?? "").toUpperCase().includes(search.toUpperCase())
+  )
+
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
-      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+
+      {/* ── Tabs ── */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
         {[["summary","Summary"],["holdings","Holdings"],["roi","ROI"]].map(([t, l]) => (
-          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "7px 0", background: "none", border: "none", borderBottom: `2px solid ${tab === t ? "#00D4AA" : "transparent"}`, color: tab === t ? "#00D4AA" : "rgba(255,255,255,0.35)", fontSize: 11, cursor: "pointer", fontFamily: "'Space Mono',monospace" }}>{l}</button>
+          <button key={t} onClick={() => setTab(t)} style={{
+            flex: 1, padding: "7px 0", background: "none", border: "none",
+            borderBottom: `2px solid ${tab === t ? "var(--t-accent)" : "transparent"}`,
+            color: tab === t ? "var(--t-accent)" : "var(--t-text3)",
+            fontSize: 11, cursor: "pointer", fontFamily: mono,
+          }}>{l}</button>
         ))}
       </div>
 
-      {loading
-        ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12 }}>Loading…</div>
-        : !data
-          ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: 12, fontFamily: "'Space Mono',monospace", textAlign: "center", padding: 16 }}>No portfolio data yet.<br/>Start trading to see your portfolio.</div>
-          : (
-            <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
-              {tab === "summary" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    ["Total Value",    `৳${(data.totalValue ?? 0).toLocaleString()}`,  "#fff"],
-                    ["Cash Balance",   `৳${(data.cashBalance ?? 0).toLocaleString()}`, "#fff"],
-                    ["Invested",       `৳${(data.investedAmount ?? 0).toLocaleString()}`, "#fff"],
-                    ["Today P&L",      `${up ? "+" : ""}৳${pnl.toLocaleString()}`,     up ? "#00D4AA" : "#FF6B6B"],
-                    ["Total Return",   `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`, pnlPct >= 0 ? "#00D4AA" : "#FF6B6B"],
-                  ].map(([l, v, c]) => (
-                    <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>{l}</span>
-                      <span style={{ color: c, fontSize: 12, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{v}</span>
+      {loading ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--t-text3)", fontSize: 12, fontFamily: mono }}>Loading…</div>
+      ) : !data ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--t-text3)", fontSize: 12, fontFamily: mono, textAlign: "center", padding: 16 }}>
+          No portfolio data yet.<br/>Start trading to see your portfolio.
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflowY: "auto" }}>
+
+          {/* ── Summary ── */}
+          {tab === "summary" && (
+            <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+              {[
+                ["Total Value",  `৳${(data.totalValue ?? 0).toLocaleString()}`,          "var(--t-text1)"],
+                ["Cash Balance", `৳${(data.cashBalance ?? 0).toLocaleString()}`,          "var(--t-text1)"],
+                ["Invested",     `৳${(data.investedAmount ?? 0).toLocaleString()}`,       "var(--t-text1)"],
+                ["P&L",          `${up?"+":""}৳${pnl.toLocaleString()}`,                  up ? "var(--t-buy)" : "var(--t-sell)"],
+                ["Return",       `${pnlPct>=0?"+":""}${pnlPct.toFixed(2)}%`,              pnlPct >= 0 ? "var(--t-buy)" : "var(--t-sell)"],
+              ].map(([l, v, c]) => (
+                <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid var(--t-border)" }}>
+                  <span style={{ color: "var(--t-text3)", fontSize: 11, fontFamily: mono }}>{l}</span>
+                  <span style={{ color: c, fontSize: 12, fontFamily: mono, fontWeight: 700 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Holdings ── */}
+          {tab === "holdings" && (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {/* Search */}
+              <div style={{ padding: "6px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
+                <input
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search holdings…"
+                  style={{ width: "100%", boxSizing: "border-box", background: "var(--t-hover)", border: "1px solid var(--t-border)", borderRadius: 5, padding: "4px 8px", color: "var(--t-text1)", fontSize: 10, outline: "none", fontFamily: mono }}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--t-accent)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--t-border)"}
+                />
+              </div>
+              {/* Column headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 48px 72px 72px", gap: 4, padding: "4px 8px", borderBottom: "1px solid var(--t-border)", background: "var(--t-bg)" }}>
+                {["SYMBOL","QTY","VALUE","P&L"].map(h => (
+                  <span key={h} style={{ fontSize: 8, fontWeight: 700, color: "var(--t-text3)", fontFamily: mono, letterSpacing: "0.06em", textAlign: h === "SYMBOL" ? "left" : "right", display: "block" }}>{h}</span>
+                ))}
+              </div>
+              {/* Rows */}
+              {filteredHoldings.length === 0 ? (
+                <div style={{ padding: 16, textAlign: "center", color: "var(--t-text3)", fontSize: 11, fontFamily: mono }}>No holdings</div>
+              ) : filteredHoldings.map((h: any, i: number) => {
+                const code = h.tradingCode ?? h.symbol ?? "—"
+                const pnlH = h.unrealizedPnl ?? h.pnl ?? 0
+                const upH  = pnlH >= 0
+                return (
+                  <div key={i} onClick={() => { emitSymbol(code) }} style={{
+                    display: "grid", gridTemplateColumns: "1fr 48px 72px 72px",
+                    gap: 4, padding: "6px 8px", borderBottom: "1px solid var(--t-border)",
+                    cursor: "pointer",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--t-hover)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div>
+                      <div style={{ color: "var(--t-accent)", fontSize: 11, fontFamily: mono, fontWeight: 700 }}>{code}</div>
+                      <div style={{ color: "var(--t-text3)", fontSize: 9, fontFamily: mono }}>avg ৳{(h.avgCostPrice ?? h.avgBuy ?? 0).toFixed(2)}</div>
+                    </div>
+                    <div style={{ textAlign: "right", alignSelf: "center" }}>
+                      <span style={{ color: "var(--t-text2)", fontSize: 10, fontFamily: mono }}>{h.quantity ?? h.qty}</span>
+                    </div>
+                    <div style={{ textAlign: "right", alignSelf: "center" }}>
+                      <span style={{ color: "var(--t-text1)", fontSize: 10, fontFamily: mono }}>৳{((h.currentValue ?? h.value) ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div style={{ textAlign: "right", alignSelf: "center" }}>
+                      <span style={{ color: upH ? "var(--t-buy)" : "var(--t-sell)", fontSize: 10, fontFamily: mono, fontWeight: 700 }}>
+                        {upH ? "+" : ""}৳{pnlH.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── ROI ── */}
+          {tab === "roi" && (
+            <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+              {[
+                ["Total Return",      `${(roi?.totalReturn ?? 0) >= 0 ? "+" : ""}${(roi?.totalReturn ?? 0).toFixed(2)}%`],
+                ["Annualized Return", `${(roi?.annualizedReturn ?? 0).toFixed(2)}%`],
+                ["Sharpe Ratio",      `${(roi?.sharpeRatio ?? 0).toFixed(2)}`],
+                ["Max Drawdown",      `${(roi?.maxDrawdown ?? 0).toFixed(2)}%`],
+              ].map(([l, v]) => (
+                <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid var(--t-border)" }}>
+                  <span style={{ color: "var(--t-text3)", fontSize: 11, fontFamily: mono }}>{l}</span>
+                  <span style={{ color: "var(--t-text1)", fontSize: 11, fontFamily: mono, fontWeight: 700 }}>{v}</span>
+                </div>
+              ))}
+              {(roi?.history ?? []).length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono, marginBottom: 6, letterSpacing: "0.06em" }}>HISTORY</div>
+                  {(roi.history ?? []).slice(-10).map((r: any, i: number) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid var(--t-border)" }}>
+                      <span style={{ color: "var(--t-text3)", fontSize: 10, fontFamily: mono }}>{new Date(r.date ?? r.capturedAt).toLocaleDateString()}</span>
+                      <span style={{ color: (r.roiPercent ?? 0) >= 0 ? "var(--t-buy)" : "var(--t-sell)", fontSize: 10, fontFamily: mono }}>
+                        {(r.roiPercent ?? 0) >= 0 ? "+" : ""}{(r.roiPercent ?? 0).toFixed(2)}%
+                      </span>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {tab === "holdings" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {(data.holdings ?? []).length === 0
-                    ? <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, textAlign: "center", padding: 16, fontFamily: "'Space Mono',monospace" }}>No holdings</div>
-                    : (data.holdings ?? []).map((h, i) => {
-                        const up = (h.unrealizedPnl ?? h.pnl ?? 0) >= 0
-                        return (
-                          <div key={i} style={{ padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{h.tradingCode ?? h.symbol}</span>
-                              <span style={{ color: "#fff", fontSize: 11, fontFamily: "'Space Mono',monospace" }}>৳{(h.currentValue ?? h.value ?? 0).toLocaleString()}</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{h.quantity} @ ৳{h.avgCostPrice ?? h.avgBuy?.toFixed(2)}</span>
-                              <span style={{ color: up ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{up ? "+" : ""}৳{(h.unrealizedPnl ?? h.pnl ?? 0).toLocaleString()}</span>
-                            </div>
-                          </div>
-                        )
-                      })
-                  }
-                </div>
-              )}
-
-              {tab === "roi" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(roi?.history ?? []).slice(-10).map((r, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                      <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{new Date(r.date ?? r.capturedAt).toLocaleDateString()}</span>
-                      <span style={{ color: (r.roiPercent ?? 0) >= 0 ? "#00D4AA" : "#FF6B6B", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>{(r.roiPercent ?? 0) >= 0 ? "+" : ""}{(r.roiPercent ?? 0).toFixed(2)}%</span>
-                    </div>
-                  ))}
-                  {(roi?.history ?? []).length === 0 && <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 11, textAlign: "center", padding: 16, fontFamily: "'Space Mono',monospace" }}>No ROI history</div>}
                 </div>
               )}
             </div>
-          )
-      }
+          )}
+        </div>
+      )}
     </div>
   )
 }
