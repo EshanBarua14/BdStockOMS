@@ -18,7 +18,6 @@ public class AppDbContext : DbContext
     public DbSet<Stock> Stocks { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<Portfolio> Portfolios { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<SystemLog> SystemLogs { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<LoginHistory> LoginHistories { get; set; }
@@ -644,4 +643,13 @@ public class AppDbContext : DbContext
             new Stock { Id = 16, TradingCode = "DUTCHBANGL", CompanyName = "Dutch Bangla Bank Ltd",               Exchange = "CSE", Category = StockCategory.A, BoardLotSize = 1, LastTradePrice = 98.20m,  CircuitBreakerHigh = 108.02m, CircuitBreakerLow = 88.38m,  IsActive = true, LastUpdatedAt = new DateTime(2026, 1, 1) }
         );
     }
+    // ── Day 65: Admin Settings DbSets ──
+    public DbSet<AppSetting>       AppSettings   => Set<AppSetting>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<FeeStructure>     FeeStructures => Set<FeeStructure>();
+    public DbSet<SystemRole>       SystemRoles   => Set<SystemRole>();
+    public DbSet<ApiKey>           ApiKeys       => Set<ApiKey>();
+    public DbSet<Announcement>     Announcements => Set<Announcement>();
+    public DbSet<BackupHistory>    BackupHistory => Set<BackupHistory>();
+    public DbSet<IpWhitelistEntry> IpWhitelist   => Set<IpWhitelistEntry>();
 }

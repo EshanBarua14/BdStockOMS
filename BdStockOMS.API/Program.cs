@@ -6,7 +6,6 @@ using BdStockOMS.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
 using BdStockOMS.API.Data;
-using BdStockOMS.API.Middleware;
 using BdStockOMS.API.Services;
 using BdStockOMS.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -222,6 +221,11 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+// ── Day 65: Admin Settings Services
+builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
+builder.Services.AddScoped<ISystemHealthService, SystemHealthService>();
 
 var app = builder.Build();
 
