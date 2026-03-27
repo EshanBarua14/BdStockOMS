@@ -125,7 +125,7 @@ public class OrderAmendmentServiceTests
     {
         var (db, _, _, _, _, investor, trader, _, stock) = await SeedAsync();
         var order = CreatePendingLimitOrder(investor.Id, trader.Id, stock.Id, 1);
-        order.Status = OrderStatus.Executed;
+        order.Status = OrderStatus.Filled;
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 

@@ -192,7 +192,7 @@ public class CCDServiceTests
             Id = 1, InvestorId = 2, StockId = 1, BrokerageHouseId = 1,
             OrderType = OrderType.Buy, OrderCategory = OrderCategory.Market,
             Quantity = 10, PriceAtOrder = 380, ExecutionPrice = 380,
-            Status = OrderStatus.Executed, SettlementType = SettlementType.T2,
+            Status = OrderStatus.Filled, SettlementType = SettlementType.T2,
             PlacedBy = PlacedByRole.Investor, CreatedAt = DateTime.UtcNow,
             ExecutedAt = DateTime.UtcNow
         });

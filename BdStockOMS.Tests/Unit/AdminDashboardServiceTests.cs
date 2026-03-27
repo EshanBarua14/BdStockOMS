@@ -49,9 +49,9 @@ public class AdminDashboardServiceTests
 
         // Orders — mix of today and older
         db.Orders.AddRange(
-            new Order { InvestorId = 2, TraderId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  OrderCategory = OrderCategory.Limit, Quantity = 100, PriceAtOrder = 400m, SettlementType = SettlementType.T2, PlacedBy = PlacedByRole.Trader, Status = OrderStatus.Executed,  CreatedAt = now },
+            new Order { InvestorId = 2, TraderId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  OrderCategory = OrderCategory.Limit, Quantity = 100, PriceAtOrder = 400m, SettlementType = SettlementType.T2, PlacedBy = PlacedByRole.Trader, Status = OrderStatus.Filled,  CreatedAt = now },
             new Order { InvestorId = 2, TraderId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Sell, OrderCategory = OrderCategory.Limit, Quantity = 50,  PriceAtOrder = 410m, SettlementType = SettlementType.T2, PlacedBy = PlacedByRole.Trader, Status = OrderStatus.Pending,   CreatedAt = now },
-            new Order { InvestorId = 3, TraderId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  OrderCategory = OrderCategory.Limit, Quantity = 200, PriceAtOrder = 400m, SettlementType = SettlementType.T2, PlacedBy = PlacedByRole.Trader, Status = OrderStatus.Executed,  CreatedAt = now.AddDays(-5) }
+            new Order { InvestorId = 3, TraderId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  OrderCategory = OrderCategory.Limit, Quantity = 200, PriceAtOrder = 400m, SettlementType = SettlementType.T2, PlacedBy = PlacedByRole.Trader, Status = OrderStatus.Filled,  CreatedAt = now.AddDays(-5) }
         );
 
         // Fund requests

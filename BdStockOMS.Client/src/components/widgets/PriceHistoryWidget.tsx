@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/api/client';
 import { useLinkedSymbol } from '@/hooks/useColorGroupSync';

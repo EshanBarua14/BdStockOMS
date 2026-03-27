@@ -31,14 +31,14 @@ public class OrderStateMachineTests
 
     // ── CanTransition ─────────────────────────────────────────────────────
     [Theory]
-    [InlineData(OrderStatus.Pending,  OrderStatus.Executed,  true)]
+    [InlineData(OrderStatus.Pending,  OrderStatus.Filled,  true)]
     [InlineData(OrderStatus.Pending,  OrderStatus.Cancelled, true)]
     [InlineData(OrderStatus.Pending,  OrderStatus.Rejected,  true)]
-    [InlineData(OrderStatus.Executed, OrderStatus.Completed, true)]
-    [InlineData(OrderStatus.Executed, OrderStatus.Cancelled, true)]
+    [InlineData(OrderStatus.Filled, OrderStatus.Completed, true)]
+    [InlineData(OrderStatus.Filled, OrderStatus.Cancelled, true)]
     [InlineData(OrderStatus.Completed,OrderStatus.Cancelled, false)]
     [InlineData(OrderStatus.Cancelled,OrderStatus.Pending,   false)]
-    [InlineData(OrderStatus.Rejected, OrderStatus.Executed,  false)]
+    [InlineData(OrderStatus.Rejected, OrderStatus.Filled,  false)]
     public void CanTransition_ReturnsExpected(OrderStatus from, OrderStatus to, bool expected)
     {
         var sm = new OrderStateMachine(BuildDb());
@@ -52,7 +52,7 @@ public class OrderStateMachineTests
         var sm      = new OrderStateMachine(BuildDb());
         var allowed = sm.GetAllowedTransitions(OrderStatus.Pending);
         Assert.Equal(3, allowed.Length);
-        Assert.Contains(OrderStatus.Executed,  allowed);
+        Assert.Contains(OrderStatus.Filled,  allowed);
         Assert.Contains(OrderStatus.Cancelled, allowed);
         Assert.Contains(OrderStatus.Rejected,  allowed);
     }
@@ -83,10 +83,10 @@ public class OrderStateMachineTests
         await db.SaveChangesAsync();
 
         var sm     = new OrderStateMachine(db);
-        var result = await sm.TransitionAsync(order, OrderStatus.Executed);
+        var result = await sm.TransitionAsync(order, OrderStatus.Filled);
 
         Assert.True(result);
-        Assert.Equal(OrderStatus.Executed, order.Status);
+        Assert.Equal(OrderStatus.Filled, order.Status);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class OrderStateMachineTests
         await db.SaveChangesAsync();
 
         var sm = new OrderStateMachine(db);
-        await sm.TransitionAsync(order, OrderStatus.Executed);
+        await sm.TransitionAsync(order, OrderStatus.Filled);
 
         Assert.NotNull(order.ExecutedAt);
     }
@@ -122,7 +122,7 @@ public class OrderStateMachineTests
     public async Task TransitionAsync_SetsCompletedAt_WhenMovingToCompleted()
     {
         var db    = BuildDb();
-        var order = BuildOrder(OrderStatus.Executed);
+        var order = BuildOrder(OrderStatus.Filled);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
@@ -169,12 +169,12 @@ public class OrderStateMachineTests
         await db.SaveChangesAsync();
 
         var sm = new OrderStateMachine(db);
-        await sm.TransitionAsync(order, OrderStatus.Executed, triggeredBy: "system-test");
+        await sm.TransitionAsync(order, OrderStatus.Filled, triggeredBy: "system-test");
 
         var evt = db.Set<OrderEvent>().FirstOrDefault();
         Assert.NotNull(evt);
         Assert.Equal("Pending",  evt!.FromStatus);
-        Assert.Equal("Executed", evt.ToStatus);
+        Assert.Equal("Filled", evt.ToStatus);
         Assert.Equal("system-test", evt.TriggeredBy);
     }
 

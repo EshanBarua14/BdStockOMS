@@ -146,7 +146,7 @@ public class RMSValidationTests
             InvestorId       = 1, TraderId = 1, StockId = 1,
             BrokerageHouseId = 1, OrderType = OrderType.Buy,
             OrderCategory    = OrderCategory.Market, Quantity = 1000,
-            PriceAtOrder     = 15_000m, Status = OrderStatus.Executed,
+            PriceAtOrder     = 15_000m, Status = OrderStatus.Filled,
             SettlementType   = SettlementType.T2,
             PlacedBy         = PlacedByRole.Investor,
             CreatedAt        = DateTime.UtcNow

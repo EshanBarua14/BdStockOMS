@@ -1,4 +1,7 @@
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import BrokerManagementPage from '@/pages/BrokerManagementPage';
+import BranchManagementPage  from '@/pages/BranchManagementPage';
+import BOManagementPage       from '@/pages/BOManagementPage';
 import { AdminPlaceholderPage } from './pages/admin/PlaceholderPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute }    from '@/components/auth/ProtectedRoute'
@@ -59,9 +62,9 @@ export default function App() {
           <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
           <Route path="/settings/:section" element={<AdminSettingsPage />} />
           {/* Admin placeholders */}
-          <Route path="/admin/brokers"      element={<AdminPlaceholderPage title="Broker Management" />} />
-          <Route path="/admin/branches"     element={<AdminPlaceholderPage title="Branch Management" />} />
-          <Route path="/admin/bo-accounts"  element={<AdminPlaceholderPage title="BO Account Management" />} />
+          <Route path="/admin/brokers"      element={<BrokerManagementPage />} />
+          <Route path="/admin/branches"     element={<BranchManagementPage />} />
+          <Route path="/admin/bo-accounts"  element={<BOManagementPage />} />
           <Route path="/admin/users"        element={<AdminPlaceholderPage title="User Management" />} />
           <Route path="/admin/fix"          element={<AdminPlaceholderPage title="FIX Gateway" />} />
           <Route path="/admin/activities"   element={<AdminPlaceholderPage title="Activity Log" />} />

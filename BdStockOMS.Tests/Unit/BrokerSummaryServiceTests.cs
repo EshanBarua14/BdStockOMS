@@ -44,7 +44,7 @@ namespace BdStockOMS.Tests.Unit
             );
             _db.Stocks.Add(new Stock { Id = 1, TradingCode = "GP", CompanyName = "Grameenphone", Exchange = "DSE", LastTradePrice = 400m, CircuitBreakerHigh = 440m, CircuitBreakerLow = 360m, IsActive = true, LastUpdatedAt = DateTime.UtcNow });
             _db.Orders.AddRange(
-                new Order { Id = 1, InvestorId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  Quantity = 10, PriceAtOrder = 400m, Status = OrderStatus.Executed, CreatedAt = _today },
+                new Order { Id = 1, InvestorId = 1, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Buy,  Quantity = 10, PriceAtOrder = 400m, Status = OrderStatus.Filled, CreatedAt = _today },
                 new Order { Id = 2, InvestorId = 2, StockId = 1, BrokerageHouseId = 1, OrderType = OrderType.Sell, Quantity = 5,  PriceAtOrder = 400m, Status = OrderStatus.Pending,  CreatedAt = _today }
             );
             _db.Trades.AddRange(

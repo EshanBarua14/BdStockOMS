@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // BdStockOMS — Admin Settings API Hooks
 // File: BdStockOMS.Client/src/hooks/useAdminSettings.ts

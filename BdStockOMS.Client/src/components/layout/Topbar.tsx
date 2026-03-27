@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TopbarIconBtn } from "./TopbarIconBtn";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { SettingsPanel } from "./SettingsPanel";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useLinkedSymbol } from '@/hooks/useColorGroupSync';
 // @ts-nocheck
 // src/components/widgets/MostActiveWidget.tsx

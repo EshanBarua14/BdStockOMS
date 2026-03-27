@@ -138,3 +138,19 @@ export const apiClient = {
   delete: (url: string)                 => _fetch(url, { method: "DELETE" }),
   patch:  (url: string, body?: unknown) => _fetch(url, { method: "PATCH",  body: JSON.stringify(body ?? {}) }),
 }
+
+// ── Broker Management ─────────────────────────────────────────
+export const getBrokerages       = () => fetch("/api/broker-management/brokerages", { headers: headers() }).then(r => handle(r));
+export const getBrokerage        = (id: number) => fetch(`/api/broker-management/brokerages/${id}`, { headers: headers() }).then(r => handle(r));
+export const createBrokerage     = (dto: any) => fetch("/api/broker-management/brokerages", { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
+export const updateBrokerage     = (id: number, dto: any) => fetch(`/api/broker-management/brokerages/${id}`, { method: "PUT", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
+export const toggleBrokerage     = (id: number, active: boolean) => fetch(`/api/broker-management/brokerages/${id}/${active ? "activate" : "deactivate"}`, { method: "PUT", headers: headers() }).then(r => handle(r));
+
+export const getBranches         = (brokerageHouseId?: number) => fetch(`/api/broker-management/branches${brokerageHouseId ? "?brokerageHouseId=" + brokerageHouseId : ""}`, { headers: headers() }).then(r => handle(r));
+export const getBranch           = (id: number) => fetch(`/api/broker-management/branches/${id}`, { headers: headers() }).then(r => handle(r));
+export const createBranch        = (dto: any) => fetch("/api/broker-management/branches", { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
+export const updateBranch        = (id: number, dto: any) => fetch(`/api/broker-management/branches/${id}`, { method: "PUT", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
+export const toggleBranch        = (id: number, active: boolean) => fetch(`/api/broker-management/branches/${id}/${active ? "activate" : "deactivate"}`, { method: "PUT", headers: headers() }).then(r => handle(r));
+
+export const getManagedBOAccounts = (brokerageHouseId?: number) => fetch(`/api/broker-management/bo-accounts${brokerageHouseId ? "?brokerageHouseId=" + brokerageHouseId : ""}`, { headers: headers() }).then(r => handle(r));
+export const updateBOAccount      = (userId: number, dto: any) => fetch(`/api/broker-management/bo-accounts/${userId}`, { method: "PUT", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
