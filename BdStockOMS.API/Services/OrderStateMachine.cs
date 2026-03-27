@@ -9,8 +9,8 @@ public class OrderStateMachine : IOrderStateMachine
     // Valid transitions: key = from, value = allowed destinations
     private static readonly Dictionary<OrderStatus, OrderStatus[]> _transitions = new()
     {
-        [OrderStatus.Pending]     = [OrderStatus.Executed, OrderStatus.Cancelled, OrderStatus.Rejected],
-        [OrderStatus.Executed]    = [OrderStatus.Completed, OrderStatus.Cancelled],
+        [OrderStatus.Pending]     = [OrderStatus.Filled, OrderStatus.Cancelled, OrderStatus.Rejected],
+        [OrderStatus.Filled]    = [OrderStatus.Completed, OrderStatus.Cancelled],
         [OrderStatus.Completed]   = [],
         [OrderStatus.Cancelled]   = [],
         [OrderStatus.Rejected]    = [],
@@ -45,7 +45,7 @@ public class OrderStateMachine : IOrderStateMachine
         // Update timestamps
         switch (to)
         {
-            case OrderStatus.Executed:  order.ExecutedAt  = DateTime.UtcNow; break;
+            case OrderStatus.Filled:  order.ExecutedAt  = DateTime.UtcNow; break;
             case OrderStatus.Completed: order.CompletedAt = DateTime.UtcNow; break;
             case OrderStatus.Cancelled: order.CancelledAt = DateTime.UtcNow; break;
             case OrderStatus.Rejected:

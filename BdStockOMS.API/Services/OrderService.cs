@@ -212,7 +212,7 @@ public class OrderService : IOrderService
             return (null, $"Order cannot be executed. Current status: {order.Status}.");
 
         // Execute at current market price
-        order.Status = OrderStatus.Executed;
+        order.Status = OrderStatus.Filled;
         order.ExecutionPrice = order.Stock.LastTradePrice;
         order.ExecutedAt = DateTime.UtcNow;
         order.TraderId ??= traderId; // assign trader if not already set

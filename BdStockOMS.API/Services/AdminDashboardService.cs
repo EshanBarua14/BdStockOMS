@@ -61,7 +61,7 @@ public class AdminDashboardService : IAdminDashboardService
 
         var todayOrders    = allOrders.Where(o => o.CreatedAt.Date == today).ToList();
         var monthOrders    = allOrders.Where(o => o.CreatedAt >= monthStart).ToList();
-        var executedToday  = todayOrders.Where(o => o.Status == OrderStatus.Executed).ToList();
+        var executedToday  = todayOrders.Where(o => o.Status == OrderStatus.Filled).ToList();
 
         return Result<OrderStatsDto>.Success(new OrderStatsDto
         {

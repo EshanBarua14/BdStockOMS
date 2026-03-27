@@ -41,11 +41,11 @@ public class BrokerageReportService : IBrokerageReportService
             BuyOrders          = orders.Count(o => o.OrderType == OrderType.Buy),
             SellOrders         = orders.Count(o => o.OrderType == OrderType.Sell),
             PendingOrders      = orders.Count(o => o.Status == OrderStatus.Pending),
-            ExecutedOrders     = orders.Count(o => o.Status == OrderStatus.Executed),
+            ExecutedOrders     = orders.Count(o => o.Status == OrderStatus.Filled),
             CancelledOrders    = orders.Count(o => o.Status == OrderStatus.Cancelled),
             RejectedOrders     = orders.Count(o => o.Status == OrderStatus.Rejected),
             TotalOrderValue    = orders
-                .Where(o => o.Status == OrderStatus.Executed)
+                .Where(o => o.Status == OrderStatus.Filled)
                 .Sum(o => o.Quantity * o.PriceAtOrder)
         });
     }
@@ -70,9 +70,9 @@ public class BrokerageReportService : IBrokerageReportService
                 InvestorName     = g.Key.FullName,
                 Email            = g.Key.Email,
                 TotalOrders      = g.Count(),
-                ExecutedOrders   = g.Count(o => o.Status == OrderStatus.Executed),
+                ExecutedOrders   = g.Count(o => o.Status == OrderStatus.Filled),
                 TotalTradedValue = g
-                    .Where(o => o.Status == OrderStatus.Executed)
+                    .Where(o => o.Status == OrderStatus.Filled)
                     .Sum(o => o.Quantity * o.PriceAtOrder)
             })
             .OrderByDescending(i => i.TotalTradedValue)
@@ -92,7 +92,7 @@ public class BrokerageReportService : IBrokerageReportService
 
         var executedOrders = await _context.Orders
             .Where(o => o.BrokerageHouseId == brokerageHouseId &&
-                        o.Status == OrderStatus.Executed &&
+                        o.Status == OrderStatus.Filled &&
                         o.CreatedAt >= from && o.CreatedAt <= to)
             .ToListAsync();
 

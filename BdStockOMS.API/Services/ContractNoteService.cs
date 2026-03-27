@@ -47,7 +47,7 @@ namespace BdStockOMS.API.Services
                     return result;
                 }
 
-                if (order.Status != OrderStatus.Executed && order.Status != OrderStatus.Completed)
+                if (order.Status != OrderStatus.Filled && order.Status != OrderStatus.Completed)
                 {
                     result.Success = false;
                     result.Message = $"Cannot generate contract note for order in status: {order.Status}.";

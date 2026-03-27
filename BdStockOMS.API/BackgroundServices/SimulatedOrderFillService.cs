@@ -55,11 +55,11 @@ public class SimulatedOrderFillService : BackgroundService
             if (ct.IsCancellationRequested) break;
 
             // Determine delay based on order category
+            var ageMs = (DateTime.UtcNow - order.CreatedAt).TotalMilliseconds;
             var delayMs = order.OrderCategory == OrderCategory.Market
                 ? _rng.Next(1000, 3000)
                 : _rng.Next(4000, 12000);
 
-            $1
 
             // First transition: Pending → Open after 500ms
             if (order.Status == OrderStatus.Pending && ageMs > 500)

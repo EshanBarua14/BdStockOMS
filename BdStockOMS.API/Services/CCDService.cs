@@ -172,7 +172,7 @@ public class CCDService : ICCDService
         if (order == null)
             return (null, "Order not found.");
 
-        if (order.Status != OrderStatus.Executed)
+        if (order.Status != OrderStatus.Filled)
             return (null, $"Only Executed orders can be settled. Current status: {order.Status}.");
 
         var investor = await _db.Users.FindAsync(order.InvestorId);
