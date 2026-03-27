@@ -160,3 +160,12 @@ export const getRMSLimitsAll     = (brokerageHouseId?: number) => fetch(`/api/rm
 export const getRMSLimitsForInvestor = (investorId: number) => fetch(`/api/rms/investor/${investorId}`, { headers: headers() }).then(r => handle(r))
 export const setRMSLimit         = (dto: any) => fetch("/api/rms/set-limit", { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r))
 export const getMyRMSLimits      = () => fetch("/api/rms/my-limits", { headers: headers() }).then(r => handle(r))
+// ── Accounts / Fund Requests ─────────────────────────────────
+export const getFundRequests     = (page=1,pageSize=10,status: string='') => fetch(`/api/fund-requests?page=${page}&pageSize=${pageSize}${status?'&status='+status:''}`,{headers:headers()}).then(r=>handle(r))
+export const getMyFundRequests   = (page=1) => fetch(`/api/fund-requests/my?page=${page}`,{headers:headers()}).then(r=>handle(r))
+export const createFundRequest   = (dto: any) => fetch('/api/fund-requests',{method:'POST',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const approveFundTrader   = (id: any,dto: any) => fetch(`/api/fund-requests/${id}/approve-trader`,{method:'PUT',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const approveFundCCD      = (id: any) => fetch(`/api/fund-requests/${id}/approve-ccd`,{method:'PUT',headers:headers()}).then(r=>handle(r))
+export const rejectFundRequest   = (id: any,dto: any) => fetch(`/api/fund-requests/${id}/reject`,{method:'PUT',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const completeFundRequest = (id: any) => fetch(`/api/fund-requests/${id}/complete`,{method:'PUT',headers:headers()}).then(r=>handle(r))
+export const getMyBalance        = () => fetch('/api/fund-requests/balance',{headers:headers()}).then(r=>handle(r))
