@@ -245,6 +245,8 @@ export function TimeAndSalesWidget({
   const [showFilters,setShowFilters]  = useState(false)
   const [filters,    setFilters]      = useState<Filters>(DEFAULT_FILTERS)
   const [connected,  setConnected]    = useState(false)
+  const [pinnedSymbols, setPinnedSymbols] = useState<string[]>([defaultTradingCode])
+  const [activeSymbolTab, setActiveSymbolTab] = useState(defaultTradingCode)
   const [flashIds,   setFlashIds]     = useState<Set<number>>(new Set())
   const tableRef = useRef<HTMLDivElement>(null)
 
@@ -281,9 +283,26 @@ export function TimeAndSalesWidget({
 
   const handleSearch = () => {
     const code = inputCode.trim().toUpperCase()
-    if (code) { setTradingCode(code); emitSymbol(code) }
+    if (code) { pinSymbol(code); emitSymbol(code) }
   }
 
+  const pinSymbol = (code: string) => {
+    if (!pinnedSymbols.includes(code)) setPinnedSymbols(p => [...p, code])
+    setActiveSymbolTab(code)
+    setTradingCode(code)
+    setInputCode(code)
+  }
+  const unpinSymbol = (code: string) => {
+    const next = pinnedSymbols.filter(s => s !== code)
+    if (next.length === 0) return
+    setPinnedSymbols(next)
+    if (activeSymbolTab === code) {
+      const newActive = next[next.length - 1]
+      setActiveSymbolTab(newActive)
+      setTradingCode(newActive)
+      setInputCode(newActive)
+    }
+  }
   const patchFilter = (patch: Partial<Filters>) => setFilters(f => ({ ...f, ...patch }))
   const resetFilters = () => setFilters(DEFAULT_FILTERS)
   const activeFilterCount = countActiveFilters(filters)
@@ -396,6 +415,33 @@ export function TimeAndSalesWidget({
           ))}
         </div>
       </div>
+
+
+      {/* ── Pinned Symbol Tabs ── */}
+      {pinnedSymbols.length > 0 && (
+        <div style={{ display: "flex", gap: 2, padding: "4px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-panel)", overflowX: "auto" }}>
+          {pinnedSymbols.map(sym => (
+            <div key={sym} style={{ display: "flex", alignItems: "center", gap: 2,
+              background: activeSymbolTab === sym ? "rgba(34,211,238,0.12)" : "var(--t-hover)",
+              border: `1px solid ${activeSymbolTab === sym ? "rgba(34,211,238,0.4)" : "var(--t-border)"}`,
+              borderRadius: 5, padding: "2px 6px", cursor: "pointer", flexShrink: 0 }}
+              onClick={() => { setActiveSymbolTab(sym); setTradingCode(sym); setInputCode(sym) }}>
+              <span style={{ fontSize: 10, fontWeight: 700, fontFamily: mono,
+                color: activeSymbolTab === sym ? "#22d3ee" : "var(--t-text2)" }}>{sym}</span>
+              {pinnedSymbols.length > 1 && (
+                <span onClick={e => { e.stopPropagation(); unpinSymbol(sym) }}
+                  style={{ fontSize: 8, color: "var(--t-text3)", cursor: "pointer", marginLeft: 2,
+                    lineHeight: 1, padding: "0 1px" }}>✕</span>
+              )}
+            </div>
+          ))}
+          <div style={{ display: "flex", alignItems: "center", marginLeft: "auto", flexShrink: 0 }}>
+            <span style={{ fontSize: 9, color: "var(--t-text3)", fontFamily: mono }}>
+              {pinnedSymbols.length}/6
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ── Collapsible Filter Panel ── */}
       {showFilters && (
