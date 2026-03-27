@@ -154,3 +154,9 @@ export const toggleBranch        = (id: number, active: boolean) => fetch(`/api/
 
 export const getManagedBOAccounts = (brokerageHouseId?: number) => fetch(`/api/broker-management/bo-accounts${brokerageHouseId ? "?brokerageHouseId=" + brokerageHouseId : ""}`, { headers: headers() }).then(r => handle(r));
 export const updateBOAccount      = (userId: number, dto: any) => fetch(`/api/broker-management/bo-accounts/${userId}`, { method: "PUT", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r));
+
+// ── RMS Management ────────────────────────────────────────────
+export const getRMSLimitsAll     = (brokerageHouseId?: number) => fetch(`/api/rms/all${brokerageHouseId ? "?brokerageHouseId=" + brokerageHouseId : ""}`, { headers: headers() }).then(r => handle(r))
+export const getRMSLimitsForInvestor = (investorId: number) => fetch(`/api/rms/investor/${investorId}`, { headers: headers() }).then(r => handle(r))
+export const setRMSLimit         = (dto: any) => fetch("/api/rms/set-limit", { method: "POST", headers: headers(), body: JSON.stringify(dto) }).then(r => handle(r))
+export const getMyRMSLimits      = () => fetch("/api/rms/my-limits", { headers: headers() }).then(r => handle(r))

@@ -144,3 +144,4 @@ public record SetRMSLimitRequest(
     decimal MaxDailyValue, decimal MaxExposure,
     decimal ConcentrationPct,
     RMSAction ActionOnBreach = RMSAction.Block);
+// NOTE: append above the last closing brace — handled below

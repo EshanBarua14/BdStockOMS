@@ -1,0 +1,293 @@
+// @ts-nocheck
+import { useEffect, useState } from "react";
+import { getBrokerages, getManagedBOAccounts, setRMSLimit } from "@/api/client";
+
+const mono = '"JetBrains Mono",monospace';
+const col  = (v) => `var(${v})`;
+const fmt  = (n) => "৳" + Number(n).toLocaleString("en-BD", { minimumFractionDigits: 2 });
+
+const LEVELS = ["Investor","Trader","Stock","Sector","Market","Exchange"];
+
+const Badge = ({ active }) => (
+  <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, fontFamily: mono,
+    background: active ? "rgba(0,212,170,0.15)" : "rgba(255,107,107,0.15)",
+    color: active ? "#00D4AA" : "#FF6B6B", border: `1px solid ${active ? "#00D4AA40" : "#FF6B6B40"}` }}>
+    {active ? "ACTIVE" : "INACTIVE"}
+  </span>
+);
+
+const ActionBadge = ({ action }) => {
+  const colors = { Warn: "#FFB800", Block: "#FF6B6B", Freeze: "#9B59B6" };
+  const c = colors[action] || col("--t-text3");
+  return (
+    <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, fontFamily: mono,
+      background: c + "20", color: c, border: `1px solid ${c}40` }}>{action}</span>
+  );
+};
+
+const Field = ({ label, children }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    <label style={{ fontSize: 10, color: col("--t-text3"), fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</label>
+    {children}
+  </div>
+);
+
+const Inp = ({ value, onChange, type = "text" }) => (
+  <input type={type} value={value ?? ""} onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
+    style={{ background: col("--t-hover"), border: `1px solid ${col("--t-border")}`, borderRadius: 6,
+      padding: "7px 10px", color: col("--t-text1"), fontSize: 12, fontFamily: mono, outline: "none", width: "100%" }} />
+);
+
+const Sel = ({ value, onChange, children }) => (
+  <select value={value} onChange={e => onChange(e.target.value)}
+    style={{ background: col("--t-hover"), border: `1px solid ${col("--t-border")}`, borderRadius: 6,
+      padding: "7px 10px", color: col("--t-text1"), fontSize: 12, fontFamily: mono, outline: "none" }}>
+    {children}
+  </select>
+);
+
+const EMPTY = { level: 1, entityId: null, entityType: "Investor", brokerageHouseId: 1,
+  maxOrderValue: 5000000, maxDailyValue: 20000000, maxExposure: 50000000,
+  concentrationPct: 10, actionOnBreach: 2 };
+
+export default function RMSManagementPage() {
+  const [limits,     setLimitsState] = useState([]);
+  const [brokerages, setBrokerages]  = useState([]);
+  const [boAccounts, setBoAccounts]  = useState([]);
+  const [loading,    setLoading]     = useState(true);
+  const [showForm,   setShowForm]    = useState(false);
+  const [form,       setForm]        = useState(EMPTY);
+  const [saving,     setSaving]      = useState(false);
+  const [filterBrok, setFilterBrok]  = useState(0);
+  const [filterType, setFilterType]  = useState("");
+  const [activeTab,  setActiveTab]   = useState("all");
+
+  const token = () => {
+    try { return JSON.parse(localStorage.getItem("bd_oms_auth_v2") || "{}").user?.token || ""; }
+    catch { return ""; }
+  };
+
+  const load = () => {
+    setLoading(true);
+    Promise.all([
+      fetch("/api/rms/limits", { headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" } }).then(r => r.ok ? r.json() : []),
+      getBrokerages(),
+      getManagedBOAccounts(),
+    ]).then(([l, b, bo]) => {
+      setLimitsState(Array.isArray(l) ? l : []);
+      setBrokerages(Array.isArray(b) ? b : []);
+      setBoAccounts(Array.isArray(bo) ? bo : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+  const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    try { await setRMSLimit(form); setShowForm(false); load(); }
+    finally { setSaving(false); }
+  };
+
+  const tabFiltered = limits.filter(l => {
+    const type = l.entityType || l.EntityType || "";
+    if (activeTab === "investor") return type === "Investor";
+    if (activeTab === "trader")   return type === "Trader";
+    if (activeTab === "market")   return ["Market","Sector","Exchange"].includes(type);
+    return true;
+  }).filter(l =>
+    (!filterBrok || (l.brokerageHouseId || l.BrokerageHouseId) === filterBrok) &&
+    (!filterType || (l.entityType || l.EntityType) === filterType)
+  );
+
+  const investorCount = limits.filter(l => (l.entityType||l.EntityType) === "Investor").length;
+  const blockCount    = limits.filter(l => (l.actionOnBreach||l.ActionOnBreach) === 2 || (l.actionOnBreach||l.ActionOnBreach) === "Block").length;
+  const warnCount     = limits.filter(l => (l.actionOnBreach||l.ActionOnBreach) === 1 || (l.actionOnBreach||l.ActionOnBreach) === "Warn").length;
+
+  const getAction = (l) => {
+    const v = l.actionOnBreach ?? l.ActionOnBreach;
+    if (typeof v === "string") return v;
+    return v === 1 ? "Warn" : v === 3 ? "Freeze" : "Block";
+  };
+
+  return (
+    <div style={{ padding: 24, color: col("--t-text1"), minHeight: "100vh" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, fontFamily: mono }}>RMS Limit Management</div>
+          <div style={{ fontSize: 12, color: col("--t-text3"), marginTop: 2 }}>Configure per-entity trading limits — DSE/CSE compliance</div>
+        </div>
+        <button onClick={() => { setForm(EMPTY); setShowForm(true); }}
+          style={{ padding: "8px 16px", background: col("--t-accent"), color: "#000",
+            border: "none", borderRadius: 7, fontWeight: 700, fontSize: 12, fontFamily: mono, cursor: "pointer" }}>
+          + Set New Limit
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Total Limits",    value: limits.length,  color: col("--t-accent") },
+          { label: "Investor Limits", value: investorCount,  color: "#64B4FF" },
+          { label: "Block Actions",   value: blockCount,     color: "#FF6B6B" },
+          { label: "Warn Actions",    value: warnCount,      color: "#FFB800" },
+        ].map(card => (
+          <div key={card.label} style={{ background: col("--t-panel"), border: `1px solid ${col("--t-border")}`,
+            borderRadius: 10, padding: "14px 18px" }}>
+            <div style={{ fontSize: 10, color: col("--t-text3"), fontFamily: mono, textTransform: "uppercase", marginBottom: 6 }}>{card.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, fontFamily: mono, color: card.color }}>{card.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: `1px solid ${col("--t-border")}` }}>
+        {[{id:"all",label:"All Limits"},{id:"investor",label:"Investor"},{id:"trader",label:"Trader"},{id:"market",label:"Market/Sector"}].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            style={{ padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 12, fontFamily: mono, fontWeight: 600,
+              background: "transparent", borderBottom: activeTab === tab.id ? `2px solid ${col("--t-accent")}` : "2px solid transparent",
+              color: activeTab === tab.id ? col("--t-accent") : col("--t-text3"), marginBottom: -1 }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+        <select value={filterBrok} onChange={e => setFilterBrok(Number(e.target.value))}
+          style={{ background: col("--t-hover"), border: `1px solid ${col("--t-border")}`, borderRadius: 7,
+            padding: "8px 12px", color: col("--t-text1"), fontSize: 12, fontFamily: mono, outline: "none" }}>
+          <option value={0}>All Brokerages</option>
+          {brokerages.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)}
+          style={{ background: col("--t-hover"), border: `1px solid ${col("--t-border")}`, borderRadius: 7,
+            padding: "8px 12px", color: col("--t-text1"), fontSize: 12, fontFamily: mono, outline: "none" }}>
+          <option value="">All Entity Types</option>
+          {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+      </div>
+
+      {/* Table */}
+      {loading ? <div style={{ color: col("--t-text3"), fontFamily: mono, fontSize: 12 }}>Loading RMS limits...</div> : (
+        <div style={{ border: `1px solid ${col("--t-border")}`, borderRadius: 10, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: mono }}>
+            <thead>
+              <tr style={{ background: col("--t-panel"), borderBottom: `1px solid ${col("--t-border")}` }}>
+                {["Level","Entity Type","Entity ID","Max Order","Max Daily","Max Exposure","Conc %","Action","Status"].map(h => (
+                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10,
+                    color: col("--t-text3"), textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tabFiltered.map((l, i) => (
+                <tr key={l.id || i} style={{ borderBottom: `1px solid ${col("--t-border")}`,
+                  background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
+                  <td style={{ padding: "10px 14px", color: col("--t-accent"), fontWeight: 700 }}>{l.level ?? l.Level}</td>
+                  <td style={{ padding: "10px 14px" }}>{l.entityType ?? l.EntityType}</td>
+                  <td style={{ padding: "10px 14px", color: col("--t-text2") }}>{l.entityId ?? l.EntityId ?? "—"}</td>
+                  <td style={{ padding: "10px 14px", color: "#00D4AA" }}>{fmt(l.maxOrderValue ?? l.MaxOrderValue ?? 0)}</td>
+                  <td style={{ padding: "10px 14px" }}>{fmt(l.maxDailyValue ?? l.MaxDailyValue ?? 0)}</td>
+                  <td style={{ padding: "10px 14px" }}>{fmt(l.maxExposure ?? l.MaxExposure ?? 0)}</td>
+                  <td style={{ padding: "10px 14px" }}>{(l.concentrationPct ?? l.ConcentrationPct ?? 0)}%</td>
+                  <td style={{ padding: "10px 14px" }}><ActionBadge action={getAction(l)} /></td>
+                  <td style={{ padding: "10px 14px" }}><Badge active={l.isActive ?? l.IsActive ?? true} /></td>
+                </tr>
+              ))}
+              {tabFiltered.length === 0 && (
+                <tr><td colSpan={9} style={{ padding: 24, textAlign: "center", color: col("--t-text3") }}>
+                  No RMS limits found. Click "+ Set New Limit" to configure one.
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Set Limit Modal */}
+      {showForm && (
+        <>
+          <div onClick={() => setShowForm(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 999 }} />
+          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+            width: 560, background: col("--t-surface"), border: `1px solid ${col("--t-border")}`,
+            borderRadius: 12, zIndex: 1000, padding: 24, boxShadow: "0 24px 48px rgba(0,0,0,0.6)", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, fontFamily: mono, marginBottom: 20 }}>Set RMS Limit</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
+
+              <Field label="Level">
+                <Sel value={form.level} onChange={v => set("level")(Number(v))}>
+                  <option value={1}>Investor</option><option value={2}>Trader</option>
+                  <option value={3}>Stock</option><option value={4}>Sector</option>
+                  <option value={5}>Market</option><option value={6}>Exchange</option>
+                </Sel>
+              </Field>
+
+              <Field label="Entity Type">
+                <Sel value={form.entityType} onChange={set("entityType")}>
+                  {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                </Sel>
+              </Field>
+
+              <div style={{ gridColumn: "1/-1" }}>
+                <Field label="Brokerage House">
+                  <Sel value={form.brokerageHouseId} onChange={v => set("brokerageHouseId")(Number(v))}>
+                    {brokerages.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </Sel>
+                </Field>
+              </div>
+
+              {["Investor","Trader"].includes(form.entityType) && (
+                <div style={{ gridColumn: "1/-1" }}>
+                  <Field label={`Select ${form.entityType}`}>
+                    <Sel value={form.entityId ?? ""} onChange={v => set("entityId")(Number(v) || null)}>
+                      <option value="">Global (all {form.entityType}s)</option>
+                      {boAccounts
+                        .filter(a => !form.brokerageHouseId || a.brokerageHouseId === form.brokerageHouseId)
+                        .map(a => <option key={a.userId} value={a.userId}>{a.boNumber} — {a.fullName}</option>)}
+                    </Sel>
+                  </Field>
+                </div>
+              )}
+
+              <Field label="Max Order Value (৳)"><Inp value={form.maxOrderValue}    onChange={set("maxOrderValue")}    type="number" /></Field>
+              <Field label="Max Daily Value (৳)"><Inp value={form.maxDailyValue}    onChange={set("maxDailyValue")}    type="number" /></Field>
+              <Field label="Max Exposure (৳)">   <Inp value={form.maxExposure}      onChange={set("maxExposure")}      type="number" /></Field>
+              <Field label="Concentration %">     <Inp value={form.concentrationPct} onChange={set("concentrationPct")} type="number" /></Field>
+
+              <div style={{ gridColumn: "1/-1" }}>
+                <label style={{ fontSize: 10, color: col("--t-text3"), fontFamily: mono, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Action on Breach</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{label:"Warn",v:1,color:"#FFB800"},{label:"Block",v:2,color:"#FF6B6B"},{label:"Freeze",v:3,color:"#9B59B6"}].map(opt => (
+                    <button key={opt.label} onClick={() => set("actionOnBreach")(opt.v)}
+                      style={{ flex: 1, padding: "8px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontFamily: mono, fontWeight: 700,
+                        background: form.actionOnBreach === opt.v ? opt.color + "20" : col("--t-hover"),
+                        border: `1px solid ${form.actionOnBreach === opt.v ? opt.color : col("--t-border")}`,
+                        color: form.actionOnBreach === opt.v ? opt.color : col("--t-text2") }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, color: col("--t-text3"), fontFamily: mono, marginTop: 6 }}>
+                  Warn = allow + alert · Block = reject order · Freeze = suspend account
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setShowForm(false)} style={{ padding: "8px 16px", background: col("--t-hover"),
+                border: `1px solid ${col("--t-border")}`, borderRadius: 7, color: col("--t-text2"),
+                fontSize: 12, fontFamily: mono, cursor: "pointer" }}>Cancel</button>
+              <button onClick={save} disabled={saving} style={{ padding: "8px 20px", background: col("--t-accent"),
+                color: "#000", border: "none", borderRadius: 7, fontWeight: 700,
+                fontSize: 12, fontFamily: mono, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+                {saving ? "Saving..." : "Set Limit"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

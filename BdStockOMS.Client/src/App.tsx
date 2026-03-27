@@ -1,6 +1,7 @@
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import BrokerManagementPage from '@/pages/BrokerManagementPage';
 import BranchManagementPage  from '@/pages/BranchManagementPage';
+import RMSManagementPage   from '@/pages/RMSManagementPage';
 import BOManagementPage       from '@/pages/BOManagementPage';
 import { AdminPlaceholderPage } from './pages/admin/PlaceholderPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -11,7 +12,7 @@ import { DashboardLayout }   from '@/components/layout/DashboardLayout'
 import DashboardPage         from "@/pages/DashboardPage"
 import { BuySellConsole }    from '@/components/trading/BuySellConsole'
 import { TradeMonitorPage } from '@/pages/TradeMonitorPage'
-import { RMSPage } from '@/pages/PlaceholderPages'
+// RMSPage replaced by RMSManagementPage
 import {
   OrdersPage, PortfolioPage, MarketPage,
   SuperAdminPage, RbacPage, TenantPage,
@@ -34,7 +35,7 @@ export default function App() {
             <Route path="/portfolio"  element={<PortfolioPage />} />
             <Route path="/market"     element={<MarketPage />} />
             <Route path="/trade-monitor" element={<TradeMonitorPage />} />
-            <Route path="/rms" element={<RMSPage />} />
+            <Route path="/rms" element={<RMSManagementPage />} />
           </Route>
         </Route>
 
