@@ -30,20 +30,26 @@ function GaugeBar({ label, used, total, color }: any) {
   )
 }
 
+import { useSelectedBOStore } from '@/store/useSelectedBOStore'
 export function RMSLimitsWidget() {
+  const selectedBO = useSelectedBOStore(s => s.selectedBO)
   const navigate = useNavigate()
   const [limits, setLimits] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
-      try { setLimits(await rmsApi.getMyLimits()) } catch { setLimits(DEMO_RMS) }
+      try {
+        const url = selectedBO ? `/api/rms/investor/${selectedBO.userId}` : null
+        const data = url ? await import('@/api/client').then(m => m.apiClient.get(url)).then(r => r.data) : await rmsApi.getMyLimits()
+        setLimits(data)
+      } catch { setLimits(DEMO_RMS) }
       finally { setLoading(false) }
     }
     load()
     const id = setInterval(load, 15000)
     return () => clearInterval(id)
-  }, [])
+  }, [selectedBO?.userId])
 
   const l = limits ?? {}
   const marginUsed  = l.marginUsed  ?? l.usedMargin  ?? 0
@@ -60,7 +66,10 @@ export function RMSLimitsWidget() {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
       <div style={{ padding: "5px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>RMS LIMITS</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "'Space Mono',monospace" }}>RMS LIMITS</span>
+          {selectedBO && <span style={{ color: "var(--t-accent)", fontSize: 9, fontFamily: "'Space Mono',monospace" }}>{selectedBO.boNumber} · {selectedBO.fullName}</span>}
+        </div>
         <span style={{ color: riskColor, fontSize: 10, fontFamily: "'Space Mono',monospace", fontWeight: 700 }}>{riskLabel}</span>
       </div>
 

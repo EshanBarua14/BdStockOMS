@@ -77,6 +77,25 @@ public class RMSController : ControllerBase
     }
 
     // POST /api/rms/set-limit
+
+    // GET /api/rms/investor/{userId} — Admin: fetch RMS limits for a specific investor
+    [HttpGet("investor/{investorId}")]
+    [Authorize(Roles = "SuperAdmin,Admin,BrokerageAdmin,Trader")]
+    public async Task<IActionResult> GetInvestorLimits(int investorId)
+    {
+        var limits = await _db.RMSLimits
+            .Where(r => r.EntityId == investorId &&
+                        r.EntityType == "Investor" &&
+                        r.IsActive)
+            .ToListAsync();
+        return Ok(limits.Any() ? limits : new object[]
+        {
+            new { limitType = "DayBuyValue",   used = 0, limit = 5000000, entityType = "Investor" },
+            new { limitType = "Exposure",       used = 0, limit = 10000000, entityType = "Investor" },
+            new { limitType = "MarginUsed",     used = 0, limit = 1000000, entityType = "Investor" },
+        });
+    }
+
     [HttpPost("set-limit")]
     [Authorize(Roles = "SuperAdmin,Admin,ComplianceOfficer")]
     public async Task<IActionResult> SetLimit([FromBody] SetRMSLimitRequest request)
