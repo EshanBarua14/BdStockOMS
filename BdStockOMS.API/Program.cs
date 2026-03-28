@@ -224,6 +224,7 @@ builder.Services.AddSwaggerGen(options =>
 
 // ── Day 65: Admin Settings Services
 builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+builder.Services.AddScoped<IAdminFixService, AdminFixService>();
 builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 builder.Services.AddScoped<ISystemHealthService, SystemHealthService>();
 
