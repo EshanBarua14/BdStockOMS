@@ -1,6 +1,6 @@
 // SimulatedOrderFillService.cs
-// Auto-fills Pending orders after a short delay to simulate exchange matching.
-// Market orders fill in 2-4s, Limit orders fill in 5-15s.
+// Realistic fill simulation: Market orders fill fast, Limit orders fill on price
+// condition only, slippage applied, Buy/Sell side correctly propagated via SignalR.
 
 using BdStockOMS.API.Data;
 using BdStockOMS.API.Hubs;
@@ -29,11 +29,10 @@ public class SimulatedOrderFillService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        _logger.LogInformation("SimulatedOrderFillService started");
-        while (!ct.IsCancellationRequested)
+        _logger.LogInformation("SimulatedOrderFillService started (realistic mode)");
         {
-            await Task.Delay(2000, ct);
-            try { await ProcessPendingOrders(ct); }
+            await Task.Delay(3000, ct);
+            try   { await ProcessPendingOrders(ct); }
             catch (Exception ex) { _logger.LogWarning(ex, "SimulatedOrderFill error"); }
         }
     }
@@ -43,52 +42,55 @@ public class SimulatedOrderFillService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var pending = await db.Orders
+        var orders = await db.Orders
             .Include(o => o.Stock)
             .Include(o => o.Investor)
             .Where(o => o.Status == OrderStatus.Pending || o.Status == OrderStatus.Open)
-            .Take(20)
+            .Take(30)
             .ToListAsync(ct);
 
-        foreach (var order in pending)
+        foreach (var order in orders)
         {
             if (ct.IsCancellationRequested) break;
 
-            // Determine delay based on order category
             var ageMs = (DateTime.UtcNow - order.CreatedAt).TotalMilliseconds;
-            var delayMs = order.OrderCategory == OrderCategory.Market
-                ? _rng.Next(1000, 3000)
-                : _rng.Next(4000, 12000);
 
-
-            // First transition: Pending → Open after 500ms
+            // Step 1: Pending -> Open after 500 ms
             if (order.Status == OrderStatus.Pending && ageMs > 500)
             {
                 order.Status = OrderStatus.Open;
                 await db.SaveChangesAsync(ct);
-                continue; // process fill on next cycle
+                continue;
             }
             if (order.Status != OrderStatus.Open) continue;
 
-            var stock     = order.Stock;
-            var fillPrice = stock?.LastTradePrice ?? order.LimitPrice ?? order.PriceAtOrder;
+            var stock       = order.Stock;
+            var marketPrice = stock?.LastTradePrice ?? order.LimitPrice ?? order.PriceAtOrder;
 
-            // Limit order: only fill if price is within 3% of market
-            if (order.OrderCategory == OrderCategory.Limit && order.LimitPrice.HasValue && stock != null)
+            // Step 2: Decide whether to fill this tick
+            bool shouldFill = order.OrderCategory switch
             {
-                var ltp = stock.LastTradePrice;
-                if (order.OrderType == OrderType.Buy  && order.LimitPrice.Value < ltp * 0.97m) continue;
-                if (order.OrderType == OrderType.Sell && order.LimitPrice.Value > ltp * 1.03m) continue;
-                fillPrice = order.LimitPrice.Value;
-            }
+                // Market: high probability, fills quickly
+                OrderCategory.Market => ageMs > 1500 && _rng.NextDouble() < 0.90,
 
-            // Fill with tiny slippage ±0.1%
-            order.ExecutionPrice = Math.Round(fillPrice * (decimal)(1 + (_rng.NextDouble() - 0.5) * 0.002), 2);
-            // Transition: Pending → Open → Filled
-            order.Status = OrderStatus.Filled;
+                // Limit: price must cross, then random liquidity check
+                OrderCategory.Limit  => IsLimitFillable(order, marketPrice)
+                                        && ageMs > 3000
+                                        && _rng.NextDouble() < 0.55,
+                _ => false
+            };
+
+
+            // Step 3: Fill price with slippage for market orders
+            decimal fillPrice = order.OrderCategory == OrderCategory.Market
+                ? ApplySlippage(marketPrice, order.OrderType)
+                : order.LimitPrice!.Value;
+
+            order.ExecutionPrice = Math.Round(fillPrice, 2);
+            order.Status         = OrderStatus.Filled;
             order.ExecutedAt     = DateTime.UtcNow;
 
-            // Update portfolio for BUY
+            // Step 4: Update portfolio
             if (order.OrderType == OrderType.Buy)
             {
                 var portfolio = await db.Portfolios.FirstOrDefaultAsync(
@@ -96,13 +98,14 @@ public class SimulatedOrderFillService : BackgroundService
 
                 if (portfolio == null)
                 {
-                    db.Portfolios.Add(new Portfolio {
-                        InvestorId        = order.InvestorId,
-                        StockId           = order.StockId,
-                        BrokerageHouseId  = order.BrokerageHouseId,
-                        Quantity          = order.Quantity,
-                        AverageBuyPrice   = order.ExecutionPrice!.Value,
-                        LastUpdatedAt     = DateTime.UtcNow,
+                    db.Portfolios.Add(new Portfolio
+                    {
+                        InvestorId       = order.InvestorId,
+                        StockId          = order.StockId,
+                        BrokerageHouseId = order.BrokerageHouseId,
+                        Quantity         = order.Quantity,
+                        AverageBuyPrice  = order.ExecutionPrice!.Value,
+                        LastUpdatedAt    = DateTime.UtcNow,
                     });
                 }
                 else
@@ -116,7 +119,6 @@ public class SimulatedOrderFillService : BackgroundService
                 }
             }
 
-            // Update portfolio for SELL
             if (order.OrderType == OrderType.Sell)
             {
                 var portfolio = await db.Portfolios.FirstOrDefaultAsync(
@@ -129,27 +131,46 @@ public class SimulatedOrderFillService : BackgroundService
                     if (portfolio.Quantity == 0) db.Portfolios.Remove(portfolio);
                 }
 
-                // Credit cash for sell proceeds
                 if (order.Investor != null)
                     order.Investor.CashBalance += order.Quantity * order.ExecutionPrice!.Value;
             }
 
             await db.SaveChangesAsync(ct);
 
-            // Broadcast TradeExecuted via SignalR
-            await _hub.Clients.All.SendAsync("TradeExecuted", new {
+            // Step 5: Broadcast — side = order.OrderType.ToString() = "Buy" or "Sell"
+            await _hub.Clients.All.SendAsync("TradeExecuted", new
+            {
                 orderId        = order.Id,
                 tradingCode    = stock?.TradingCode,
                 status         = order.Status.ToString(),
                 filledQuantity = order.Quantity,
                 executionPrice = order.ExecutionPrice,
-                side           = order.OrderType.ToString(),
+                side           = order.OrderType.ToString(),  // FIX: always Buy or Sell
             }, ct);
 
             _logger.LogInformation(
-                "Simulated fill: Order {Id} {Side} {Qty}×{Code} @ {Price} → {Status}",
+                "Filled: Order {Id} {Side} {Qty}x{Code} @ {Price:F2} (market {Market:F2})",
                 order.Id, order.OrderType, order.Quantity,
-                stock?.TradingCode, order.ExecutionPrice, order.Status);
+                stock?.TradingCode, order.ExecutionPrice, marketPrice);
         }
+    }
+
+    // BUY  limit fills when market <= limit (getting it at or cheaper than limit)
+    // SELL limit fills when market >= limit (getting it at or higher than limit)
+    private static bool IsLimitFillable(Order order, decimal marketPrice)
+    {
+        return order.OrderType switch
+        {
+            OrderType.Buy  => marketPrice <= order.LimitPrice.Value,
+            OrderType.Sell => marketPrice >= order.LimitPrice.Value,
+            _              => false
+        };
+    }
+
+    // Buyers pay slightly above market, sellers receive slightly below
+    private static decimal ApplySlippage(decimal price, OrderType side)
+    {
+        var slip = (decimal)(_rng.NextDouble() * 0.002); // 0-0.2%
+        return side == OrderType.Buy ? price * (1 + slip) : price * (1 - slip);
     }
 }

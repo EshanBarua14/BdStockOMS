@@ -3,22 +3,18 @@
 // Full-featured orders table: sortable, searchable, filterable columns, drag-reorder
 
 import React from "react"
+import { OrderStatusBadge, OrderSideBadge } from "./OrderBook/OrderStatusBadge"
 import { DataTable } from "../ui/DataTable"
 import { useTableState, ColumnDef } from "../../hooks/useTableState"
 import { ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "../../hooks/useOrders"
 import type { Order } from "../../hooks/useOrders"
 
 function StatusBadge({ status }: { status: number }) {
-  const s = ORDER_STATUS[status] ?? { label: "Unknown", color: "text-zinc-500" }
-  return <span className={`text-[10px] font-semibold ${s.color}`}>{s.label}</span>
+  return <OrderStatusBadge status={status} />
 }
 
 function TypeBadge({ type }: { type: number }) {
-  return (
-    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${type === 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
-      {ORDER_TYPE_LABEL[type] ?? "—"}
-    </span>
-  )
+  return <OrderSideBadge side={type} />
 }
 
 const ORDER_COLUMNS: ColumnDef<Order>[] = [

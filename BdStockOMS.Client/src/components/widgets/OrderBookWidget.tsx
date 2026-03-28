@@ -7,6 +7,7 @@
 // - Cancel uses correct numeric id
 
 import { useState, useMemo } from "react"
+import { OrderStatusBadge, OrderSideBadge } from "./OrderBook/OrderStatusBadge"
 import { useOrders, ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "@/hooks/useOrders"
 
 const STATUS_COLORS: Record<number, string> = {
@@ -125,9 +126,7 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
                 {o.tradingCode || `#${o.stockId}`}
               </span>
               {/* Side */}
-              <span style={{ color: isBuy ? "var(--t-buy)" : "var(--t-sell)", fontSize: 10, fontFamily: mono, fontWeight: 700 }}>
-                {isBuy ? "BUY" : "SELL"}
-              </span>
+              <OrderSideBadge side={o.orderType} />
               {/* Type */}
               <span style={{ color: "var(--t-text3)", fontSize: 10, fontFamily: mono }}>
                 {ORDER_CAT_LABEL[o.orderCategory] ?? "—"}
@@ -141,9 +140,7 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
                 {o.limitPrice != null ? `৳${o.limitPrice.toFixed(2)}` : "MKT"}
               </span>
               {/* Status */}
-              <span style={{ color: STATUS_COLORS[o.status] ?? "var(--t-text2)", fontSize: 10, fontFamily: mono }}>
-                {statusInfo?.label ?? `Status ${o.status}`}
-              </span>
+              <OrderStatusBadge status={o.status} />
               {/* Cancel button — only for Pending(0) or Open(1) */}
               <div>
                 {(o.status === 0 || o.status === 1) && (
