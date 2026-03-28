@@ -4,6 +4,7 @@ import BranchManagementPage  from '@/pages/BranchManagementPage';
 import AccountsPage  from '@/pages/AccountsPage';
 import IPOPage       from '@/pages/IPOPage';
 import TBondPage     from '@/pages/TBondPage';
+import ReportsPage       from '@/pages/ReportsPage';
 import RMSManagementPage   from '@/pages/RMSManagementPage';
 import BOManagementPage       from '@/pages/BOManagementPage';
 import { AdminPlaceholderPage } from './pages/admin/PlaceholderPage';
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/market"     element={<MarketPage />} />
             <Route path="/trade-monitor" element={<TradeMonitorPage />} />
             <Route path="/rms" element={<RMSManagementPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/ipo" element={<IPOPage />} />
           <Route path="/tbond" element={<TBondPage />} />

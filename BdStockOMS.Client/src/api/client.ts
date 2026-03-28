@@ -169,3 +169,10 @@ export const approveFundCCD      = (id: any) => fetch(`/api/fund-requests/${id}/
 export const rejectFundRequest   = (id: any,dto: any) => fetch(`/api/fund-requests/${id}/reject`,{method:'PUT',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
 export const completeFundRequest = (id: any) => fetch(`/api/fund-requests/${id}/complete`,{method:'PUT',headers:headers()}).then(r=>handle(r))
 export const getMyBalance        = () => fetch('/api/fund-requests/balance',{headers:headers()}).then(r=>handle(r))
+
+// ── Reports ───────────────────────────────────────────────────
+export const getOrderSummaryReport  = (bid: any, from: any, to: any) => fetch(`/api/brokeragereport/${bid}/orders?fromDate=${from}&toDate=${to}`,{headers:headers()}).then(r=>handle(r))
+export const getTopInvestorsReport  = (bid: any, from: any, to: any, top=10) => fetch(`/api/brokeragereport/${bid}/top-investors?fromDate=${from}&toDate=${to}&top=${top}`,{headers:headers()}).then(r=>handle(r))
+export const getCommissionReport    = (bid: any, from: any, to: any) => fetch(`/api/brokeragereport/${bid}/commission?fromDate=${from}&toDate=${to}`,{headers:headers()}).then(r=>handle(r))
+export const getFundRequestReport   = (bid: any, from: any, to: any) => fetch(`/api/brokeragereport/${bid}/fund-requests?fromDate=${from}&toDate=${to}`,{headers:headers()}).then(r=>handle(r))
+export const getAuditLogs           = (page=1,pageSize=50,from: string="",to: string="") => fetch(`/api/admin/audit?page=${page}&pageSize=${pageSize}${from?"&from="+from:""}${to?"&to="+to:""}`,{headers:headers()}).then(r=>handle(r))
