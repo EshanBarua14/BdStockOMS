@@ -53,7 +53,7 @@ function Pill({ children, style = {} }: { children: React.ReactNode; style?: Rea
   }}>{children}</div>
 }
 
-export function Topbar() {
+export function Topbar({ onOpenPalette }: { onOpenPalette?: () => void } = {}) {
   const user = useAuthStore(s => s.user)
   const { ticksArray, marketStatus } = useMarketData()
   const sr = useSignalRStatus()
