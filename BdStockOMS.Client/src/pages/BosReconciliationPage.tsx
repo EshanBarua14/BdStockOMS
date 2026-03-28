@@ -2,7 +2,7 @@
 // BosReconciliationPage.tsx - Day 74
 import { useState, useEffect, useCallback } from 'react'
 import { bosGetSessions, bosUploadClients, bosUploadPositions, bosExportPositions, bosGetCompliance, bosRefreshCompliance } from '@/api/client'
-import { useAuthStore } from '@/store/useAuthStore'
+import { useAuthStore } from '@/store/authStore'
 
 const mono = "'JetBrains Mono', monospace"
 
