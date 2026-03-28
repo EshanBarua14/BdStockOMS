@@ -43,20 +43,21 @@ function Tabs({ active, onChange }: { active: string; onChange: (t:string)=>void
 }
 
 function UploadTab({ brokerageHouseId, userId }: { brokerageHouseId:number; userId:number }) {
-  const [mode,setMode]       = useState<'clients'|'positions'>('clients')
-  const [xmlContent,setXml]  = useState('')
-  const [xmlName,setXmlName] = useState('')
-  const [ctrlContent,setCtrl]= useState('')
+  const [mode,setMode]        = useState<'clients'|'positions'>('clients')
+  const [xmlContent,setXml]   = useState('')
+  const [xmlName,setXmlName]  = useState('')
+  const [ctrlContent,setCtrl] = useState('')
   const [ctrlName,setCtrlName]= useState('')
-  const [busy,setBusy]       = useState(false)
-  const [result,setResult]   = useState<any>(null)
-  const [error,setError]     = useState('')
+  const [busy,setBusy]        = useState(false)
+  const [result,setResult]    = useState<any>(null)
+  const [error,setError]      = useState('')
 
   const readFile = (f:File):Promise<string> => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target?.result as string); r.onerror=rej; r.readAsText(f) })
   const onXml  = async (e:any) => { const f=e.target.files?.[0]; if(f){setXmlName(f.name);setXml(await readFile(f))} }
   const onCtrl = async (e:any) => { const f=e.target.files?.[0]; if(f){setCtrlName(f.name);setCtrl(await readFile(f))} }
 
   const submit = async () => {
+    if(!xmlContent){setError('XML file required');return}
     setBusy(true);setError('');setResult(null)
     try {
       const dto={brokerageHouseId,uploadedByUserId:userId,xmlFileName:xmlName,xmlContent,ctrlFileName:ctrlName,ctrlContent}
@@ -82,19 +83,21 @@ function UploadTab({ brokerageHouseId, userId }: { brokerageHouseId:number; user
       <div style={{display:'flex',flexDirection:'column',gap:6}}>
         <label style={{fontSize:11,color:'var(--t-text3)',fontFamily:mono}}>XML FILE *</label>
         <input type='file' accept='.xml' onChange={onXml} style={inp as any} />
-        {xmlName&&<span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>{xmlName} - {xmlContent.length.toLocaleString()} chars</span>}
+        {xmlName && <span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>{xmlName} - {xmlContent.length.toLocaleString()} chars</span>}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:6}}>
         <label style={{fontSize:11,color:'var(--t-text3)',fontFamily:mono}}>CTRL FILE (optional - MD5 verification)</label>
         <input type='file' accept='.ctrl,.xml,.txt' onChange={onCtrl} style={inp as any} />
-        {ctrlName&&<span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>{ctrlName}</span>}
+        {ctrlName && <span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>{ctrlName}</span>}
       </div>
+      <button onClick={submit} disabled={busy} style={{
         padding:'10px 24px',borderRadius:6,fontSize:13,fontFamily:mono,cursor:busy?'wait':'pointer',
         background:busy?'var(--t-hover)':'rgba(0,212,170,0.15)',
         border:'1px solid '+(busy?'var(--t-border)':'var(--t-accent)'),
+        color:busy?'var(--t-text3)':'var(--t-accent)',fontWeight:700,
       }}>{busy?'Processing...':'Run Reconciliation'}</button>
-      {error&&<div style={{background:'rgba(255,107,107,0.08)',border:'1px solid rgba(255,107,107,0.25)',borderRadius:6,padding:'10px 14px',fontSize:12,color:'var(--t-sell)',fontFamily:mono}}>{error}</div>}
-      {result&&(
+      {error && <div style={{background:'rgba(255,107,107,0.08)',border:'1px solid rgba(255,107,107,0.25)',borderRadius:6,padding:'10px 14px',fontSize:12,color:'var(--t-sell)',fontFamily:mono}}>{error}</div>}
+      {result && (
         <div style={{background:'var(--t-panel)',border:'1px solid var(--t-border)',borderRadius:8,padding:16,display:'flex',flexDirection:'column',gap:12}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}><Pill v={result.status}/><Md2Badge ok={result.md5Verified}/></div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
@@ -105,7 +108,7 @@ function UploadTab({ brokerageHouseId, userId }: { brokerageHouseId:number; user
               </div>
             ))}
           </div>
-          {result.unmatchedItems?.length>0&&(
+          {result.unmatchedItems?.length > 0 && (
             <div>
               <div style={{fontSize:11,color:'var(--t-text3)',fontFamily:mono,marginBottom:8}}>UNMATCHED BO NUMBERS</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
@@ -115,7 +118,7 @@ function UploadTab({ brokerageHouseId, userId }: { brokerageHouseId:number; user
               </div>
             </div>
           )}
-          {result.errorMessage&&<div style={{fontSize:11,color:'var(--t-sell)',fontFamily:mono}}>{result.errorMessage}</div>}
+          {result.errorMessage && <div style={{fontSize:11,color:'var(--t-sell)',fontFamily:mono}}>{result.errorMessage}</div>}
         </div>
       )}
     </div>
@@ -139,9 +142,9 @@ function SessionsTab({ brokerageHouseId }: { brokerageHouseId:number }) {
         <span style={{fontSize:12,color:'var(--t-text3)',fontFamily:mono}}>{sessions.length} sessions</span>
         <button onClick={load} style={{fontSize:11,color:'var(--t-accent)',background:'none',border:'none',cursor:'pointer',fontFamily:mono}}>Refresh</button>
       </div>
-      {loading?<div style={{padding:24,textAlign:'center',color:'var(--t-text3)',fontSize:12,fontFamily:mono}}>Loading...</div>
-      :error?<div style={{padding:24,color:'var(--t-sell)',fontSize:12,fontFamily:mono}}>{error}</div>
-      :(
+      {loading ? <div style={{padding:24,textAlign:'center',color:'var(--t-text3)',fontSize:12,fontFamily:mono}}>Loading...</div>
+      : error   ? <div style={{padding:24,color:'var(--t-sell)',fontSize:12,fontFamily:mono}}>{error}</div>
+      : (
         <div style={{overflowX:'auto',flex:1}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,fontFamily:mono}}>
             <thead><tr style={{background:'var(--t-panel)'}}>
@@ -150,9 +153,9 @@ function SessionsTab({ brokerageHouseId }: { brokerageHouseId:number }) {
               ))}
             </tr></thead>
             <tbody>
-              {sessions.length===0
-                ?<tr><td colSpan={9} style={{padding:24,textAlign:'center',color:'var(--t-text3)'}}>No sessions yet</td></tr>
-                :sessions.map((s,i)=>(
+              {sessions.length === 0
+                ? <tr><td colSpan={9} style={{padding:24,textAlign:'center',color:'var(--t-text3)'}}>No sessions yet</td></tr>
+                : sessions.map((s,i)=>(
                   <tr key={s.id} style={{borderBottom:'1px solid var(--t-border)'}}
                     onMouseEnter={e=>(e.currentTarget.style.background='var(--t-hover)')}
                     onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
@@ -196,8 +199,9 @@ function ComplianceTab({ brokerageHouseId }: { brokerageHouseId:number }) {
   }
   if(loading) return <div style={{padding:24,textAlign:'center',color:'var(--t-text3)',fontSize:12,fontFamily:mono}}>Loading compliance...</div>
   if(error)   return <div style={{padding:24,color:'var(--t-sell)',fontSize:12,fontFamily:mono}}>{error}</div>
-  const passed = report.checks?.filter((c:any)=>c.passed).length??0
-  const total  = report.checks?.length??0
+  if(!report) return null
+  const passed = report.checks?.filter((c:any)=>c.passed).length ?? 0
+  const total  = report.checks?.length ?? 0
   return (
     <div style={{padding:20,display:'flex',flexDirection:'column',gap:16}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -205,7 +209,7 @@ function ComplianceTab({ brokerageHouseId }: { brokerageHouseId:number }) {
           <div style={{width:10,height:10,borderRadius:'50%',background:passed===total?'#00D4AA':'#FF6B6B'}}/>
           <span style={{fontSize:14,fontWeight:700,color:'var(--t-text1)',fontFamily:mono}}>{report.brokerageName}</span>
           <span style={{fontSize:12,color:'var(--t-text3)',fontFamily:mono}}>{passed}/{total} passed</span>
-          {report.fromCache&&<span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>(cached)</span>}
+          {report.fromCache && <span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>(cached)</span>}
         </div>
         <button onClick={refresh} disabled={refreshing} style={{padding:'6px 14px',borderRadius:6,fontSize:11,fontFamily:mono,cursor:refreshing?'wait':'pointer',background:'var(--t-hover)',border:'1px solid var(--t-border)',color:'var(--t-text2)'}}>{refreshing?'Refreshing...':'Force Refresh'}</button>
       </div>
@@ -219,13 +223,14 @@ function ComplianceTab({ brokerageHouseId }: { brokerageHouseId:number }) {
             borderLeft:'3px solid '+(c.passed?'#00D4AA':c.severity==='Critical'?'#FF6B6B':'#F59E0B'),
             borderRadius:6,padding:'10px 14px',display:'flex',alignItems:'flex-start',gap:12,
           }}>
-            <span style={{fontSize:14,marginTop:1}}>{c.passed?'v':'x'}</span>
+            <span style={{fontSize:14,marginTop:1,color:c.passed?'#00D4AA':'#FF6B6B'}}>{c.passed?'v':'x'}</span>
             <div style={{flex:1}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:c.failureReason?4:0}}>
                 <span style={{fontSize:11,fontWeight:700,color:'var(--t-text1)',fontFamily:mono}}>{c.checkName}</span>
+                {c.passed ? null : <Pill v={c.severity}/>}
               </div>
               <div style={{fontSize:11,color:'var(--t-text3)',fontFamily:mono}}>{c.description}</div>
-              {c.failureReason&&<div style={{fontSize:11,color:'var(--t-sell)',fontFamily:mono,marginTop:4}}>{c.failureReason}</div>}
+              {c.failureReason && <div style={{fontSize:11,color:'var(--t-sell)',fontFamily:mono,marginTop:4}}>{c.failureReason}</div>}
             </div>
             <Pill v={c.passed?'Passed':'Failed'}/>
           </div>
@@ -246,6 +251,7 @@ function ExportTab({ brokerageHouseId }: { brokerageHouseId:number }) {
     finally{setBusy(false)}
   }
   const download = ()=>{
+    if(!result)return
     const a=document.createElement('a')
     a.href=URL.createObjectURL(new Blob([result.xmlContent],{type:'text/xml'}))
     a.download=result.fileName;a.click()
@@ -257,8 +263,8 @@ function ExportTab({ brokerageHouseId }: { brokerageHouseId:number }) {
         <div style={{fontSize:12,color:'var(--t-text3)',fontFamily:mono,marginBottom:16}}>Generates BOS-compatible XML with MD5 checksum for all current portfolio positions.</div>
         <button onClick={run} disabled={busy} style={{padding:'10px 24px',borderRadius:6,fontSize:13,fontFamily:mono,cursor:busy?'wait':'pointer',background:'rgba(0,212,170,0.12)',border:'1px solid var(--t-accent)',color:'var(--t-accent)',fontWeight:700}}>{busy?'Generating...':'Generate XML'}</button>
       </div>
-      {error&&<div style={{background:'rgba(255,107,107,0.08)',border:'1px solid rgba(255,107,107,0.25)',borderRadius:6,padding:'10px 14px',fontSize:12,color:'var(--t-sell)',fontFamily:mono}}>{error}</div>}
-      {result&&(
+      {error && <div style={{background:'rgba(255,107,107,0.08)',border:'1px solid rgba(255,107,107,0.25)',borderRadius:6,padding:'10px 14px',fontSize:12,color:'var(--t-sell)',fontFamily:mono}}>{error}</div>}
+      {result && (
         <div style={{background:'var(--t-panel)',border:'1px solid var(--t-border)',borderRadius:8,padding:16,display:'flex',flexDirection:'column',gap:12}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <span style={{fontSize:12,fontWeight:700,color:'var(--t-text1)',fontFamily:mono}}>{result.fileName}</span>
@@ -268,8 +274,7 @@ function ExportTab({ brokerageHouseId }: { brokerageHouseId:number }) {
             <span style={{fontSize:10,color:'var(--t-text3)',fontFamily:mono}}>MD5:</span>
             <span style={{fontSize:10,color:'var(--t-accent)',fontFamily:mono}}>{result.md5Hash}</span>
           </div>
-          <pre style={{background:'var(--t-hover)',borderRadius:6,padding:12,fontSize:10,color:'var(--t-text2)',fontFamily:mono,overflow:'auto',maxHeight:300,margin:0}}>{result.xmlContent?.slice(0,2000)}{result.xmlContent?.length>2000?'
-...':''}</pre>
+          <pre style={{background:'var(--t-hover)',borderRadius:6,padding:12,fontSize:10,color:'var(--t-text2)',fontFamily:mono,overflow:'auto',maxHeight:300,margin:0}}>{result.xmlContent?.slice(0,2000)}{result.xmlContent?.length>2000?'\n...':''}</pre>
         </div>
       )}
     </div>
@@ -279,8 +284,8 @@ function ExportTab({ brokerageHouseId }: { brokerageHouseId:number }) {
 export default function BosReconciliationPage() {
   const [tab,setTab] = useState('Upload')
   const user = useAuthStore(s=>s.user)
-  const brokerageHouseId = user?.brokerageHouseId??1
-  const userId = user?.id??1
+  const brokerageHouseId = user?.brokerageHouseId ?? 1
+  const userId = user?.id ?? 1
   return (
     <div style={{height:'100%',display:'flex',flexDirection:'column',background:'var(--t-surface)',overflow:'hidden'}}>
       <div style={{padding:'12px 20px',borderBottom:'1px solid var(--t-border)',background:'var(--t-panel)',flexShrink:0,display:'flex',alignItems:'center',gap:12}}>
@@ -289,10 +294,10 @@ export default function BosReconciliationPage() {
       </div>
       <Tabs active={tab} onChange={setTab}/>
       <div style={{flex:1,overflow:'auto'}}>
-        {tab==='Upload'&&<UploadTab brokerageHouseId={brokerageHouseId} userId={userId}/>}
-        {tab==='Sessions'&&<SessionsTab brokerageHouseId={brokerageHouseId}/>}
-        {tab==='Compliance'&&<ComplianceTab brokerageHouseId={brokerageHouseId}/>}
-        {tab==='Export'&&<ExportTab brokerageHouseId={brokerageHouseId}/>}
+        {tab==='Upload'     && <UploadTab     brokerageHouseId={brokerageHouseId} userId={userId}/>}
+        {tab==='Sessions'   && <SessionsTab   brokerageHouseId={brokerageHouseId}/>}
+        {tab==='Compliance' && <ComplianceTab brokerageHouseId={brokerageHouseId}/>}
+        {tab==='Export'     && <ExportTab     brokerageHouseId={brokerageHouseId}/>}
       </div>
     </div>
   )
