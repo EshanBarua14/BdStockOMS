@@ -132,7 +132,7 @@ public class RealMarketDataService : BackgroundService
                 tradingCode    = stock.TradingCode,
                 companyName    = stock.CompanyName,
                 exchange       = stock.Exchange,
-                category       = stock.Category.ToString(),
+                category       = stock.Category.ToString(), // enum name e.g. A, B, Z
                 lastTradePrice = newPrice,
                 change,
                 changePercent  = changePct,

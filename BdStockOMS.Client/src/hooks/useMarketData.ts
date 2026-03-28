@@ -5,6 +5,12 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { getMarketData } from "../api/market"
 import { subscribeMarket } from "./useSignalR"
 
+const CAT_MAP: Record<number, string> = { 0: 'A', 1: 'B', 2: 'G', 3: 'N', 4: 'Z', 5: 'Spot' };
+const resolveCategory = (v: any): string => {
+  if (typeof v === 'string' && isNaN(Number(v))) return v;
+  return CAT_MAP[Number(v)] ?? String(v);
+};
+
 export interface StockTick {
   stockId: number
   tradingCode: string
@@ -59,7 +65,7 @@ function normaliseStock(s: any): StockTick {
     closePrice:         s.closePrice ?? s.ClosePrice ?? 0,
     openPrice:          s.openPrice ?? s.OpenPrice ?? 0,
     exchange:           s.exchange ?? s.Exchange ?? '',
-    category:           s.category ?? s.Category ?? '',
+    category:           resolveCategory(s.category ?? s.Category ?? 0),
     circuitBreakerHigh: s.circuitBreakerHigh ?? s.CircuitBreakerHigh ?? 0,
     circuitBreakerLow:  s.circuitBreakerLow  ?? s.CircuitBreakerLow  ?? 0,
     boardLotSize:       s.boardLotSize ?? s.BoardLotSize ?? 1,
