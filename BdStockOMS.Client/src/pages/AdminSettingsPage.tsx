@@ -22,7 +22,7 @@ type Section =
   | 'audit-log' | 'roles' | 'api-keys' | 'ip-whitelist'
   | 'data-retention' | 'announcements' | 'integrations';
 
-const BASE = 'https://localhost:7219/api';
+const BASE = '/api';
 
 function getToken(): string | null {
   try {
@@ -587,6 +587,7 @@ function TradingRulesSettings({ toast }: { toast: (m: string, t: 'success' | 'er
 
 // ── Section: Fee Structure ────────────────────────────────────
 function FeeStructureSettings({ toast }: { toast: (m: string, t: 'success' | 'error') => void }) {
+  useEffect(() => { apiFetch('/admin/fees').then(setFees).catch(() => {}); }, []);
   const [fees, setFees] = useState([
     { id: '1', name: 'Standard A/B', brokeragePercent: 0.40, secdFeePercent: 0.015, cdblFeePercent: 0.015, vatPercent: 15, aitPercent: 0.05, minBrokerage: 10, applyToCategory: 'ALL', isActive: true },
     { id: '2', name: 'Z Category', brokeragePercent: 0.50, secdFeePercent: 0.015, cdblFeePercent: 0.015, vatPercent: 15, aitPercent: 0.05, minBrokerage: 15, applyToCategory: 'Z', isActive: true },
@@ -714,6 +715,7 @@ function FeeStructureSettings({ toast }: { toast: (m: string, t: 'success' | 'er
 
 // ── Section: System Health ────────────────────────────────────
 function SystemHealthPanel({ toast: _toast }: { toast: (m: string, t: 'success' | 'error') => void }) {
+  useEffect(() => { apiFetch('/admin/health').then(setHealth).catch(() => {}); }, []);
   const [health, setHealth] = useState({
     dbStatus: 'healthy', redisStatus: 'healthy', signalrStatus: 'healthy', fixStatus: 'disconnected',
     cpuUsage: 23, memoryUsage: 47, diskUsage: 38,
@@ -1149,7 +1151,9 @@ function BackupSettings({ toast }: { toast: (m: string, t: 'success' | 'error') 
     retentionDays: 30,
     s3Enabled: false, s3Bucket: '', s3Region: 'ap-south-1', s3AccessKey: '', s3SecretKey: '',
   });
-  const [history] = useState([
+  const [history, setHistory] = useState([]);
+  useEffect(() => { apiFetch('/admin/backup/history').then(setHistory).catch(() => {}); }, []);
+  const [_history_unused] = useState([
     { id: '1', size: '245 MB', duration: '1m 23s', status: 'success', createdAt: new Date(Date.now() - 86400000).toISOString() },
     { id: '2', size: '243 MB', duration: '1m 18s', status: 'success', createdAt: new Date(Date.now() - 172800000).toISOString() },
     { id: '3', size: '241 MB', duration: '2m 01s', status: 'failed', createdAt: new Date(Date.now() - 259200000).toISOString() },
@@ -1269,7 +1273,9 @@ function RolesPermissions({ toast }: { toast: (m: string, t: 'success' | 'error'
   const MODULES = ['Dashboard', 'Trading', 'Portfolio', 'Reports', 'BO Management', 'Admin Settings', 'User Management', 'Market Data'];
   const ACTIONS = ['read', 'write', 'delete', 'admin'];
 
-  const [roles, _setRoles] = useState([
+  const [roles, setRoles] = useState([]);
+  useEffect(() => { apiFetch('/admin/roles').then(setRoles).catch(() => {}); }, []);
+  const [_roles_unused, _setRoles] = useState([
     { id: '1', name: 'Super Admin', description: 'Full system access', isSystem: true, userCount: 1, permissions: MODULES.map(m => ({ module: m, actions: ACTIONS })) },
     { id: '2', name: 'Branch Manager', description: 'Branch-level operations', isSystem: false, userCount: 4, permissions: MODULES.slice(0, 5).map(m => ({ module: m, actions: ['read', 'write'] })) },
     { id: '3', name: 'Dealer', description: 'Order entry & portfolio view', isSystem: false, userCount: 12, permissions: ['Dashboard', 'Trading', 'Portfolio'].map(m => ({ module: m, actions: ['read', 'write'] })) },
@@ -1374,6 +1380,7 @@ function RolesPermissions({ toast }: { toast: (m: string, t: 'success' | 'error'
 
 // ── Section: API Keys ─────────────────────────────────────────
 function ApiKeysSettings({ toast }: { toast: (m: string, t: 'success' | 'error') => void }) {
+  useEffect(() => { apiFetch('/admin/api-keys').then(setKeys).catch(() => {}); }, []);
   const [keys, setKeys] = useState([
     { id: '1', name: 'Market Data Feed', key: 'sk_live_****************************a1b2', scopes: ['market:read'], createdAt: '2025-06-01', expiresAt: '2026-06-01', lastUsed: new Date().toISOString(), active: true },
     { id: '2', name: 'Reporting Service', key: 'sk_live_****************************c3d4', scopes: ['orders:read', 'portfolio:read'], createdAt: '2025-05-15', expiresAt: null, lastUsed: new Date(Date.now() - 3600000).toISOString(), active: true },
@@ -1483,6 +1490,7 @@ function ApiKeysSettings({ toast }: { toast: (m: string, t: 'success' | 'error')
 
 // ── Section: Announcements ────────────────────────────────────
 function AnnouncementsSettings({ toast }: { toast: (m: string, t: 'success' | 'error') => void }) {
+  useEffect(() => { apiFetch('/admin/announcements').then(setItems).catch(() => {}); }, []);
   const [items, setItems] = useState([
     { id: '1', title: 'Market Holiday Notice', body: 'Markets will be closed on Friday July 4th.', type: 'info', active: true, pinned: true, expiresAt: '2025-07-05' },
     { id: '2', title: 'System Maintenance', body: 'Scheduled maintenance Saturday 2 AM–4 AM. Trading will be unavailable.', type: 'warning', active: false, pinned: false, expiresAt: '2025-07-06' },
@@ -1589,6 +1597,7 @@ function AnnouncementsSettings({ toast }: { toast: (m: string, t: 'success' | 'e
 // ── Section: IP Whitelist ─────────────────────────────────────
 function IPWhitelistSettings({ toast }: { toast: (m: string, t: 'success' | 'error') => void }) {
   const [enabled, setEnabled] = useState(false);
+  useEffect(() => { apiFetch('/admin/ip-whitelist').then(setIps).catch(() => {}); }, []);
   const [ips, setIps] = useState([
     { id: '1', ip: '192.168.1.0/24', label: 'Office LAN', addedAt: '2025-06-01' },
     { id: '2', ip: '203.0.113.5', label: 'Admin VPN', addedAt: '2025-06-15' },
