@@ -1,23 +1,24 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react'
+// DashboardLayout.tsx - Day 78 — central keyboard shortcut wiring
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar }  from './Topbar'
 import { CommandPalette } from '@/components/ui/CommandPalette'
+import { KeyboardHelp }   from '@/components/ui/KeyboardHelp'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+
+function Inner({ paletteOpen, setPaletteOpen, helpOpen, setHelpOpen }) {
+  useKeyboardShortcuts({
+    onOpenPalette: () => setPaletteOpen(o => !o),
+    onShowHelp:    () => setHelpOpen(o => !o),
+  })
+  return null
+}
 
 export function DashboardLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false)
-
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault()
-        setPaletteOpen(o => !o)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+  const [helpOpen,    setHelpOpen]    = useState(false)
 
   return (
     <div style={{
@@ -36,7 +37,12 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <Inner
+        paletteOpen={paletteOpen} setPaletteOpen={setPaletteOpen}
+        helpOpen={helpOpen}       setHelpOpen={setHelpOpen}
+      />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <KeyboardHelp   open={helpOpen}    onClose={() => setHelpOpen(false)} />
     </div>
   )
 }
