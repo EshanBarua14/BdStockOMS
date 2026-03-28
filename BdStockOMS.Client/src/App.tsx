@@ -1,4 +1,5 @@
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import BosReconciliationPage from '@/pages/BosReconciliationPage';
 import BrokerManagementPage from '@/pages/BrokerManagementPage';
 import BranchManagementPage  from '@/pages/BranchManagementPage';
 import AccountsPage  from '@/pages/AccountsPage';
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/admin/branches"     element={<BranchManagementPage />} />
           <Route path="/admin/bo-accounts"  element={<BOManagementPage />} />
           <Route path="/admin/users"        element={<AdminPlaceholderPage title="User Management" />} />
+          <Route path="/admin/bos" element={<BosReconciliationPage />} />
           <Route path="/admin/fix"          element={<AdminPlaceholderPage title="FIX Gateway" />} />
           <Route path="/admin/activities"   element={<AdminPlaceholderPage title="Activity Log" />} />
         </Routes>

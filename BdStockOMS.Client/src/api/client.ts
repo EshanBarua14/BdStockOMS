@@ -176,3 +176,11 @@ export const getTopInvestorsReport  = (bid: any, from: any, to: any, top=10) => 
 export const getCommissionReport    = (bid: any, from: any, to: any) => fetch(`/api/brokeragereport/${bid}/commission?fromDate=${from}&toDate=${to}`,{headers:headers()}).then(r=>handle(r))
 export const getFundRequestReport   = (bid: any, from: any, to: any) => fetch(`/api/brokeragereport/${bid}/fund-requests?fromDate=${from}&toDate=${to}`,{headers:headers()}).then(r=>handle(r))
 export const getAuditLogs           = (page=1,pageSize=50,from: string="",to: string="") => fetch(`/api/admin/audit?page=${page}&pageSize=${pageSize}${from?"&from="+from:""}${to?"&to="+to:""}`,{headers:headers()}).then(r=>handle(r))
+
+// BOS XML Reconciliation
+export const bosGetSessions       = (id: number) => fetch('/api/bos/sessions/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosUploadClients     = (dto: any)   => fetch('/api/bos/upload/clients',{method:'POST',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const bosUploadPositions   = (dto: any)   => fetch('/api/bos/upload/positions',{method:'POST',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const bosExportPositions   = (id: number) => fetch('/api/bos/export/positions/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosGetCompliance     = (id: number) => fetch('/api/boscompliance/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosRefreshCompliance = (id: number) => fetch('/api/boscompliance/'+id+'/refresh',{method:'POST',headers:headers()}).then(r=>handle(r))

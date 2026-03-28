@@ -1,0 +1,8 @@
+
+// BOS XML Reconciliation
+export const bosGetSessions       = (id: number) => fetch('/api/bos/sessions/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosUploadClients     = (dto: any)   => fetch('/api/bos/upload/clients',{method:'POST',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const bosUploadPositions   = (dto: any)   => fetch('/api/bos/upload/positions',{method:'POST',headers:headers(),body:JSON.stringify(dto)}).then(r=>handle(r))
+export const bosExportPositions   = (id: number) => fetch('/api/bos/export/positions/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosGetCompliance     = (id: number) => fetch('/api/boscompliance/'+id,{headers:headers(),cache:'no-store'}).then(r=>handle(r))
+export const bosRefreshCompliance = (id: number) => fetch('/api/boscompliance/'+id+'/refresh',{method:'POST',headers:headers()}).then(r=>handle(r))
