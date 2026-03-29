@@ -58,3 +58,30 @@ day-80-multitenant-v2 (from day-79-order-model-v2)
 
 ## Next - Day 81
 Granular RBAC: UserPermissions table, BO Group, Basket, 60+ permission constants, Permission middleware
+
+## Post-Day-80 UI Fixes (same branch)
+
+### ORDER BOOK widget redesigned (OrderBookWidget.tsx)
+- Tab filter bar: All / Open / Pending / Filled / Cancelled
+- Side filter buttons: All / BUY / SELL
+- Clean 7-column table: SYMBOL / SIDE / TYPE / QTY / PRICE / STATUS / ACTIONS
+- MOD button: inline amend form with Qty + Price inputs + SAVE
+- CXL button: cancels order, refreshes list
+- Footer: live counts for Total / Pending / Open / Filled / Cancelled
+
+### OrderStatusBadge.tsx rewritten
+- Inline styles replacing Tailwind classes
+- Handles both string (API returns "Waiting") and number status values
+- All 15 Day-79 statuses mapped with distinct colors
+- Animated dot for active statuses
+
+### Backend fixes
+- CancelOrderAsync: now allows Pending/Queued/Submitted/Waiting/Open
+- CancelOrder endpoint: added SuperAdmin to allowed roles
+- AmendOrder endpoint added: POST /api/orders/{id}/amend
+- AmendOrderAsync added to OrderService
+- AmendOrderRequestDto created in DTOs/Order/
+
+### API client fixes
+- cancelOrder: now sends {reason} body
+- amendOrder: added, correct URL /api/orders/{id}/amend
