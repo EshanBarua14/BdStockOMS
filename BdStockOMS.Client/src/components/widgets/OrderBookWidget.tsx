@@ -1,39 +1,28 @@
 // @ts-nocheck
 // src/components/widgets/OrderBookWidget.tsx
-// Fixed Day 61 audit:
-// - Field names corrected: o.symbol→o.tradingCode, o.side→derived from o.orderType,
-//   o.type→ORDER_CAT_LABEL[o.orderCategory], o.price→o.limitPrice, o.orderId→o.id
-// - Status filter uses numeric status codes not strings
-// - Cancel uses correct numeric id
-
 import { useState, useMemo } from "react"
 import { OrderStatusBadge, OrderSideBadge } from "./OrderBook/OrderStatusBadge"
-import { useOrders, ORDER_STATUS, ORDER_TYPE_LABEL, ORDER_CAT_LABEL } from "@/hooks/useOrders"
+import { useOrders, ORDER_STATUS, ORDER_CAT_LABEL } from "@/hooks/useOrders"
 
-const STATUS_COLORS: Record<number, string> = {
-  0: "#F59E0B",                    // Pending
-  1: "#3B82F6",                    // Open
-  2: "#8B5CF6",                    // PartiallyFilled
-  3: "#00D4AA",                    // Filled
-  4: "#22D3EE",                    // Completed
-  5: "rgba(255,255,255,0.25)",     // Cancelled
-  6: "#FF6B6B",                    // Rejected
-}
-
-const STATUS_LABELS: Record<string, number> = {
-  "All": -1, "Open": 1, "Pending": 0, "Filled": 3, "Cancelled": 4
+const STATUS_LABELS: Record<string, string[]> = {
+  "All":       [],
+  "Open":      ["Open","Submitted"],
+  "Pending":   ["Pending","Queued","Waiting"],
+  "Filled":    ["Filled","Completed"],
+  "Cancelled": ["Cancelled","Rejected","Deleted","CancelRequested"],
 }
 
 export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
   const { orders, loading, cancel } = useOrders()
-  const [filter, setFilter] = useState("All")
-  const [search, setSearch]     = useState("")
-  const [sideF,  setSideF]      = useState("All")
+  const [filter, setFilter]         = useState("All")
+  const [search, setSearch]         = useState("")
+  const [sideF,  setSideF]          = useState("All")
   const [cancelling, setCancelling] = useState<number | null>(null)
 
   const filtered = useMemo(() => orders.filter(o => {
-    const statusNum = STATUS_LABELS[filter]
-    if (statusNum !== -1 && o.status !== statusNum) return false
+    const allowed = STATUS_LABELS[filter]
+    const statusStr = String(o.status)
+    if (allowed.length > 0 && !allowed.includes(statusStr)) return false
     if (sideF === "Buy"  && o.orderType !== 0) return false
     if (sideF === "Sell" && o.orderType !== 1) return false
     const code = o.tradingCode ?? ""
@@ -47,111 +36,130 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
     setCancelling(null)
   }
 
-  const mono = "'JetBrains Mono', monospace"
+  const counts = {
+    total:     orders.length,
+    pending:   orders.filter(o => ["Pending","Queued","Waiting"].includes(String(o.status))).length,
+    open:      orders.filter(o => ["Open","Submitted"].includes(String(o.status))).length,
+    filled:    orders.filter(o => ["Filled","Completed"].includes(String(o.status))).length,
+    cancelled: orders.filter(o => ["Cancelled","Rejected","Deleted"].includes(String(o.status))).length,
+  }
+
+  const s = {
+    wrap:    { height:"100%", display:"flex", flexDirection:"column" as const, background:"var(--t-surface)", overflow:"hidden", fontFamily:"var(--font-mono,'JetBrains Mono',monospace)" },
+    filterBar: { padding:"6px 8px 0", borderBottom:"1px solid var(--t-border)", flexShrink:0, background:"var(--t-panel)" },
+    row1:    { display:"flex", gap:4, alignItems:"center", marginBottom:5 },
+    input:   { flex:1, background:"var(--t-hover)", border:"1px solid var(--t-border)", borderRadius:4, padding:"3px 8px", color:"var(--t-text1)", fontSize:11, outline:"none" },
+    tabBar:  { display:"flex", gap:2, paddingBottom:5 },
+    colHead: { display:"grid", gridTemplateColumns:"80px 48px 56px 60px 76px 76px 44px", gap:4, padding:"4px 8px", borderBottom:"1px solid var(--t-border)", flexShrink:0, background:"var(--t-panel)" },
+    colTxt:  { color:"var(--t-text3)", fontSize:9, letterSpacing:"0.07em" },
+    foot:    { borderTop:"1px solid var(--t-border)", padding:"4px 8px", display:"flex", gap:10, flexShrink:0, background:"var(--t-panel)", flexWrap:"wrap" as const },
+    footLbl: { color:"var(--t-text3)", fontSize:9 },
+  }
+
+  const sideBtn = (label: string) => {
+    const active = sideF === label
+    const isBuy  = label === "Buy"
+    const isSell = label === "Sell"
+    return (
+      <button key={label} onClick={() => setSideF(label)} style={{
+        padding:"3px 10px", borderRadius:4, fontSize:10, fontWeight: active ? 700 : 400, cursor:"pointer",
+        border: active
+          ? `1px solid ${isBuy ? "rgba(0,212,170,0.4)" : isSell ? "rgba(255,107,107,0.4)" : "var(--t-border)"}`
+          : "1px solid transparent",
+        background: active
+          ? (isBuy ? "rgba(0,212,170,0.12)" : isSell ? "rgba(255,107,107,0.12)" : "var(--t-hover)")
+          : "transparent",
+        color: active
+          ? (isBuy ? "var(--t-buy)" : isSell ? "var(--t-sell)" : "var(--t-text1)")
+          : "var(--t-text3)",
+      }}>{label}</button>
+    )
+  }
+
+  const tabBtn = (label: string) => {
+    const active = filter === label
+    return (
+      <button key={label} onClick={() => setFilter(label)} style={{
+        padding:"2px 9px", borderRadius:3, fontSize:10, cursor:"pointer",
+        background: active ? "var(--t-hover)" : "transparent",
+        border: active ? "1px solid var(--t-border)" : "1px solid transparent",
+        color: active ? "var(--t-text1)" : "var(--t-text3)",
+        fontWeight: active ? 500 : 400,
+      }}>{label}</button>
+    )
+  }
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--t-surface)", overflow: "hidden" }}>
+    <div style={s.wrap}>
 
-      {/* ── Filters ── */}
-      <div style={{ padding: "6px 8px", borderBottom: "1px solid var(--t-border)", display: "flex", flexDirection: "column", gap: 5, flexShrink: 0, background: "var(--t-panel)" }}>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter symbol…"
-            style={{ flex: 1, background: "var(--t-hover)", border: "1px solid var(--t-border)", borderRadius: 5, padding: "4px 8px", color: "var(--t-text1)", fontSize: 11, outline: "none", fontFamily: mono }}
+      {/* Filter bar */}
+      <div style={s.filterBar}>
+        <div style={s.row1}>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Filter symbol…" style={s.input}
             onFocus={e => e.currentTarget.style.borderColor = "var(--t-accent)"}
             onBlur={e => e.currentTarget.style.borderColor = "var(--t-border)"}
           />
-          {["All", "Buy", "Sell"].map(s => (
-            <button key={s} onClick={() => setSideF(s)} style={{
-              padding: "4px 8px",
-              background: sideF === s
-                ? (s === "Buy" ? "rgba(0,212,170,0.15)" : s === "Sell" ? "rgba(255,107,107,0.15)" : "rgba(255,255,255,0.08)")
-                : "none",
-              border: `1px solid ${sideF === s ? "var(--t-border)" : "transparent"}`,
-              borderRadius: 4,
-              color: sideF === s
-                ? (s === "Buy" ? "var(--t-buy)" : s === "Sell" ? "var(--t-sell)" : "var(--t-text1)")
-                : "var(--t-text3)",
-              fontSize: 10, cursor: "pointer", fontFamily: mono, fontWeight: sideF === s ? 700 : 400,
-            }}>{s}</button>
-          ))}
+          {["All","Buy","Sell"].map(sideBtn)}
         </div>
-        <div style={{ display: "flex", gap: 3 }}>
-          {["All", "Open", "Pending", "Filled", "Cancelled"].map(s => (
-            <button key={s} onClick={() => setFilter(s)} style={{
-              padding: "3px 7px",
-              background: filter === s ? "var(--t-hover)" : "none",
-              border: `1px solid ${filter === s ? "var(--t-border)" : "transparent"}`,
-              borderRadius: 4,
-              color: filter === s ? "var(--t-text1)" : "var(--t-text3)",
-              fontSize: 10, cursor: "pointer", fontFamily: mono,
-            }}>{s}</button>
-          ))}
+        <div style={s.tabBar}>
+          {["All","Open","Pending","Filled","Cancelled"].map(tabBtn)}
         </div>
       </div>
 
-      {/* ── Column headers ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "80px 44px 60px 64px 72px 64px 50px", gap: 4, padding: "4px 8px", borderBottom: "1px solid var(--t-border)", flexShrink: 0, background: "var(--t-panel)" }}>
-        {["SYMBOL", "SIDE", "TYPE", "QTY", "PRICE", "STATUS", ""].map(h => (
-          <span key={h} style={{ color: "var(--t-text3)", fontSize: 9, fontFamily: mono, letterSpacing: "0.06em" }}>{h}</span>
+      {/* Column headers */}
+      <div style={s.colHead}>
+        {["SYMBOL","SIDE","TYPE","QTY","PRICE","STATUS",""].map(h => (
+          <span key={h} style={s.colTxt}>{h}</span>
         ))}
       </div>
 
-      {/* ── Rows ── */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      {/* Rows */}
+      <div style={{ flex:1, overflowY:"auto" }}>
         {loading ? (
-          <div style={{ textAlign: "center", color: "var(--t-text3)", fontSize: 11, padding: 16, fontFamily: mono }}>Loading…</div>
+          <div style={{ textAlign:"center", color:"var(--t-text3)", fontSize:11, padding:20 }}>Loading…</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", color: "var(--t-text3)", fontSize: 11, padding: 16, fontFamily: mono }}>No orders</div>
+          <div style={{ textAlign:"center", color:"var(--t-text3)", fontSize:11, padding:20 }}>No orders</div>
         ) : filtered.map(o => {
-          const isBuy = o.orderType === 0
-          const statusNum = typeof o.status === 'string' ? parseInt(o.status) : o.status
-          const statusInfo = ORDER_STATUS[statusNum] ?? { label: String(o.status), color: "text-zinc-500" } ?? { label: String(o.status), color: "text-zinc-500" }
           const isLinked = linkedSymbol && linkedSymbol === o.tradingCode
           return (
             <div key={o.id}
               onClick={() => onSymbolClick?.(o.tradingCode)}
               style={{
-                display: "grid", gridTemplateColumns: "80px 44px 60px 64px 72px 64px 50px",
-                gap: 4, padding: "5px 8px",
-                borderBottom: "1px solid var(--t-border)",
-                cursor: "pointer",
+                display:"grid", gridTemplateColumns:"80px 48px 56px 60px 76px 76px 44px",
+                gap:4, padding:"5px 8px",
+                borderBottom:"1px solid var(--t-border)",
+                cursor:"pointer",
                 background: isLinked ? "rgba(0,212,170,0.04)" : "transparent",
-                transition: "background 0.08s",
+                alignItems:"center",
               }}
               onMouseEnter={e => { if (!isLinked) e.currentTarget.style.background = "var(--t-hover)" }}
               onMouseLeave={e => e.currentTarget.style.background = isLinked ? "rgba(0,212,170,0.04)" : "transparent"}
             >
-              {/* Symbol */}
-              <span style={{ color: "var(--t-text1)", fontSize: 11, fontFamily: mono, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ color:"var(--t-text1)", fontSize:11, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {o.tradingCode || `#${o.stockId}`}
               </span>
-              {/* Side */}
               <OrderSideBadge side={o.orderType} />
-              {/* Type */}
-              <span style={{ color: "var(--t-text3)", fontSize: 10, fontFamily: mono }}>
+              <span style={{ color:"var(--t-text3)", fontSize:10 }}>
                 {ORDER_CAT_LABEL[o.orderCategory] ?? "—"}
               </span>
-              {/* Qty */}
-              <span style={{ color: "var(--t-text2)", fontSize: 10, fontFamily: mono }}>
+              <span style={{ color:"var(--t-text2)", fontSize:10 }}>
                 {o.quantity?.toLocaleString()}
               </span>
-              {/* Price */}
-              <span style={{ color: "var(--t-text2)", fontSize: 10, fontFamily: mono }}>
-                {o.limitPrice != null ? `৳${o.limitPrice.toFixed(2)}` : "MKT"}
+              <span style={{ color:"var(--t-text2)", fontSize:10 }}>
+                {o.limitPrice != null ? `৳${o.limitPrice.toFixed(2)}` : o.priceAtOrder != null ? `৳${o.priceAtOrder.toFixed(2)}` : "MKT"}
               </span>
-              {/* Status */}
               <OrderStatusBadge status={o.status} />
-              {/* Cancel button — only for Pending(0) or Open(1) */}
               <div>
-                {(o.status === 0 || o.status === 1) && (
+                {(["Pending","Open","Queued","Submitted","Waiting"].includes(String(o.status))) && (
                   <button
                     onClick={e => { e.stopPropagation(); handleCancel(o.id) }}
                     disabled={cancelling === o.id}
                     style={{
-                      background: "rgba(255,107,107,0.12)", border: "1px solid rgba(255,107,107,0.25)",
-                      borderRadius: 3, color: "var(--t-sell)", fontSize: 9, cursor: "pointer",
-                      padding: "2px 5px", fontFamily: mono, fontWeight: 700,
-                      opacity: cancelling === o.id ? 0.5 : 1,
+                      background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.3)",
+                      borderRadius:3, color:"var(--t-sell)", fontSize:9, cursor:"pointer",
+                      padding:"2px 5px", fontWeight:700, opacity: cancelling === o.id ? 0.5 : 1,
                     }}>
                     {cancelling === o.id ? "…" : "CXL"}
                   </button>
@@ -162,17 +170,17 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
         })}
       </div>
 
-      {/* ── Footer stats ── */}
-      <div style={{ borderTop: "1px solid var(--t-border)", padding: "4px 8px", display: "flex", gap: 12, flexShrink: 0, background: "var(--t-panel)" }}>
+      {/* Footer */}
+      <div style={s.foot}>
         {[
-          ["Total",     orders.length],
-          ["Pending",   orders.filter(o => o.status === 0).length],
-          ["Open",      orders.filter(o => o.status === 1).length],
-          ["Filled",    orders.filter(o => o.status === 3).length],
-          ["Cancelled", orders.filter(o => o.status === 4).length],
-        ].map(([l, v]) => (
-          <span key={l} style={{ color: "var(--t-text3)", fontSize: 9, fontFamily: mono }}>
-            {l}: <span style={{ color: "var(--t-text1)", fontWeight: 700 }}>{v}</span>
+          ["Total",     counts.total,     "var(--t-text1)"],
+          ["Pending",   counts.pending,   "#f59e0b"],
+          ["Open",      counts.open,      "#38bdf8"],
+          ["Filled",    counts.filled,    "#10b981"],
+          ["Cancelled", counts.cancelled, "var(--t-text3)"],
+        ].map(([l, v, c]) => (
+          <span key={l as string} style={s.footLbl}>
+            {l}: <b style={{ color: c as string }}>{v as number}</b>
           </span>
         ))}
       </div>
