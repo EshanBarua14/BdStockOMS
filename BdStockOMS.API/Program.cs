@@ -93,6 +93,7 @@ builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUp
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.SimulatedOrderFillService>();
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnlockService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+builder.Services.AddScoped<ITenantDbContextFactory, SharedTenantDbContextFactory>();
 builder.Services.AddScoped<IFlextradeBosComplianceService, FlextradeBosComplianceService>();
 builder.Services.AddScoped<IBosXmlService, BosXmlService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();

@@ -2,10 +2,20 @@ using System.Security.Claims;
 using BdStockOMS.API.Services;
 using Microsoft.AspNetCore.Http;
 using Moq;
+using Microsoft.EntityFrameworkCore;
+using BdStockOMS.API.Data;
 using Xunit;
 
 public class TenantContextTests
 {
+    private static AppDbContext CreateInMemoryDb()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new AppDbContext(options);
+    }
+
     private static IHttpContextAccessor BuildAccessor(List<Claim> claims)
     {
         var identity  = new ClaimsIdentity(claims, "Test");
@@ -26,7 +36,7 @@ public class TenantContextTests
             new("BrokerageHouseId", "7"),
         });
 
-        var ctx = new TenantContext(accessor);
+        var ctx = new TenantContext(accessor, CreateInMemoryDb());
 
         Assert.Equal(7,          ctx.BrokerageHouseId);
         Assert.Equal("user-123", ctx.UserId);
@@ -44,7 +54,7 @@ public class TenantContextTests
             new("BrokerageHouseId", "0"),
         });
 
-        var ctx = new TenantContext(accessor);
+        var ctx = new TenantContext(accessor, CreateInMemoryDb());
 
         Assert.True(ctx.IsSuperAdmin);
     }
@@ -58,7 +68,7 @@ public class TenantContextTests
             new(ClaimTypes.Role, "Trader"),
         });
 
-        var ctx = new TenantContext(accessor);
+        var ctx = new TenantContext(accessor, CreateInMemoryDb());
 
         Assert.Equal(0, ctx.BrokerageHouseId);
         Assert.False(ctx.IsSuperAdmin);
@@ -70,7 +80,7 @@ public class TenantContextTests
         var mock = new Mock<IHttpContextAccessor>();
         mock.Setup(a => a.HttpContext).Returns((HttpContext?)null);
 
-        var ctx = new TenantContext(mock.Object);
+        var ctx = new TenantContext(mock.Object, CreateInMemoryDb());
 
         Assert.Equal(0,            ctx.BrokerageHouseId);
         Assert.Equal(string.Empty, ctx.UserId);
@@ -88,7 +98,7 @@ public class TenantContextTests
             new("BrokerageHouseId", "not-a-number"),
         });
 
-        var ctx = new TenantContext(accessor);
+        var ctx = new TenantContext(accessor, CreateInMemoryDb());
 
         Assert.Equal(0, ctx.BrokerageHouseId);
     }

@@ -61,6 +61,7 @@ public class AppDbContext : DbContext
     public DbSet<ContractNote> ContractNotes { get; set; }
     public DbSet<BosImportLog> BosImportLogs { get; set; }
     public DbSet<BrokerageConnection> BrokerageConnections { get; set; }
+    public DbSet<TenantFeatureFlag> TenantFeatureFlags { get; set; }
     public DbSet<BosImportSession> BosImportSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -6,4 +6,5 @@ public interface ITenantContext
     string UserId           { get; }
     string Role             { get; }
     bool   IsSuperAdmin     { get; }
+    bool   IsFeatureEnabled(string featureKey);
 }
