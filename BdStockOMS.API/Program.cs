@@ -249,6 +249,7 @@ builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 builder.Services.AddScoped<ISystemHealthService, SystemHealthService>();
 builder.Services.AddScoped<IComplianceService, ComplianceService>();
 builder.Services.AddScoped<IIPOService, IPOService>();
+builder.Services.AddScoped<ITBondService, TBondService>();
 builder.Services.Configure<ComplianceSettings>(builder.Configuration.GetSection("ComplianceSettings"));
 
 var app = builder.Build();

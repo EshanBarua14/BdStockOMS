@@ -664,4 +664,8 @@ public class AppDbContext : DbContext
     public DbSet<ComplianceReport> ComplianceReports => Set<ComplianceReport>();
     public DbSet<IPO> IPOs => Set<IPO>();
     public DbSet<IPOApplication> IPOApplications => Set<IPOApplication>();
+    public DbSet<TBond> TBonds => Set<TBond>();
+    public DbSet<TBondOrder> TBondOrders => Set<TBondOrder>();
+    public DbSet<CouponPayment> CouponPayments => Set<CouponPayment>();
+    public DbSet<TBondHolding> TBondHoldings => Set<TBondHolding>();
 }
