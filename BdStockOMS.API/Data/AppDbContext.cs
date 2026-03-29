@@ -62,6 +62,10 @@ public class AppDbContext : DbContext
     public DbSet<BosImportLog> BosImportLogs { get; set; }
     public DbSet<BrokerageConnection> BrokerageConnections { get; set; }
     public DbSet<TenantFeatureFlag> TenantFeatureFlags { get; set; }
+    public DbSet<BOGroup> BOGroups { get; set; }
+    public DbSet<BOGroupMember> BOGroupMembers { get; set; }
+    public DbSet<Basket> Baskets { get; set; }
+    public DbSet<BasketStock> BasketStocks { get; set; }
     public DbSet<BosImportSession> BosImportSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
