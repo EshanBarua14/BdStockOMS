@@ -145,4 +145,29 @@ public class SettlementService : ISettlementService
         => await _db.SettlementItems
             .Where(i => i.SettlementBatchId == batchId)
             .ToListAsync();
+    public async Task<SettlementBatch?> GetBatchByIdAsync(int batchId, int brokerageHouseId)
+        => await _db.SettlementBatches
+            .Include(b => b.Items)
+            .FirstOrDefaultAsync(b => b.Id == batchId && b.BrokerageHouseId == brokerageHouseId);
+
+    public async Task<List<SettlementItem>> GetInvestorSettlementsAsync(
+        int investorId, int brokerageHouseId)
+        => await _db.SettlementItems
+            .Where(i => i.InvestorId == investorId && i.BrokerageHouseId == brokerageHouseId)
+            .OrderByDescending(i => i.SettlementDate)
+            .ToListAsync();
+
+    public async Task<int> AutoCreateBatchesForTodayAsync(int brokerageHouseId)
+    {
+        var yesterday = DateTime.UtcNow.Date.AddDays(-1);
+        var existing  = await _db.SettlementBatches
+            .AnyAsync(b => b.BrokerageHouseId == brokerageHouseId
+                        && b.TradeDate.Date == yesterday);
+
+        if (existing) return 0;
+
+        var batch = await CreateBatchAsync(brokerageHouseId, "DSE", yesterday);
+        return batch.TotalTrades;
+    }
+
 }

@@ -92,6 +92,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 // ── BACKGROUND SERVICES ────────────────────────
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.StockPriceUpdateService>();
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.SimulatedOrderFillService>();
+builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AutoSettlementService>();
 builder.Services.AddHostedService<BdStockOMS.API.BackgroundServices.AccountUnlockService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 builder.Services.AddScoped<ITenantDbContextFactory, SharedTenantDbContextFactory>();
