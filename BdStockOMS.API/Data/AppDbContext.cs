@@ -62,6 +62,7 @@ public class AppDbContext : DbContext
     public DbSet<BosImportLog> BosImportLogs { get; set; }
     public DbSet<BrokerageConnection> BrokerageConnections { get; set; }
     public DbSet<TenantFeatureFlag> TenantFeatureFlags { get; set; }
+    public DbSet<FIXMessageLog> FIXMessageLogs { get; set; }
     public DbSet<RMSLimitV2> RMSLimitsV2 { get; set; }
     public DbSet<EDRSnapshot> EDRSnapshots { get; set; }
     public DbSet<BOGroup> BOGroups { get; set; }

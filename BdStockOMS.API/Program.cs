@@ -1,3 +1,4 @@
+using BdStockOMS.API.FIX;
 using FluentValidation;
 using BdStockOMS.API.Middleware;
 using BdStockOMS.API.Validators;
@@ -100,6 +101,8 @@ builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<ISessionPolicyService, SessionPolicyService>();
 builder.Services.AddScoped<IUserPermissionService, UserPermissionService>();
 builder.Services.AddScoped<IEDRService, EDRService>();
+builder.Services.AddSingleton<IFIXConnectorFactory, FIXConnectorFactory>();
+builder.Services.AddScoped<IFIXOrderService, FIXOrderService>();
 builder.Services.AddScoped<IRMSCascadeService, RMSCascadeService>();
 builder.Services.AddHttpClient("DSE", c => {
     c.BaseAddress = new Uri("https://dsebd.org/");
