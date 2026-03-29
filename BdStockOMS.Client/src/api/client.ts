@@ -41,8 +41,21 @@ export const placeOrder  = (dto: any) =>
   fetch(`/api/orders`, { method: "POST", headers: headers(), body: JSON.stringify(dto), cache: "no-store" }).then(r => handle(r))
 
 // Backend: [HttpPut("{id:int}/cancel")] — use PUT not POST
-export const cancelOrder = (id: number) =>
-  fetch(`/api/orders/${id}/cancel`, { method: "PUT", headers: headers(), cache: "no-store" }).then(r => handle<void>(r))
+export const cancelOrder = (id: number, reason = "User cancelled") =>
+  fetch(`/api/orders/${id}/cancel`, {
+    method: "PUT",
+    headers: headers(),
+    body: JSON.stringify({ reason }),
+    cache: "no-store"
+  }).then(r => handle<void>(r))
+
+export const amendOrder = (id: number, dto: { quantity?: number; limitPrice?: number; notes?: string }) =>
+  fetch(`/api/order-amendments/${id}/amend`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(dto),
+    cache: "no-store"
+  }).then(r => handle<any>(r))
 
 // ─── Market ───────────────────────────────────────────────────────────────────
 export const getMarketDepth    = (code: string) =>

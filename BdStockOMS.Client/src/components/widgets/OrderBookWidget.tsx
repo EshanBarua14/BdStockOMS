@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { OrderStatusBadge, OrderSideBadge } from "./OrderBook/OrderStatusBadge"
 import { useOrders, ORDER_STATUS, ORDER_CAT_LABEL } from "@/hooks/useOrders"
+import { amendOrder } from "@/api/client"
 
 const STATUS_LABELS: Record<string, string[]> = {
   "All":       [],
@@ -18,6 +19,9 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
   const [search, setSearch]         = useState("")
   const [sideF,  setSideF]          = useState("All")
   const [cancelling, setCancelling] = useState<number | null>(null)
+  const [amending, setAmending]     = useState<number | null>(null)
+  const [amendQty, setAmendQty]     = useState("")
+  const [amendPrice, setAmendPrice] = useState("")
 
   const filtered = useMemo(() => orders.filter(o => {
     const allowed = STATUS_LABELS[filter]
@@ -42,6 +46,19 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
     open:      orders.filter(o => ["Open","Submitted"].includes(String(o.status))).length,
     filled:    orders.filter(o => ["Filled","Completed"].includes(String(o.status))).length,
     cancelled: orders.filter(o => ["Cancelled","Rejected","Deleted"].includes(String(o.status))).length,
+  }
+
+  const handleAmend = async (orderId: number) => {
+    const dto: any = {}
+    if (amendQty && Number(amendQty) > 0)    dto.quantity   = Number(amendQty)
+    if (amendPrice && Number(amendPrice) > 0) dto.limitPrice = Number(amendPrice)
+    if (!dto.quantity && !dto.limitPrice) return
+    try {
+      await amendOrder(orderId, dto)
+      setAmending(null)
+      setAmendQty("")
+      setAmendPrice("")
+    } catch(e) { console.error(e) }
   }
 
   const s = {
@@ -153,16 +170,45 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
               <OrderStatusBadge status={o.status} />
               <div>
                 {(["Pending","Open","Queued","Submitted","Waiting"].includes(String(o.status))) && (
-                  <button
-                    onClick={e => { e.stopPropagation(); handleCancel(o.id) }}
-                    disabled={cancelling === o.id}
-                    style={{
-                      background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.3)",
-                      borderRadius:3, color:"var(--t-sell)", fontSize:9, cursor:"pointer",
-                      padding:"2px 5px", fontWeight:700, opacity: cancelling === o.id ? 0.5 : 1,
-                    }}>
-                    {cancelling === o.id ? "…" : "CXL"}
-                  </button>
+                  <div style={{ display:"flex", gap:3 }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setAmending(amending === o.id ? null : o.id); setAmendQty(String(o.quantity)); setAmendPrice(String(o.limitPrice ?? "")); }}
+                      style={{
+                        background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)",
+                        borderRadius:3, color:"#60a5fa", fontSize:9, cursor:"pointer",
+                        padding:"2px 5px", fontWeight:700,
+                      }}>MOD</button>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleCancel(o.id) }}
+                      disabled={cancelling === o.id}
+                      style={{
+                        background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.3)",
+                        borderRadius:3, color:"var(--t-sell)", fontSize:9, cursor:"pointer",
+                        padding:"2px 5px", fontWeight:700, opacity: cancelling === o.id ? 0.5 : 1,
+                      }}>{cancelling === o.id ? "…" : "CXL"}</button>
+                  </div>
+                )}
+                {amending === o.id && (
+                  <div onClick={e => e.stopPropagation()} style={{
+                    gridColumn:"1/-1", padding:"6px 8px", marginTop:2,
+                    background:"var(--t-panel)", border:"1px solid var(--t-border)",
+                    borderRadius:4, display:"flex", gap:6, alignItems:"center",
+                  }}>
+                    <input value={amendQty} onChange={e => setAmendQty(e.target.value)}
+                      placeholder="Qty" type="number"
+                      style={{ width:60, background:"var(--t-hover)", border:"1px solid var(--t-border)", borderRadius:3, padding:"2px 6px", color:"var(--t-text1)", fontSize:10, outline:"none" }} />
+                    <input value={amendPrice} onChange={e => setAmendPrice(e.target.value)}
+                      placeholder="Price" type="number"
+                      style={{ width:70, background:"var(--t-hover)", border:"1px solid var(--t-border)", borderRadius:3, padding:"2px 6px", color:"var(--t-text1)", fontSize:10, outline:"none" }} />
+                    <button onClick={() => handleAmend(o.id)} style={{
+                      background:"rgba(59,130,246,0.15)", border:"1px solid rgba(59,130,246,0.4)",
+                      borderRadius:3, color:"#60a5fa", fontSize:9, cursor:"pointer", padding:"2px 8px", fontWeight:700,
+                    }}>SAVE</button>
+                    <button onClick={() => setAmending(null)} style={{
+                      background:"transparent", border:"1px solid var(--t-border)",
+                      borderRadius:3, color:"var(--t-text3)", fontSize:9, cursor:"pointer", padding:"2px 8px",
+                    }}>✕</button>
+                  </div>
                 )}
               </div>
             </div>

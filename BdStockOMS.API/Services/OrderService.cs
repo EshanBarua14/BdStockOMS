@@ -17,6 +17,7 @@ public interface IOrderService
     Task<(OrderResponseDto? Order, string? Error)> CancelOrderAsync(
         int orderId, int userId, string role, string reason);
     Task<List<PortfolioResponseDto>> GetPortfolioAsync(int investorId);
+    Task<(OrderResponseDto? Order, string? Error)> AmendOrderAsync(int orderId, int userId, string role, AmendOrderRequestDto dto);
 }
 
 public class OrderService : IOrderService
@@ -235,12 +236,17 @@ public class OrderService : IOrderService
         if (order == null)
             return (null, "Order not found.");
 
-        if (order.Status != OrderStatus.Pending)
-            return (null, $"Only Pending orders can be cancelled. Current status: {order.Status}.");
+        var cancellable = new[] {
+            OrderStatus.Pending, OrderStatus.Queued, OrderStatus.Submitted,
+            OrderStatus.Waiting, OrderStatus.Open, OrderStatus.CancelRequested
+        };
+        if (!cancellable.Contains(order.Status))
+            return (null, $"Cannot cancel order in status {order.Status}.");
 
         // Investor can only cancel their own orders
         if (role == "Investor" && order.InvestorId != userId)
             return (null, "You can only cancel your own orders.");
+        // SuperAdmin and Admin can cancel any order
 
         order.Status = OrderStatus.Cancelled;
         order.RejectionReason = reason;
@@ -377,4 +383,34 @@ public class OrderService : IOrderService
         CancelledAt = o.CancelledAt,
         TotalValue = o.PriceAtOrder * o.Quantity
     };
+    public async Task<(OrderResponseDto? Order, string? Error)> AmendOrderAsync(
+        int orderId, int userId, string role, AmendOrderRequestDto dto)
+    {
+        var order = await _db.Orders
+            .Include(o => o.Stock)
+            .Include(o => o.Investor)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null) return (null, "Order not found.");
+
+        var ok = new[] {
+            OrderStatus.Pending, OrderStatus.Queued, OrderStatus.Submitted,
+            OrderStatus.Waiting, OrderStatus.Open
+        };
+        if (!ok.Contains(order.Status))
+            return (null, $"Cannot amend order in status {order.Status}.");
+
+        if (role == "Investor" && order.InvestorId != userId)
+            return (null, "You can only amend your own orders.");
+
+        if (dto.Quantity.HasValue && dto.Quantity.Value > 0)     order.Quantity   = dto.Quantity.Value;
+        if (dto.LimitPrice.HasValue && dto.LimitPrice.Value > 0) order.LimitPrice = dto.LimitPrice.Value;
+        if (!string.IsNullOrEmpty(dto.Notes))                    order.Notes      = dto.Notes;
+
+        order.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return (MapToDto(order), null);
+    }
+
 }

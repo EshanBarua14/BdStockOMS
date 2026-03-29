@@ -134,4 +134,19 @@ public class OrderController : ControllerBase
     {
         return User.FindFirst(ClaimTypes.Role)?.Value ?? "";
     }
+    // POST /api/orders/{id}/amend
+    [HttpPost("{id:int}/amend")]
+    [Authorize(Roles = "Investor,Trader,Admin,SuperAdmin")]
+    public async Task<IActionResult> AmendOrder(int id, [FromBody] AmendOrderRequestDto dto)
+    {
+        var userId = GetUserId();
+        var role   = GetRole();
+
+        var (order, error) = await _orderService.AmendOrderAsync(id, userId, role, dto);
+        if (error != null) return BadRequest(new { message = error });
+
+        return Ok(new { message = "Order amended.", orderId = id,
+            quantity = order!.Quantity, limitPrice = order.LimitPrice });
+    }
+
 }
