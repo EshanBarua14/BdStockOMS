@@ -112,12 +112,10 @@ export function OrderEntryWidget({ colorGroup }: { colorGroup?: string | null })
             <input
               value={searchQ || symbol}
               onChange={e => { setSearchQ(e.target.value); setSymbol(""); setShowDrop(true) }}
-              onFocus={() => setShowDrop(true)}
-              onBlur={() => setTimeout(() => setShowDrop(false), 150)}
+              onFocus={e => { setShowDrop(true); e.currentTarget.style.borderColor = "var(--t-accent)"; }}
+              onBlur={e => { setTimeout(() => setShowDrop(false), 150); e.currentTarget.style.borderColor = "var(--t-border)"; }}
               placeholder="Symbol e.g. BRACBANK"
               style={{ width: "100%", boxSizing: "border-box", background: "var(--t-hover)", border: "1px solid var(--t-border)", borderRadius: 5, padding: "4px 8px", color: "var(--t-text1)", fontSize: 11, outline: "none", fontFamily: mono }}
-              onFocus={e => e.currentTarget.style.borderColor = "var(--t-accent)"}
-              onBlur={e => e.currentTarget.style.borderColor = "var(--t-border)"}
             />
             {showDrop && filtered.length > 0 && (
               <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--t-elevated)", border: "1px solid var(--t-border)", borderRadius: 7, zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", marginTop: 2 }}>
