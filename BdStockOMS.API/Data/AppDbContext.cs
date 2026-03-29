@@ -660,4 +660,5 @@ public class AppDbContext : DbContext
     public DbSet<Announcement>     Announcements => Set<Announcement>();
     public DbSet<BackupHistory>    BackupHistory => Set<BackupHistory>();
     public DbSet<IpWhitelistEntry> IpWhitelist   => Set<IpWhitelistEntry>();
+    public DbSet<ComplianceReport> ComplianceReports => Set<ComplianceReport>();
 }

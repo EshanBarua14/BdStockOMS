@@ -83,6 +83,7 @@ public static class Permissions
     public const string ComplianceReport   = "compliance.report";
     public const string ComplianceAudit    = "compliance.audit";
     public const string ComplianceFreeze   = "compliance.freeze";
+    public const string ComplianceManage  = "compliance.manage";
 
     // ── IPO / T-Bond ─────────────────────────────────────────────────
     public const string IpoView            = "ipo.view";

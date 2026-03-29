@@ -3,22 +3,23 @@
 ## Branch
 `day-88-compliance-reporting`
 
-## Completed
-- ComplianceReport model (enums: AlertType, Severity, Status)
-- ComplianceSettings POCO + appsettings.json section
-- IComplianceService interface (8 methods)
-- ComplianceService implementation:
-  - CheckLargeTrade (threshold-based, 3 severity tiers)
-  - CheckAMLStructuring (count + volume window)
-  - CheckWashTrade (same symbol, opposite side, time window)
-  - CheckUnusualFrequency (orders/hour threshold)
-- ComplianceController (8 endpoints)
-- Permissions: ComplianceView, ComplianceManage
-- EF migration: Day88_ComplianceReports
-- 50 new tests in Day88Tests.cs
+## What was built
+- `ComplianceReport` model — enums: AlertType (8 types), Severity, Status
+- `ComplianceSettings` POCO + appsettings.json section
+- `IComplianceService` interface (8 methods)
+- `ComplianceService` — 4 detection engines:
+  - Large trade alert (3-tier severity: Medium/High/Critical)
+  - AML structuring (count + volume window check)
+  - Wash trade (same StockId, opposite OrderType, time window)
+  - Unusual frequency (orders/hour threshold)
+- `ComplianceController` — 8 endpoints (scan order, scan investor, list, get, resolve, escalate, summary, export CSV)
+- `Permissions.ComplianceManage` added
+- EF migration: `Day88_ComplianceReports` table
 
 ## Tests
-- 1,390 (Day 87) + 50 (Day 88) = **1,440 passing, 0 failures**
+- Day 87 baseline: 1,390
+- Day 88 new: 38
+- **Total: 1,428 passing, 0 failures**
 
 ## Next
-Day 89: Corporate actions (dividend, bonus, rights issue)
+Day 89: Corporate actions — dividend, bonus, rights issue processing, portfolio adjustment
