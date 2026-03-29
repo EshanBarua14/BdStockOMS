@@ -662,4 +662,6 @@ public class AppDbContext : DbContext
     public DbSet<BackupHistory>    BackupHistory => Set<BackupHistory>();
     public DbSet<IpWhitelistEntry> IpWhitelist   => Set<IpWhitelistEntry>();
     public DbSet<ComplianceReport> ComplianceReports => Set<ComplianceReport>();
+    public DbSet<IPO> IPOs => Set<IPO>();
+    public DbSet<IPOApplication> IPOApplications => Set<IPOApplication>();
 }
