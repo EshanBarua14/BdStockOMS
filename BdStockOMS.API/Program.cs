@@ -117,6 +117,7 @@ builder.Services.AddScoped<IDseScraperService, DseScraperService>();
 builder.Services.AddScoped<ICseScraperService, CseScraperService>();
 builder.Services.AddScoped<IExchangeScraperFactory, ExchangeScraperFactory>();
 builder.Services.AddScoped<IContractNoteService, ContractNoteService>();
+builder.Services.AddScoped<IContractNoteAutoGenerateService, ContractNoteAutoGenerateService>();
 builder.Services.AddHostedService<BosComplianceHostedService>();
 
 // ── SIGNALR ────────────────────────────────────
