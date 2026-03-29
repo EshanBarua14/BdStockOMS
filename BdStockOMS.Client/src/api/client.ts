@@ -50,7 +50,7 @@ export const cancelOrder = (id: number, reason = "User cancelled") =>
   }).then(r => handle<void>(r))
 
 export const amendOrder = (id: number, dto: { quantity?: number; limitPrice?: number; notes?: string }) =>
-  fetch(`/api/order-amendments/${id}/amend`, {
+  fetch(`/api/orders/${id}/amend`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(dto),

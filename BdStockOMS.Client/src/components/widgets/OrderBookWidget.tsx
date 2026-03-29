@@ -14,7 +14,7 @@ const STATUS_LABELS: Record<string, string[]> = {
 }
 
 export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
-  const { orders, loading, cancel } = useOrders()
+  const { orders, loading, cancel, refresh } = useOrders()
   const [filter, setFilter]         = useState("All")
   const [search, setSearch]         = useState("")
   const [sideF,  setSideF]          = useState("All")
@@ -58,6 +58,7 @@ export function OrderBookWidget({ linkedSymbol, onSymbolClick }: any) {
       setAmending(null)
       setAmendQty("")
       setAmendPrice("")
+      refresh()
     } catch(e) { console.error(e) }
   }
 
