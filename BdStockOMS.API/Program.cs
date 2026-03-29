@@ -99,6 +99,8 @@ builder.Services.AddScoped<IBosXmlService, BosXmlService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<ISessionPolicyService, SessionPolicyService>();
 builder.Services.AddScoped<IUserPermissionService, UserPermissionService>();
+builder.Services.AddScoped<IEDRService, EDRService>();
+builder.Services.AddScoped<IRMSCascadeService, RMSCascadeService>();
 builder.Services.AddHttpClient("DSE", c => {
     c.BaseAddress = new Uri("https://dsebd.org/");
     c.Timeout = TimeSpan.FromSeconds(15);
