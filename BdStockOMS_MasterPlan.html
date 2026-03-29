@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BdStockOMS — World-Class OMS Master Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --surface: #0d1520;
+    --panel: #111b2a;
+    --border: #1e2d42;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #39ff96;
+    --accent4: #b06cff;
+    --text1: #e8f0ff;
+    --text2: #8ba0c0;
+    --text3: #4a6080;
+    --red: #ff4466;
+    --yellow: #ffcc44;
+    --green: #22dd88;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text1);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #080c14 0%, #0a1628 50%, #05111f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 48px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(57,255,150,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: var(--sans);
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #e8f0ff 30%, #00d4ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 700px;
+    margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .stat-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 24px;
+    min-width: 120px;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  /* SECTIONS */
+  .section {
+    padding: 48px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+  .section h2 {
+    font-family: var(--sans);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text1);
+  }
+
+  /* STATUS GRID */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .status-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .status-done { background: rgba(34,221,136,0.15); color: var(--green); border: 1px solid rgba(34,221,136,0.3); }
+  .status-partial { background: rgba(255,204,68,0.15); color: var(--yellow); border: 1px solid rgba(255,204,68,0.3); }
+  .status-missing { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
+  .status-card-body { flex: 1; }
+  .status-card-title { font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 2px; }
+  .status-card-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+  /* GAP TABLE */
+  .gap-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .gap-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .gap-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(30,45,66,0.5);
+    font-size: 12px;
+    color: var(--text2);
+    vertical-align: top;
+  }
+  .gap-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .gap-name { color: var(--text1); font-weight: 500; }
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+  .badge-red { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
+  .badge-yellow { background: rgba(255,204,68,0.15); color: var(--yellow); border: 1px solid rgba(255,204,68,0.3); }
+  .badge-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+  .badge-green { background: rgba(34,221,136,0.1); color: var(--green); border: 1px solid rgba(34,221,136,0.2); }
+  .badge-purple { background: rgba(176,108,255,0.1); color: var(--accent4); border: 1px solid rgba(176,108,255,0.2); }
+
+  /* PHASE PLAN */
+  .phase {
+    margin-bottom: 40px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .phase-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-a { background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02)); }
+  .phase-b { background: linear-gradient(135deg, rgba(57,255,150,0.06), rgba(57,255,150,0.02)); }
+  .phase-c { background: linear-gradient(135deg, rgba(255,107,53,0.06), rgba(255,107,53,0.02)); }
+  .phase-d { background: linear-gradient(135deg, rgba(176,108,255,0.06), rgba(176,108,255,0.02)); }
+  .phase-e { background: linear-gradient(135deg, rgba(255,204,68,0.06), rgba(255,204,68,0.02)); }
+  .phase-f { background: linear-gradient(135deg, rgba(34,221,136,0.06), rgba(34,221,136,0.02)); }
+  .phase-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .label-a { background: rgba(0,212,255,0.15); color: var(--accent); }
+  .label-b { background: rgba(57,255,150,0.15); color: var(--accent3); }
+  .label-c { background: rgba(255,107,53,0.15); color: var(--accent2); }
+  .label-d { background: rgba(176,108,255,0.15); color: var(--accent4); }
+  .label-e { background: rgba(255,204,68,0.15); color: var(--yellow); }
+  .label-f { background: rgba(34,221,136,0.15); color: var(--green); }
+  .phase-title { font-family: var(--sans); font-size: 18px; font-weight: 700; }
+  .phase-range { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-left: auto; }
+
+  .day-table { width: 100%; border-collapse: collapse; }
+  .day-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .day-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(30,45,66,0.5);
+    vertical-align: top;
+    font-size: 12px;
+  }
+  .day-table tr:last-child td { border-bottom: none; }
+  .day-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .day-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .day-branch {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent3);
+    background: rgba(57,255,150,0.06);
+    border: 1px solid rgba(57,255,150,0.15);
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .day-title { font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 6px; }
+  .day-desc { font-size: 11px; color: var(--text2); line-height: 1.6; }
+  .day-features { margin-top: 6px; }
+  .feature-item {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--text3);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin: 2px 2px 2px 0;
+  }
+  .day-tests {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  td.priority-col { white-space: nowrap; }
+
+  /* COMPARISON TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; }
+  .compare-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    color: var(--text3);
+  }
+  .compare-table th:nth-child(2) { color: var(--yellow); }
+  .compare-table th:nth-child(3) { color: var(--accent3); }
+  .compare-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(30,45,66,0.4);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .compare-dim { color: var(--text1); font-weight: 500; font-size: 12px; }
+  .check { color: var(--green); }
+  .cross { color: var(--red); }
+  .partial-c { color: var(--yellow); }
+  .superior { color: var(--accent3); font-weight: 600; }
+
+  /* ARCH DIAGRAM */
+  .arch-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .arch-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .arch-layer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+  }
+  .arch-layer-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text1);
+    margin-bottom: 4px;
+  }
+  .arch-layer-items {
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.6;
+  }
+
+  /* PRINCIPLE BOX */
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .principle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    border-top: 2px solid;
+  }
+  .p1 { border-color: var(--accent); }
+  .p2 { border-color: var(--accent3); }
+  .p3 { border-color: var(--accent2); }
+  .p4 { border-color: var(--accent4); }
+  .p5 { border-color: var(--yellow); }
+  .p6 { border-color: var(--green); }
+  .principle-card h4 {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .principle-card p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* TECH STACK */
+  .tech-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .tech-chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .tech-chip.new {
+    background: rgba(0,212,255,0.08);
+    border-color: rgba(0,212,255,0.2);
+    color: var(--accent);
+  }
+
+  /* NAV */
+  .toc {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    width: 220px;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0 20px 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .toc a {
+    display: block;
+    padding: 6px 20px;
+    font-size: 12px;
+    color: var(--text3);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .toc a:hover { color: var(--accent); background: rgba(0,212,255,0.05); }
+  .toc-section { font-weight: 600; color: var(--text2); }
+  .toc-sub { padding-left: 32px !important; font-size: 11px; }
+  .main-content { margin-left: 220px; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* INLINE CODE */
+  code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.15);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* CALLOUT */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(0,212,255,0.04);
+    padding: 16px 20px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+  }
+  .callout.warn { border-color: var(--yellow); background: rgba(255,204,68,0.04); }
+  .callout.danger { border-color: var(--red); background: rgba(255,68,102,0.04); }
+  .callout.success { border-color: var(--green); background: rgba(34,221,136,0.04); }
+  .callout-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.success .callout-title { color: var(--green); }
+  .callout p { font-size: 12px; color: var(--text2); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* PRINT HIDE */
+  @media print { .toc { display: none; } .main-content { margin-left: 0; } }
+
+  /* MOBILE */
+  @media (max-width: 768px) { .toc { display: none; } .main-content { margin-left: 0; } .hero { padding: 32px 24px; } .section { padding: 32px 24px; } .hero h1 { font-size: 32px; } }
+
+  .separator { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  
+  .inline-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 3px;
+    vertical-align: middle;
+  }
+
+  .progress-bar-wrap {
+    background: var(--panel);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-bar-fill { height: 100%; border-radius: 4px; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-num {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .summary-label { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR NAV -->
+<nav class="toc">
+  <div class="toc-title">BdStockOMS Plan</div>
+  <a href="#overview" class="toc-section">01 — Overview</a>
+  <a href="#current-state" class="toc-section">02 — Current State</a>
+  <a href="#gaps" class="toc-section">03 — Gap Analysis</a>
+  <a href="#architecture" class="toc-section">04 — Architecture</a>
+  <a href="#principles" class="toc-section">05 — Design Principles</a>
+  <a href="#plan" class="toc-section">06 — Day-by-Day Plan</a>
+  <a href="#phase-a" class="toc-sub">Phase A: Foundation</a>
+  <a href="#phase-b" class="toc-sub">Phase B: UI/UX</a>
+  <a href="#phase-c" class="toc-sub">Phase C: Admin/Back-Office</a>
+  <a href="#phase-d" class="toc-sub">Phase D: Security</a>
+  <a href="#phase-e" class="toc-sub">Phase E: Testing</a>
+  <a href="#phase-f" class="toc-sub">Phase F: Deployment</a>
+  <a href="#phase-g" class="toc-sub">Phase G: Go-Live Polish</a>
+  <a href="#vs-xpert" class="toc-section">07 — vs Xpert Trading</a>
+  <a href="#tech-stack" class="toc-section">08 — Tech Stack</a>
+  <a href="#rules" class="toc-section">09 — Dev Rules</a>
+</nav>
+
+<div class="main-content">
+
+<!-- HERO -->
+<div class="hero" id="overview">
+  <div class="hero-tag">// BdStockOMS — World-Class OMS Master Plan · Rev 3.0 · Day 79–130</div>
+  <h1>The World's Most Advanced<br>Bangladesh Stock Exchange OMS</h1>
+  <p class="hero-sub">A production-grade, multi-tenant, multi-exchange Order Management System built to surpass Xpert Trading (XFL OMS) on every dimension — from FIX certification compliance to 10/10 UI/UX, real-time market data, granular RBAC, and go-live deployment on both DSE and CSE.</p>
+  <div class="hero-stats">
+    <div class="stat-box"><span class="stat-num">78</span><span class="stat-label">Days Done</span></div>
+    <div class="stat-box"><span class="stat-num">1,057</span><span class="stat-label">Tests Passing</span></div>
+    <div class="stat-box"><span class="stat-num">219</span><span class="stat-label">API Files (.cs)</span></div>
+    <div class="stat-box"><span class="stat-num">108</span><span class="stat-label">Frontend Files</span></div>
+    <div class="stat-box"><span class="stat-num">21</span><span class="stat-label">DB Migrations</span></div>
+    <div class="stat-box"><span class="stat-num">52</span><span class="stat-label">Days Remaining</span></div>
+  </div>
+</div>
+
+<!-- SECTION 2: CURRENT STATE -->
+<div class="section" id="current-state">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Current System State — What We Have</h2>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">✅ Solid Foundation</div>
+    <p>Days 1–78 produced a genuinely strong foundation: real DSE scraper, full order lifecycle, commission engine, settlement, RMS, KYC, BOS reconciliation, FIX Engine UI, 20 dashboard widgets, and a beautiful dark trading interface. The 1,057 passing tests with 0 failures prove the backend is reliable.</p>
+  </div>
+
+  <h3 style="font-family:var(--sans);font-size:16px;margin:24px 0 16px;color:var(--text1);">Backend (219 .cs files, 21 migrations)</h3>
+  <div class="status-grid">
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Auth & JWT</div><div class="status-card-desc">JWT + httpOnly refresh, BCrypt, 2FA (OTP), token blacklist (Redis), session tracking, login history</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">6-Role RBAC</div><div class="status-card-desc">SuperAdmin, Admin, Trader, Investor, CCD, Compliance — broad role gates on every controller</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Order Management</div><div class="status-card-desc">Place/amend/cancel Buy/Sell Market/Limit orders, state machine, amendment audit trail</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">DSE Live Scraper</div><div class="status-card-desc">HtmlAgilityPack scraper — 780 stocks, 30s interval during market hours, 5m after close</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Commission Engine</div><div class="status-card-desc">Tiered rates per brokerage, per-investor overrides, DSE fee breakdown, commission ledger</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Settlement (T+2/T+0)</div><div class="status-card-desc">Settlement batches, settlement items, automatic T+2 scheduling by stock category</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Market Depth</div><div class="status-card-desc">5-level order book (bid/ask), live via SignalR, MarketDepth model and service</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Portfolio & P&L</div><div class="status-card-desc">Holdings, avg buy price, unrealized/realized P&L, portfolio snapshots, VWAP/52W/Beta/ROI</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">KYC Workflow</div><div class="status-card-desc">Document upload, approval/rejection workflow, KYC status on investor accounts</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">BOS Reconciliation</div><div class="status-card-desc">Clients-UBR.xml + Positions-UBR.xml, MD5 verification, import sessions, compliance export</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">FIX Engine (UI)</div><div class="status-card-desc">AdminFixService, Status/Config/Messages tabs — simulated; real protocol not wired</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Admin Settings</div><div class="status-card-desc">15 sections: fees, api-keys, announcements, ip-whitelist, backup, health, roles, FIX, etc.</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">SignalR Real-Time</div><div class="status-card-desc">StockPriceHub, TradeExecuted signal, live prices, order status push, RMS breach alerts</div></div></div>
+    <div class="status-card"><div class="status-icon status-partial">~</div><div class="status-card-body"><div class="status-card-title">RMS Limits</div><div class="status-card-desc">Brokerage-level cash/position limits only. Missing 6-level cascade (Client/User/BO Group/Basket/Branch/Broker)</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">CSE Scraper</div><div class="status-card-desc">Only DSE is scraped. CSE (cse.com.bd) not yet implemented</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Multi-Tenant DB</div><div class="status-card-desc">Single DB with BrokerageHouseId filter. No per-tenant provisioning yet</div></div></div>
+  </div>
+
+  <h3 style="font-family:var(--sans);font-size:16px;margin:24px 0 16px;color:var(--text1);">Frontend (108 .tsx/.ts files)</h3>
+  <div class="status-grid">
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">20 Dashboard Widgets</div><div class="status-card-desc">Draggable, resizable, multi-page. Watchlist, Market Depth, Portfolio, OrderBook, Price Chart, T&S, News, Top Movers, Score Board, Index Summary, Market Map, Ticker Strip, AI Prediction, Buy/Sell Pressure, Market Trade Info, Price History, Most Active, Execution List, Notifications, RMS Limits</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Buy/Sell Console</div><div class="status-card-desc">F1/F2 hotkeys, stock autocomplete, BO search, purchase power display, confirm on Enter</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Command Palette</div><div class="status-card-desc">Ctrl+K, 19 nav commands, live stock search (250ms debounce), keyboard nav, highlight</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Keyboard Navigation</div><div class="status-card-desc">Central hook, g-prefix vim nav, ? help overlay, Alt+←/→ browser history</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Admin Section</div><div class="status-card-desc">Admin Settings (15 sections), Broker/Branch/BO Management, RMS Management, Trade Monitor, BOS Reconciliation, FIX Engine</div></div></div>
+    <div class="status-card"><div class="status-icon status-done">✓</div><div class="status-card-body"><div class="status-card-title">Accounts & IPO</div><div class="status-card-desc">Fund requests, deposit/withdrawal, IPO application, T-Bond management</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Panic Button</div><div class="status-card-desc">One-click cancel-all orders — required by DSE, in every XFL handbook</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Trade Confirmation Dialogs</div><div class="status-card-desc">No confirmation before place/cancel/modify. Every professional OMS requires this</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Connection Status Dots</div><div class="status-card-desc">DSE market data dot + DSE trade data dot in topbar — required by spec</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Excel Download</div><div class="status-card-desc">Every table in Xpert has Excel download. We have CSV only in Reports</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">Production Deployment</div><div class="status-card-desc">No Railway/Vercel deployment, no CI/CD, no Docker</div></div></div>
+    <div class="status-card"><div class="status-icon status-missing">✗</div><div class="status-card-body"><div class="status-card-title">i18n (3 Languages)</div><div class="status-card-desc">English/Bengali/Chinese toggle. React-i18next with complete key coverage</div></div></div>
+  </div>
+</div>
+
+<!-- SECTION 3: GAPS -->
+<div class="section" id="gaps">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Complete Gap Analysis — What Must Be Built</h2>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><span class="summary-num" style="color:var(--red)">7</span><div class="summary-label">🔴 Critical Gaps<br>(blocks go-live)</div></div>
+    <div class="summary-card"><span class="summary-num" style="color:var(--yellow)">12</span><div class="summary-label">🟡 High Priority<br>(professional OMS)</div></div>
+    <div class="summary-card"><span class="summary-num" style="color:var(--accent)">15</span><div class="summary-label">🔵 Important<br>(feature parity)</div></div>
+    <div class="summary-card"><span class="summary-num" style="color:var(--accent4)">11</span><div class="summary-label">🟣 Advanced<br>(world-class)</div></div>
+  </div>
+
+  <table class="gap-table">
+    <thead>
+      <tr><th>Gap</th><th>Category</th><th>Severity</th><th>DSE FIX Impact</th><th>Day Fix</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="gap-name">Order model missing: TimeInForce (Day/IOC/FOK)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>M6-M10, L3-L5 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: MarketAtBest (OrdType=Z)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>M1, M5 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: MinQty (tag 110)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>L2, L3, M7, M8 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: DisplayQty (iceberg, tag 1138)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>L14, L17 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: IsPrivate / ExecInst (S=Suspend, q=Release)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>M2, M4, L13 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: TrdMatchID (880), SettlDate (64), GrossTradeAmt (381), AggressorIndicator (1057)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>M3 step 4 fails</td><td>79</td></tr>
+      <tr><td class="gap-name">Order model missing: ClOrdID (11) / OrigClOrdID (41) amendment chain</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>L7, L8, L9 fail</td><td>79</td></tr>
+      <tr><td class="gap-name">OrderStatus missing: Queued, Submitted, Waiting, Deleted, CancelRequested, EditRequested, Replaced, Private(Z)</td><td>Order Model</td><td><span class="badge badge-red">CRITICAL</span></td><td>All Order List filters fail</td><td>79</td></tr>
+      <tr><td class="gap-name">CSE scraper missing — no cse.com.bd data</td><td>Multi-Exchange</td><td><span class="badge badge-red">CRITICAL</span></td><td>—</td><td>82</td></tr>
+      <tr><td class="gap-name">Board enum missing (PUBLIC/SME/ATB/GOV/DEBT/BLOCK/BUYIN/SPUBLIC)</td><td>Multi-Exchange</td><td><span class="badge badge-red">CRITICAL</span></td><td>B1-B11, Z1-Z6 fail</td><td>82</td></tr>
+      <tr><td class="gap-name">No real FIX protocol (QuickFIX/N) — only simulated UI</td><td>FIX Protocol</td><td><span class="badge badge-red">CRITICAL</span></td><td>All S1-S12 fail</td><td>84</td></tr>
+      <tr><td class="gap-name">Panic Button missing from dashboard</td><td>UI/UX</td><td><span class="badge badge-red">CRITICAL</span></td><td>—</td><td>86</td></tr>
+      <tr><td class="gap-name">Trade confirmation dialogs missing</td><td>UI/UX</td><td><span class="badge badge-red">CRITICAL</span></td><td>—</td><td>87</td></tr>
+      <tr><td class="gap-name">Connection status dots missing (market data / trade data)</td><td>UI/UX</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>86</td></tr>
+      <tr><td class="gap-name">RMS: only brokerage-level limits — missing Client/User/BO Group/Basket/Branch levels</td><td>RMS</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>83</td></tr>
+      <tr><td class="gap-name">EDR (Equity Depth Ratio) calculation missing</td><td>RMS</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>83</td></tr>
+      <tr><td class="gap-name">Margin 3-tier threshold warnings missing</td><td>RMS</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>83</td></tr>
+      <tr><td class="gap-name">BO Group and Basket concepts missing</td><td>RBAC/RMS</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>81</td></tr>
+      <tr><td class="gap-name">Granular UserPermissions table missing</td><td>RBAC</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>81</td></tr>
+      <tr><td class="gap-name">Multi-tenant: single DB with row-level isolation only (no provisioning UI)</td><td>Multi-Tenant</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>80</td></tr>
+      <tr><td class="gap-name">Excel download missing from all tables</td><td>UI/UX</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>88</td></tr>
+      <tr><td class="gap-name">Order amendment (F4) not surfaced in UI</td><td>UI/UX</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>88</td></tr>
+      <tr><td class="gap-name">Duplicate order (F3) missing</td><td>UI/UX</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>88</td></tr>
+      <tr><td class="gap-name">XFL format cash/position file import missing (BOS daily workflow)</td><td>Back Office</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>92</td></tr>
+      <tr><td class="gap-name">File History Table with download in BOS missing</td><td>Back Office</td><td><span class="badge badge-yellow">HIGH</span></td><td>—</td><td>92</td></tr>
+      <tr><td class="gap-name">BO Account full detail view missing (EDR, margin ratio, all financial fields)</td><td>Back Office</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>91</td></tr>
+      <tr><td class="gap-name">4-step BO account opening wizard missing</td><td>Back Office</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>91</td></tr>
+      <tr><td class="gap-name">9 missing report types (Dealer Executions, Ticker Trading, etc.)</td><td>Reports</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>93</td></tr>
+      <tr><td class="gap-name">POD Trade module missing</td><td>UI/UX</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>95</td></tr>
+      <tr><td class="gap-name">Price cell flashing on update missing</td><td>UI/UX</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>111</td></tr>
+      <tr><td class="gap-name">Custom price alerts module missing</td><td>Features</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>95</td></tr>
+      <tr><td class="gap-name">Forthcoming IPO / Forthcoming T-Bond tabs missing</td><td>Features</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>96</td></tr>
+      <tr><td class="gap-name">3-language toggle (EN/BN/ZH) missing</td><td>i18n</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>112</td></tr>
+      <tr><td class="gap-name">Session auto-logout at 10 minutes missing</td><td>Security</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>97</td></tr>
+      <tr><td class="gap-name">Progressive login lockout (3→CAPTCHA, 5→lock, 10→IP block) missing</td><td>Security</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>97</td></tr>
+      <tr><td class="gap-name">No Vitest frontend tests</td><td>Testing</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>101</td></tr>
+      <tr><td class="gap-name">No Playwright E2E tests</td><td>Testing</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>102</td></tr>
+      <tr><td class="gap-name">No deployment (Railway + Vercel)</td><td>Production</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>108</td></tr>
+      <tr><td class="gap-name">No CI/CD pipeline</td><td>Production</td><td><span class="badge badge-blue">IMPORTANT</span></td><td>—</td><td>107</td></tr>
+      <tr><td class="gap-name">No Serilog structured logging</td><td>Production</td><td><span class="badge badge-purple">ADVANCED</span></td><td>—</td><td>99</td></tr>
+      <tr><td class="gap-name">TradingView-style chart with drawing tools</td><td>Advanced</td><td><span class="badge badge-purple">ADVANCED</span></td><td>—</td><td>113</td></tr>
+      <tr><td class="gap-name">Historical Volume Profile widget</td><td>Advanced</td><td><span class="badge badge-purple">ADVANCED</span></td><td>—</td><td>113</td></tr>
+      <tr><td class="gap-name">Fundamental Module (P/E, EPS, Market Cap)</td><td>Advanced</td><td><span class="badge badge-purple">ADVANCED</span></td><td>—</td><td>94</td></tr>
+      <tr><td class="gap-name">Compare stocks overlay chart</td><td>Advanced</td><td><span class="badge badge-purple">ADVANCED</span></td><td>—</td><td>113</td></tr>
+      <tr><td class="gap-name">Block board orders (B1-B11 FIX cert)</td><td>Advanced/FIX</td><td><span class="badge badge-purple">ADVANCED</span></td><td>B1-B11 fail</td><td>114</td></tr>
+      <tr><td class="gap-name">Pre-Open session handling (L19)</td><td>Advanced/FIX</td><td><span class="badge badge-purple">ADVANCED</span></td><td>L19 fails</td><td>115</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 4: ARCHITECTURE -->
+<div class="section" id="architecture">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Target Architecture</h2>
+  </div>
+
+  <div class="arch-box">
+    <div class="arch-title">// System Architecture — BdStockOMS v2.0</div>
+    <div class="arch-grid">
+      <div class="arch-layer">
+        <div class="arch-layer-name" style="color:var(--accent)">Data Sources</div>
+        <div class="arch-layer-items">
+          DSE Live Scraper<br>CSE Live Scraper<br>FIX Gateway (FIXT.1.1)<br>XFL BOS Files<br>Manual Entry
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-name" style="color:var(--accent3)">Backend API</div>
+        <div class="arch-layer-items">
+          ASP.NET Core 8<br>EF Core + SQL Server<br>Redis (cache + blacklist)<br>SignalR Hubs<br>QuickFIX/N<br>Background Services
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-name" style="color:var(--accent2)">Frontend</div>
+        <div class="arch-layer-items">
+          React 18 + TypeScript<br>Vite + Zustand<br>SignalR Client<br>react-i18next (3 lang)<br>SheetJS (Excel)<br>Chart.js / D3
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-name" style="color:var(--accent4)">Infrastructure</div>
+        <div class="arch-layer-items">
+          Railway (API + DB + Redis)<br>Vercel (Frontend)<br>GitHub Actions (CI/CD)<br>Docker Compose (local)<br>Serilog + Seq (logs)<br>Health checks
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Multi-Tenant Strategy</div>
+    <p><strong>Now:</strong> Single DB (<code>BdStockOMS</code>) with <code>BrokerageHouseId</code> row-level isolation on every table. Every query double-verified against JWT claim. <strong>Future:</strong> SuperAdmin can provision per-brokerage databases via <code>BrokerageConnections</code> model — architecture ready via <code>ITenantDbContextFactory</code> interface from Day 80. Migration runner per-tenant exposed in SuperAdmin panel.</p>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">FIX Connector Strategy</div>
+    <p><strong>Now:</strong> <code>IFIXConnector</code> interface with <code>SimulatedFIXConnector</code> default. All FIX message logic coded against the interface. <strong>Live:</strong> Drop in <code>QuickFIXConnector</code> implementing the same interface — configure SenderCompID, TargetCompID, host, port via Admin Settings. Zero code changes to order flow.</p>
+  </div>
+</div>
+
+<!-- SECTION 5: PRINCIPLES -->
+<div class="section" id="principles">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Core Design Principles — Every Line of Code</h2>
+  </div>
+  <div class="principle-grid">
+    <div class="principle-card p1">
+      <h4>🔗 Everything Connected</h4>
+      <p>Every widget shows live data from SignalR where possible. Every table has a REST fallback for initial load. If market data unavailable: demo data. No empty states, no loading spinners without fallback content.</p>
+    </div>
+    <div class="principle-card p2">
+      <h4>⚡ Optimistic UI First</h4>
+      <p>Every action (place order, cancel, modify) updates the UI immediately, confirms from server, reverts on error. P95 API response &lt; 50ms for market data. Redis cache first, DB fallback. Zero unnecessary re-renders.</p>
+    </div>
+    <div class="principle-card p3">
+      <h4>🔐 Multi-Tenant by Default</h4>
+      <p>BrokerageHouseId from JWT is the first guard on every query. No service method exists without tenant isolation. SuperAdmin bypasses cleanly. Per-tenant feature flags for exchange config, FIX config, logo, branding.</p>
+    </div>
+    <div class="principle-card p4">
+      <h4>🎛️ Micro-Level Control</h4>
+      <p>Every element: RMS limits per-stock, per-sector, per-board, per-category, per-user, per-BO-group, per-basket, per-branch, per-broker. Column show/hide, resize, reorder persisted. Every table has Excel download. Every form has keyboard shortcuts.</p>
+    </div>
+    <div class="principle-card p5">
+      <h4>🌍 i18n Everything</h4>
+      <p>All UI strings go through <code>t('key')</code> from Day 79 onward. English keys are added as each component is built. Bengali and Chinese translations added Day 112. Toggle in header persists to localStorage.</p>
+    </div>
+    <div class="principle-card p6">
+      <h4>🧪 Test Everything</h4>
+      <p>Every new service: xUnit tests same day. Every new frontend component: Vitest test same day (from Day 101). Every critical journey: Playwright E2E. Target: 1,800+ tests by Day 130, 0 failures, always.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 6: THE PLAN -->
+<div class="section" id="plan">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Day-by-Day Development Plan — Days 79 to 130</h2>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠️ How to Read This Plan</div>
+    <p>Each day = one Git branch, one commit, tests must pass before commit. Branch naming: <code>day-{N}-{slug}</code>. Every day in bash commands only — no manual file editing. If the build breaks, fix it same day before moving to the next.</p>
+  </div>
+
+  <!-- PHASE A -->
+  <div class="phase" id="phase-a">
+    <div class="phase-header phase-a">
+      <span class="phase-label label-a">PHASE A</span>
+      <span class="phase-title">Foundation Hardening</span>
+      <span class="phase-range">Days 79–85 · 7 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">79</div></td>
+          <td><div class="day-branch">day-79-order-model-v2</div></td>
+          <td>
+            <div class="day-title">Order Model v2 + DB Migration</div>
+            <div class="day-desc">The single most important migration. Extends the Order model with all DSE FIX fields. Every existing test must still pass. New fields nullable where appropriate for backward compat.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">TimeInForce enum (Day/IOC/FOK)</span>
+              <span class="feature-item">OrderCategory += MarketAtBest</span>
+              <span class="feature-item">MinQty int?</span>
+              <span class="feature-item">DisplayQty int?</span>
+              <span class="feature-item">IsPrivate bool</span>
+              <span class="feature-item">ExecInstruction enum</span>
+              <span class="feature-item">TrdMatchID string?</span>
+              <span class="feature-item">SettlDate DateTime?</span>
+              <span class="feature-item">GrossTradeAmt decimal?</span>
+              <span class="feature-item">AggressorIndicator bool?</span>
+              <span class="feature-item">ClOrdID string</span>
+              <span class="feature-item">OrigClOrdID string?</span>
+              <span class="feature-item">ExchangeId enum (DSE/CSE)</span>
+              <span class="feature-item">Board enum (7 values)</span>
+              <span class="feature-item">OrderStatus += 8 new values</span>
+              <span class="feature-item">Migration Day79_OrderModelV2</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1080+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">80</div></td>
+          <td><div class="day-branch">day-80-multitenant-v2</div></td>
+          <td>
+            <div class="day-title">Multi-Tenant Architecture v2</div>
+            <div class="day-desc">Row-level isolation hardening PLUS future-proofing for per-tenant DB. Every single service method gets an audit that it reads BrokerageHouseId from JWT — not from request body. SuperAdmin provisioning UI skeleton.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">BrokerageConnections model</span>
+              <span class="feature-item">ITenantDbContextFactory interface</span>
+              <span class="feature-item">TenantMiddleware (JWT → tenantId)</span>
+              <span class="feature-item">ITenantContext service</span>
+              <span class="feature-item">Per-tenant feature flags</span>
+              <span class="feature-item">Tenant audit: 30 services verified</span>
+              <span class="feature-item">SuperAdmin provision endpoint</span>
+              <span class="feature-item">Migration Day80_TenantProvision</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1100+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">81</div></td>
+          <td><div class="day-branch">day-81-rbac-granular</div></td>
+          <td>
+            <div class="day-title">Granular RBAC + BO Groups + Baskets</div>
+            <div class="day-desc">UserPermissions table for micro-level access control. BO Group model (group investors for shared limits). Basket model (group stocks for bulk limit rules). Permission middleware wired to every controller action.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">UserPermissions table</span>
+              <span class="feature-item">BoGroup model + service</span>
+              <span class="feature-item">Basket model + service</span>
+              <span class="feature-item">Permission middleware</span>
+              <span class="feature-item">IPermissionService</span>
+              <span class="feature-item">60+ permission constants</span>
+              <span class="feature-item">Role override logic</span>
+              <span class="feature-item">Migration Day81_GranularRBAC</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1120+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">82</div></td>
+          <td><div class="day-branch">day-82-multiexchange</div></td>
+          <td>
+            <div class="day-title">Multi-Exchange: CSE Scraper + Board Routing</div>
+            <div class="day-desc">CSE scraper (cse.com.bd) running on same 30s/5m schedule as DSE. Exchange-aware order routing. Board-specific validation rules. Per-exchange market hours. CSE stocks show up in Watchlist with exchange tag.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">CseScraperService</span>
+              <span class="feature-item">CSE market hours config</span>
+              <span class="feature-item">Exchange routing in OrderService</span>
+              <span class="feature-item">Board validation per exchange</span>
+              <span class="feature-item">BUYIN board rules</span>
+              <span class="feature-item">SPUBLIC + QI flag</span>
+              <span class="feature-item">Exchange selector in order model</span>
+              <span class="feature-item">SignalR per-exchange channels</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1140+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">83</div></td>
+          <td><div class="day-branch">day-83-rms-v2</div></td>
+          <td>
+            <div class="day-title">RMS v2 — 6-Level Cascade + EDR + Margin Thresholds</div>
+            <div class="day-desc">The full risk management system as per XFL Broker Admin handbook. 6 levels × 8 limit types = 48 limit configurations per brokerage. EDR calculation engine. 3-tier margin threshold alerts. Real-time breach detection via SignalR.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Client/User/BOGroup/Basket/Branch/Broker limits</span>
+              <span class="feature-item">Credit/Board/TradingCode/Sector/Category limits</span>
+              <span class="feature-item">Allowed/Blocked lists per level</span>
+              <span class="feature-item">EDR = MarketValue / (MarketValue - Debt)</span>
+              <span class="feature-item">3-tier margin thresholds (configurable)</span>
+              <span class="feature-item">Cascade enforcement (Client ≤ Branch ≤ Broker)</span>
+              <span class="feature-item">Real-time breach push via SignalR</span>
+              <span class="feature-item">Migration Day83_RMSv2</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1165+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">84</div></td>
+          <td><div class="day-branch">day-84-fix-connector</div></td>
+          <td>
+            <div class="day-title">FIX Connector Architecture + Simulated Engine</div>
+            <div class="day-desc">Proper IFIXConnector interface so real FIX can be dropped in via config. SimulatedFIXConnector faithfully implements all message types. FIX message log persisted to DB. Full FIXT.1.1 session lifecycle simulated.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">IFIXConnector interface</span>
+              <span class="feature-item">SimulatedFIXConnector (full FIXT.1.1)</span>
+              <span class="feature-item">FIXConnectorFactory (config-driven)</span>
+              <span class="feature-item">FIXMessage log to DB</span>
+              <span class="feature-item">NewOrderSingle (35=D)</span>
+              <span class="feature-item">ExecutionReport (35=8)</span>
+              <span class="feature-item">OrderCancelReplaceRequest (35=G)</span>
+              <span class="feature-item">OrderCancelRequest (35=F)</span>
+              <span class="feature-item">PositionReport (35=AP)</span>
+              <span class="feature-item">S1-S12 cert scenarios simulated</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1185+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">85</div></td>
+          <td><div class="day-branch">day-85-fix-order-types</div></td>
+          <td>
+            <div class="day-title">FIX Order Types: MarketAtBest, IOC, FOK, Private, Iceberg</div>
+            <div class="day-desc">All advanced DSE order types wired end-to-end: UI input → backend validation → FIX message → execution report → UI status update. Each type has its own validation rules matching DSE specifications.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">MarketAtBest (OrdType=Z) full flow</span>
+              <span class="feature-item">IOC expiry on no-fill</span>
+              <span class="feature-item">FOK reject if can't fill all</span>
+              <span class="feature-item">Private order (ExecInst=S) accept</span>
+              <span class="feature-item">Release private (ExecInst=q)</span>
+              <span class="feature-item">Iceberg (DisplayQty) refill logic</span>
+              <span class="feature-item">MinQty validation against OrderQty</span>
+              <span class="feature-item">FIX cert M1-M12 pass</span>
+              <span class="feature-item">FIX cert L1-L19 pass</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1210+</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE B -->
+  <div class="phase" id="phase-b">
+    <div class="phase-header phase-b">
+      <span class="phase-label label-b">PHASE B</span>
+      <span class="phase-title">World-Class Trading Interface</span>
+      <span class="phase-range">Days 86–96 · 11 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">86</div></td>
+          <td><div class="day-branch">day-86-dashboard-v3</div></td>
+          <td>
+            <div class="day-title">Dashboard v3 — Panic Button, Status Dots, Market Bar</div>
+            <div class="day-desc">The topbar becomes a professional OMS command center. Panic Button glows red. Two connection dots pulse green/red based on SignalR connection state. Market status bar shows DSEX/CSCX index + gainers/losers/volume. Price ticker scroll with configurable speed.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">🔴 Panic Button (cancel-all API)</span>
+              <span class="feature-item">● DSE Market Data dot</span>
+              <span class="feature-item">● DSE Trade Data dot</span>
+              <span class="feature-item">● CSE Market Data dot</span>
+              <span class="feature-item">DSEX + CSCX live index bar</span>
+              <span class="feature-item">Gainers/Losers/Unchanged counts</span>
+              <span class="feature-item">Price ticker scroll (configurable speed)</span>
+              <span class="feature-item">Pre-Open / Open / Closing / Closed status</span>
+              <span class="feature-item">Dashboard export/import as JSON</span>
+              <span class="feature-item">F5 = Save current layout</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1225+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">87</div></td>
+          <td><div class="day-branch">day-87-buysell-v3</div></td>
+          <td>
+            <div class="day-title">Buy/Sell Console v3 — Complete Order Entry Panel</div>
+            <div class="day-desc">The order entry panel becomes a fully-featured professional trading console matching and surpassing XFL's order panel. Every field from the DSE FIX spec exposed. Trade confirmation dialog (configurable off). Margin warnings live.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Exchange selector (DSE/CSE)</span>
+              <span class="feature-item">Board selector (PUBLIC/SME/ATB/GOV/DEBT/BLOCK)</span>
+              <span class="feature-item">Price type: Limit/Market/MarketAtBest</span>
+              <span class="feature-item">TimeInForce: Day/IOC/FOK</span>
+              <span class="feature-item">MinQty input</span>
+              <span class="feature-item">DisplayQty (iceberg)</span>
+              <span class="feature-item">Private Order checkbox</span>
+              <span class="feature-item">Trade Confirmation Dialog</span>
+              <span class="feature-item">Cancel Confirmation Dialog</span>
+              <span class="feature-item">3-tier margin color warnings</span>
+              <span class="feature-item">Purchase Power + Cash + Salable display</span>
+              <span class="feature-item">Price dev % from LTP warning</span>
+              <span class="feature-item">Shortcut BO accounts (A/B/C/D preset)</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1240+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">88</div></td>
+          <td><div class="day-branch">day-88-orderlist-v3</div></td>
+          <td>
+            <div class="day-title">Order List v3 — Full Professional Order Management</div>
+            <div class="day-desc">The Order List becomes the most powerful order management grid in any Bangladesh OMS. All 15 statuses. 40+ columns. F3/F4/F10. Right-click context menu. Amendment history. Excel download. Date range filter.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">All 15 order statuses with badges</span>
+              <span class="feature-item">40+ columns (all FIX fields)</span>
+              <span class="feature-item">F3 = Duplicate Order</span>
+              <span class="feature-item">F4 = Modify Order dialog</span>
+              <span class="feature-item">F10 = Cancel (with confirmation)</span>
+              <span class="feature-item">Double-click → Modify</span>
+              <span class="feature-item">Right-click context menu</span>
+              <span class="feature-item">Download Excel (SheetJS)</span>
+              <span class="feature-item">Filter: all statuses, date range, BO Group</span>
+              <span class="feature-item">Amendment history panel</span>
+              <span class="feature-item">Pagination + "Latest Only" toggle</span>
+              <span class="feature-item">Save column layout to DB</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1255+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">89</div></td>
+          <td><div class="day-branch">day-89-portfolio-v3</div></td>
+          <td>
+            <div class="day-title">Portfolio v3 — Full Financial View with EDR</div>
+            <div class="day-desc">Portfolio widget shows every financial field a trader needs: EDR, margin ratio, matured vs intraday positions, salable qty, unrealized/realized P&L. Right-click for all actions. Download Excel. BO account switcher for multi-BO traders.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">EDR column with color indicator</span>
+              <span class="feature-item">Margin ratio display</span>
+              <span class="feature-item">Market value / Cost value</span>
+              <span class="feature-item">Matured vs Intraday split</span>
+              <span class="feature-item">3-tier margin color warnings</span>
+              <span class="feature-item">Download Excel (SheetJS)</span>
+              <span class="feature-item">Right-click: Buy/Sell/Depth/T&S/Chart/News</span>
+              <span class="feature-item">BO Account switcher dropdown</span>
+              <span class="feature-item">Purchase Power + Cash pills</span>
+              <span class="feature-item">Column save to DB</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1268+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">90</div></td>
+          <td><div class="day-branch">day-90-watchlist-v3</div></td>
+          <td>
+            <div class="day-title">Watchlist v3 — Multi-Exchange, Price Flash, Views</div>
+            <div class="day-desc">The Watchlist becomes the best market data grid in any Bangladesh OMS. Price cells flash on update (configurable solid/outline/off). CSE stocks show with different exchange badge. Multiple view modes (Var%, Performance, Bid/Ask, Volume, Pre-Open). Export to Excel.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Price flash on update (CSS animation)</span>
+              <span class="feature-item">Flash type: solid/outline/off (settings)</span>
+              <span class="feature-item">DSE + CSE stocks in same watchlist</span>
+              <span class="feature-item">Exchange badge (DSE blue / CSE orange)</span>
+              <span class="feature-item">View modes: Var%/Performance/Bid-Ask/Volume/PHLC</span>
+              <span class="feature-item">Tree Map mini-view</span>
+              <span class="feature-item">Export to Excel</span>
+              <span class="feature-item">Favourite groups (3 slots)</span>
+              <span class="feature-item">Click Bid/Ask → auto-fill order form</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1280+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">91</div></td>
+          <td><div class="day-branch">day-91-bo-account-v3</div></td>
+          <td>
+            <div class="day-title">BO Account v3 — Full Detail + 4-Step Opening Wizard</div>
+            <div class="day-desc">BO Account module becomes a complete back-office tool. Full financial detail view with all margin fields. 4-step account opening wizard (Account Holder → Bank Info → Nominee → POA). CDBL link on login page. Export to Excel.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Purchase Power, Cash, Matured, Ledger display</span>
+              <span class="feature-item">Margin Status (Active/Inactive)</span>
+              <span class="feature-item">Margin Ratio, Market Value, Cost Value</span>
+              <span class="feature-item">EDR (system-calculated) vs Initial EDR</span>
+              <span class="feature-item">4-step wizard (draft save on each step)</span>
+              <span class="feature-item">Step 1: Account Holder Info (Individual/Joint)</span>
+              <span class="feature-item">Step 2: Bank Information + doc upload</span>
+              <span class="feature-item">Step 3: Nominee Details</span>
+              <span class="feature-item">Step 4: Power of Attorney + CAPTCHA</span>
+              <span class="feature-item">CDBL link on login page</span>
+              <span class="feature-item">Export BO list to Excel</span>
+              <span class="feature-item">BO Group assignment</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1295+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">92</div></td>
+          <td><div class="day-branch">day-92-rms-ui-v3</div></td>
+          <td>
+            <div class="day-title">RMS Management UI v3 — 6-Level Visual Control</div>
+            <div class="day-desc">The most comprehensive RMS UI in any Bangladesh OMS. 6-level tab structure with 8 limit types each. Visual utilization bars. Real-time breach indicator. EDR config. Margin threshold configuration. Cascade view shows how limits flow from broker to client.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">6-level tabs: Client/User/BO Group/Basket/Branch/Broker</span>
+              <span class="feature-item">8 limit types per level (Credit/Board/TradingCode/Sector/Category + Allowed lists)</span>
+              <span class="feature-item">Visual utilization bars (green/yellow/red)</span>
+              <span class="feature-item">Real-time breach indicator (SignalR)</span>
+              <span class="feature-item">EDR threshold configuration</span>
+              <span class="feature-item">3-tier margin threshold setup</span>
+              <span class="feature-item">Cascade view (broker → branch → user → client)</span>
+              <span class="feature-item">Bulk limit import (Excel)</span>
+              <span class="feature-item">Limit history audit trail</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1310+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">93</div></td>
+          <td><div class="day-branch">day-93-backoffice-v3</div></td>
+          <td>
+            <div class="day-title">Back Office v3 — XFL Format + File History + EDR Reconciliation</div>
+            <div class="day-desc">BOS page becomes a complete daily operations tool. XFL format cash/position import. File history table with view/download per upload. EDR reconciliation (system vs initial — flag mismatches instantly). DSE EOD export. Broker Trade export.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">XFL format cash file import parser</span>
+              <span class="feature-item">XFL format position file import parser</span>
+              <span class="feature-item">File History Table (view/download/status)</span>
+              <span class="feature-item">EDR reconciliation (system vs initial)</span>
+              <span class="feature-item">Mismatch → red flag + notification</span>
+              <span class="feature-item">DSE EOD Ticker export</span>
+              <span class="feature-item">Broker Trade export</span>
+              <span class="feature-item">XW Trade data import</span>
+              <span class="feature-item">Upload confirmation pop-up</span>
+              <span class="feature-item">Auto-download of upload report</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1325+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">94</div></td>
+          <td><div class="day-branch">day-94-market-data-v3</div></td>
+          <td>
+            <div class="day-title">Market Data v3 — Fundamental Module, CSE Board, Market Map</div>
+            <div class="day-desc">Market data suite upgraded. Fundamental module shows P/E, EPS, market cap, 52W stats per stock. CSE Watchlist as separate tab. Market Map treemap with hover tooltips. Score Board improvements. Market Trade Info with live gainer/loser counters.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">FundamentalWidget (P/E, EPS, Market Cap, Dividend Yield, 52W H/L, Beta)</span>
+              <span class="feature-item">CSE tab in Watchlist / Share Price</span>
+              <span class="feature-item">Market Map: sector × market cap treemap (D3)</span>
+              <span class="feature-item">Market Map hover: sector stocks popup</span>
+              <span class="feature-item">Score Board: board filter (PUBLIC/SME/ATB)</span>
+              <span class="feature-item">Market Trade Info: Gainers/Losers/Unchanged live</span>
+              <span class="feature-item">Index Summary: DSEX + DS30 + DSES + CSCX</span>
+              <span class="feature-item">Top Sectors by Gainer: SVG/PNG/CSV export</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1340+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">95</div></td>
+          <td><div class="day-branch">day-95-alerts-pod</div></td>
+          <td>
+            <div class="day-title">Alerts Module + POD Trade Widget</div>
+            <div class="day-desc">Custom price alerts set by traders — above/below price, volume threshold, % change. Alerts fire via SignalR + browser notification + badge. POD Trade: place orders at % of purchase power or holdings with auto-calculated quantity.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Alert model: price/volume/pct triggers</span>
+              <span class="feature-item">AlertService: check on every price update</span>
+              <span class="feature-item">SignalR push on alert fire</span>
+              <span class="feature-item">Browser Notification API</span>
+              <span class="feature-item">Alert history table</span>
+              <span class="feature-item">POD Trade module: % of purchase power</span>
+              <span class="feature-item">POD Trade: % of holdings quantity</span>
+              <span class="feature-item">POD percentage presets (10%/25%/50%/100%)</span>
+              <span class="feature-item">Auto-populate order form from POD</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1355+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">96</div></td>
+          <td><div class="day-branch">day-96-reports-v3</div></td>
+          <td>
+            <div class="day-title">Reports v3 — 18 Report Types + Contract Note PDF</div>
+            <div class="day-desc">Reports page becomes a complete institutional reporting suite. 18 report types covering all XFL Admin handbook requirements. All reports exportable as Excel + PDF. Date range on all. Contract note PDF per-trade. Monthly investor statement PDF.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Client Detailed Execution</span>
+              <span class="feature-item">Client Trading Summary</span>
+              <span class="feature-item">Dealer Executions by Client</span>
+              <span class="feature-item">Dealer Executions by Instrument</span>
+              <span class="feature-item">Dealer Trading</span>
+              <span class="feature-item">Ticker Detailed Executions</span>
+              <span class="feature-item">Ticker Trading</span>
+              <span class="feature-item">Daily Trade Summary</span>
+              <span class="feature-item">Commission Ledger</span>
+              <span class="feature-item">Settlement Report</span>
+              <span class="feature-item">Contract Note PDF (per-trade)</span>
+              <span class="feature-item">Monthly Investor Statement PDF</span>
+              <span class="feature-item">BSEC Regulatory Format export</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1370+</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE C -->
+  <div class="phase" id="phase-c">
+    <div class="phase-header phase-c">
+      <span class="phase-label label-c">PHASE C</span>
+      <span class="phase-title">Admin, Trade Monitor & Advanced Features</span>
+      <span class="phase-range">Days 97–103 · 7 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">97</div></td>
+          <td><div class="day-branch">day-97-trademonitor-v3</div></td>
+          <td>
+            <div class="day-title">Trade Monitor v3 — Broker Admin Command Center</div>
+            <div class="day-desc">Trade Monitor becomes the institutional oversight tool described in the XFL Broker Admin handbook. Pie chart, bar charts, top-10 traders/codes/clients. All charts export SVG/PNG/CSV. User Activities log. 10-second auto-refresh.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Buy/Sell pie chart (SVG/PNG/CSV export)</span>
+              <span class="feature-item">Top 10 Traders by Amount (bar chart)</span>
+              <span class="feature-item">Top 10 Trading Codes by Amount (bar chart)</span>
+              <span class="feature-item">Top 10 Clients by Amount (bar chart)</span>
+              <span class="feature-item">Trade summary metrics (Buy/Sell/Total/Count)</span>
+              <span class="feature-item">10s auto-refresh + manual refresh</span>
+              <span class="feature-item">User Activities log (all logins, actions, IP)</span>
+              <span class="feature-item">Export all charts SVG/PNG/CSV</span>
+              <span class="feature-item">Forthcoming IPO tab</span>
+              <span class="feature-item">Forthcoming T-Bond tab</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1385+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">98</div></td>
+          <td><div class="day-branch">day-98-charts-advanced</div></td>
+          <td>
+            <div class="day-title">Advanced Charts — TradingView-Style TA + Volume Profile + Compare</div>
+            <div class="day-desc">TA Chart upgraded with drawing tools (trendline, horizontal line, Fibonacci retracement). Historical Volume Profile widget (profile bar chart on price axis). Compare overlay: add multiple stocks to one chart. Minute Chart chart-type switcher (area/candlestick/bar).</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Drawing toolbar: Trendline, H-Line, Fib, Rectangle, Text</span>
+              <span class="feature-item">Drawing state persisted per symbol</span>
+              <span class="feature-item">Historical Volume Profile (D3 overlay)</span>
+              <span class="feature-item">Compare: add 1-3 stocks to overlay chart</span>
+              <span class="feature-item">Minute Chart: area/candlestick/bar switcher</span>
+              <span class="feature-item">Date range selector on all charts</span>
+              <span class="feature-item">Timeframe: 1m/5m/15m/1H/1D/1W/1M</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1398+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">99</div></td>
+          <td><div class="day-branch">day-99-block-misc-orders</div></td>
+          <td>
+            <div class="day-title">Block Board Orders + BUYIN + SPUBLIC + Pre-Open</div>
+            <div class="day-desc">Completes all DSE FIX certification test cases. Block board orders (B1-B11). BUYIN board (sell only). SPUBLIC board (QI account required for buy). Pre-Open session: orders queued, status Queued, market open triggers processing.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Block board: ExecInst=WholeOrNone required</span>
+              <span class="feature-item">Block board: iceberg/MinQty rejected</span>
+              <span class="feature-item">BUYIN board: BUY rejected (Z1), SELL accepted (Z2)</span>
+              <span class="feature-item">SPUBLIC: non-QI buy rejected (Z3)</span>
+              <span class="feature-item">SPUBLIC: QI buy accepted (Z4)</span>
+              <span class="feature-item">Pre-Open: orders get Queued status</span>
+              <span class="feature-item">Market open: Queued → Submitted → matching</span>
+              <span class="feature-item">GTC/GTD: rejected with DSE error code</span>
+              <span class="feature-item">FIX cert B1-B11, Z1-Z6 pass</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1415+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">100</div></td>
+          <td><div class="day-branch">day-100-i18n</div></td>
+          <td>
+            <div class="day-title">Internationalization — English / বাংলা / 中文</div>
+            <div class="day-desc">Full i18n implementation using react-i18next. Language toggle in header persists to localStorage. All existing UI strings extracted to translation keys. English complete. Bengali (Bangla) complete. Chinese (Simplified) complete. New components from Day 100 onward use t() from the start.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">react-i18next setup</span>
+              <span class="feature-item">en.json (English — complete)</span>
+              <span class="feature-item">bn.json (Bengali — complete)</span>
+              <span class="feature-item">zh.json (Chinese Simplified — complete)</span>
+              <span class="feature-item">Language toggle in Topbar (EN/বাংলা/中)</span>
+              <span class="feature-item">Persists to localStorage</span>
+              <span class="feature-item">RTL-ready CSS structure for future</span>
+              <span class="feature-item">Date/number formatting per locale</span>
+              <span class="feature-item">All 108 existing files patched</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1430+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">101</div></td>
+          <td><div class="day-branch">day-101-ui-polish-1</div></td>
+          <td>
+            <div class="day-title">UI Polish Wave 1 — Micro-Level UX Details</div>
+            <div class="day-desc">Every table gets column resize persistence. Tooltip on every icon and menu item. Zoom in/out on all tables. Font size presets. About Us page. Keyboard shortcut expansion. Right-click context menus on Score Board, Top Gainers, Most Active.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Column resize persisted to DB (per user per widget)</span>
+              <span class="feature-item">Tooltip on every icon/menu item</span>
+              <span class="feature-item">Zoom in/out on all 20 widgets</span>
+              <span class="feature-item">Font size: Small/Medium/Large global setting</span>
+              <span class="feature-item">About Us page (version, stack, regulatory)</span>
+              <span class="feature-item">Shortcut: A/B/C/D → preset BO accounts</span>
+              <span class="feature-item">Right-click on Score Board → Buy/Sell/Depth</span>
+              <span class="feature-item">Row count selector on all tables (10/25/50/100)</span>
+              <span class="feature-item">Scroll-to-top button on all long tables</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1445+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">102</div></td>
+          <td><div class="day-branch">day-102-ui-polish-2</div></td>
+          <td>
+            <div class="day-title">UI Polish Wave 2 — Performance + Animations + Dark/Light</div>
+            <div class="day-desc">Light mode theme (toggleable). Price cell color transitions (not just flash). Virtual scrolling for large lists (>500 rows). Code splitting for dashboard widgets (lazy load). WebWorker for heavy calculations (P&L, EDR). Micro-animations on order placement success/fail.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Light theme (all CSS variables)</span>
+              <span class="feature-item">Theme toggle in Topbar + persisted</span>
+              <span class="feature-item">Virtual scrolling (react-window) on large tables</span>
+              <span class="feature-item">Lazy load all 20 widgets</span>
+              <span class="feature-item">WebWorker: P&L calculations off main thread</span>
+              <span class="feature-item">Success animation on order place (green flash)</span>
+              <span class="feature-item">Error animation on rejection (red shake)</span>
+              <span class="feature-item">Smooth tab transitions</span>
+              <span class="feature-item">Loading skeleton for all async data</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1460+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">103</div></td>
+          <td><div class="day-branch">day-103-execution-timesales</div></td>
+          <td>
+            <div class="day-title">Execution Report v3 + Time & Sales v3</div>
+            <div class="day-desc">Execution Report shows all 40+ FIX columns. T&S shows buy pressure/sell pressure bars. Both have Excel download. Both show DSE + CSE data. Execution Report shows raw FIX message viewer (collapsible) for debugging.</div>
+          </td>
+          <td>
+            <div class="day-features">
+              <span class="feature-item">Execution Report: all 40+ FIX columns available</span>
+              <span class="feature-item">Execution Report: raw FIX message viewer</span>
+              <span class="feature-item">Execution Report: FIX Order ID column</span>
+              <span class="feature-item">T&S: Buy Pressure / Sell Pressure bars</span>
+              <span class="feature-item">T&S: Last 100 executions by default</span>
+              <span class="feature-item">T&S: DSE + CSE filter</span>
+              <span class="feature-item">Both: Excel download</span>
+              <span class="feature-item">Both: Date range filter</span>
+            </div>
+          </td>
+          <td><div class="day-tests">1475+</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE D -->
+  <div class="phase" id="phase-d">
+    <div class="phase-header phase-d">
+      <span class="phase-label label-d">PHASE D</span>
+      <span class="phase-title">Security Hardening, Logging, Compliance</span>
+      <span class="phase-range">Days 104–108 · 5 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">104</div></td>
+          <td><div class="day-branch">day-104-auth-hardening</div></td>
+          <td><div class="day-title">Auth Hardening — Progressive Lockout, TOTP, Session Timeout</div></td>
+          <td><div class="day-features"><span class="feature-item">3 fails → CAPTCHA</span><span class="feature-item">5 fails → 15-min lock</span><span class="feature-item">10 fails → IP block + email</span><span class="feature-item">10-min inactivity logout (configurable)</span><span class="feature-item">TOTP 2FA (Google Authenticator)</span><span class="feature-item">Min 12-char password + special chars</span><span class="feature-item">Force password change on first login</span><span class="feature-item">Single active session per user (default)</span></div></td>
+          <td><div class="day-tests">1490+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">105</div></td>
+          <td><div class="day-branch">day-105-api-hardening</div></td>
+          <td><div class="day-title">API Hardening — Rate Limiting, IDOR Audit, Compression</div></td>
+          <td><div class="day-features"><span class="feature-item">Rate limiting (per-IP, per-user, per-endpoint)</span><span class="feature-item">Response compression (gzip)</span><span class="feature-item">Correlation IDs on all requests</span><span class="feature-item">Global exception handler (structured errors)</span><span class="feature-item">FluentValidation on all DTOs</span><span class="feature-item">IDOR audit: 30 services verified (BrokerageHouseId from JWT only)</span><span class="feature-item">SQL injection prevention audit</span><span class="feature-item">CORS hardening for production URLs</span></div></td>
+          <td><div class="day-tests">1505+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">106</div></td>
+          <td><div class="day-branch">day-106-logging-monitoring</div></td>
+          <td><div class="day-title">Serilog + Health Checks + Performance Metrics</div></td>
+          <td><div class="day-features"><span class="feature-item">Serilog (structured JSON logs to file + Seq)</span><span class="feature-item">GET /health (liveness)</span><span class="feature-item">GET /health/ready (readiness)</span><span class="feature-item">GET /health/live (startup)</span><span class="feature-item">DB health check</span><span class="feature-item">Redis health check</span><span class="feature-item">SignalR connection count metric</span><span class="feature-item">Order placement latency histogram</span><span class="feature-item">Scraper success/failure rate</span></div></td>
+          <td><div class="day-tests">1518+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">107</div></td>
+          <td><div class="day-branch">day-107-compliance</div></td>
+          <td><div class="day-title">BSEC Compliance — Audit Trail v2, PII Encryption, Data Retention</div></td>
+          <td><div class="day-features"><span class="feature-item">AuditLog v2: who/what/when/IP/before/after</span><span class="feature-item">PII encryption (NID, passport, account numbers)</span><span class="feature-item">Data retention policy (auto-purge configurable)</span><span class="feature-item">BSEC compliance checklist (10-point) with live status</span><span class="feature-item">Suspicious activity detection (large orders, off-hours)</span><span class="feature-item">Cross-brokerage audit for SuperAdmin</span><span class="feature-item">Audit export in BSEC-required format</span></div></td>
+          <td><div class="day-tests">1530+</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">108</div></td>
+          <td><div class="day-branch">day-108-notifications-v2</div></td>
+          <td><div class="day-title">Notifications v2 — Email, SMS, Slack, Push</div></td>
+          <td><div class="day-features"><span class="feature-item">Real SMTP (trade fills, margin alerts, system)</span><span class="feature-item">SMS gateway (SSL Wireless or similar)</span><span class="feature-item">Slack/webhook integration</span><span class="feature-item">Browser push notifications (Web Push API)</span><span class="feature-item">Per-user notification preferences</span><span class="feature-item">Notification template system</span><span class="feature-item">Notification history table</span></div></td>
+          <td><div class="day-tests">1542+</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE E -->
+  <div class="phase" id="phase-e">
+    <div class="phase-header phase-e">
+      <span class="phase-label label-e">PHASE E</span>
+      <span class="phase-title">Testing — Automated Quality Assurance</span>
+      <span class="phase-range">Days 109–114 · 6 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">109</div></td>
+          <td><div class="day-branch">day-109-vitest</div></td>
+          <td><div class="day-title">Vitest — 40+ Frontend Component Tests</div></td>
+          <td><div class="day-features"><span class="feature-item">BuySell console validation (price/qty/margin)</span><span class="feature-item">Order status badge rendering (all 15)</span><span class="feature-item">RMS limit display (all 6 levels)</span><span class="feature-item">Market session detection (open/closed/pre-open)</span><span class="feature-item">Watchlist filtering + sorting</span><span class="feature-item">Auth guard redirect</span><span class="feature-item">i18n key coverage test</span><span class="feature-item">Confirmation dialog render</span><span class="feature-item">EDR color calculation</span><span class="feature-item">40+ tests total, 0 failures</span></div></td>
+          <td><div class="day-tests">1542+ xUnit<br>40+ Vitest</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">110</div></td>
+          <td><div class="day-branch">day-110-playwright-e2e-1</div></td>
+          <td><div class="day-title">Playwright E2E — Core Trading Journeys</div></td>
+          <td><div class="day-features"><span class="feature-item">Journey 1: Login → Place Buy → Confirm → Order in list</span><span class="feature-item">Journey 2: Login → Place Sell → Cancel → Cancelled status</span><span class="feature-item">Journey 3: Panic Button → All orders cancelled</span><span class="feature-item">Journey 4: Login → Portfolio → Excel download → data valid</span><span class="feature-item">Journey 5: Login → BOS upload → File History shows entry</span></div></td>
+          <td><div class="day-tests">+5 E2E</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">111</div></td>
+          <td><div class="day-branch">day-111-playwright-e2e-2</div></td>
+          <td><div class="day-title">Playwright E2E — Admin + Multi-Role + Multi-Exchange</div></td>
+          <td><div class="day-features"><span class="feature-item">Journey 6: Admin → Create Branch → Assign Trader → Login as Trader</span><span class="feature-item">Journey 7: RMS breach → color warning in BuySell console</span><span class="feature-item">Journey 8: Margin alert → SignalR push → notification shown</span><span class="feature-item">Journey 9: CSE stock → select in order form → CSE route taken</span><span class="feature-item">Journey 10: i18n toggle → all labels change language</span></div></td>
+          <td><div class="day-tests">+5 E2E</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">112</div></td>
+          <td><div class="day-branch">day-112-load-test</div></td>
+          <td><div class="day-title">NBomber Load Test — 200 Concurrent Users</div></td>
+          <td><div class="day-features"><span class="feature-item">200 concurrent users for 5 minutes</span><span class="feature-item">Order placement: p95 &lt; 200ms</span><span class="feature-item">Market data API: p95 &lt; 50ms</span><span class="feature-item">SignalR: 200 connections stable</span><span class="feature-item">Redis cache hit rate &gt; 80%</span><span class="feature-item">No memory leak after 5 min</span><span class="feature-item">Fix any performance issues found</span></div></td>
+          <td><div class="day-tests">Load: PASS</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">113</div></td>
+          <td><div class="day-branch">day-113-bug-sweep-1</div></td>
+          <td><div class="day-title">Bug Sweep Wave 1 — All 20 Widgets Verified</div></td>
+          <td><div class="day-features"><span class="feature-item">All 20 widgets: dark + light mode verified</span><span class="feature-item">All keyboard shortcuts working</span><span class="feature-item">All Excel downloads verified</span><span class="feature-item">All right-click menus working</span><span class="feature-item">All confirmation dialogs working</span><span class="feature-item">Mobile responsive check (tablet)</span><span class="feature-item">All i18n keys verified (no missing keys)</span></div></td>
+          <td><div class="day-tests">All green</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">114</div></td>
+          <td><div class="day-branch">day-114-bug-sweep-2</div></td>
+          <td><div class="day-title">Bug Sweep Wave 2 — FIX Cert + RMS + Multi-Tenant</div></td>
+          <td><div class="day-features"><span class="feature-item">FIX cert test cases S1-S12 verified</span><span class="feature-item">FIX cert test cases M1-M12 verified</span><span class="feature-item">FIX cert test cases L1-L19 verified</span><span class="feature-item">FIX cert test cases B1-B11 verified</span><span class="feature-item">FIX cert test cases Z1-Z6 verified</span><span class="feature-item">RMS cascade all 6 levels verified</span><span class="feature-item">Multi-tenant isolation: User A can't see User B data</span></div></td>
+          <td><div class="day-tests">All green</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE F -->
+  <div class="phase" id="phase-f">
+    <div class="phase-header phase-f">
+      <span class="phase-label label-f">PHASE F</span>
+      <span class="phase-title">Deployment — Production Go-Live</span>
+      <span class="phase-range">Days 115–122 · 8 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>What Gets Built</th><th>Key Deliverables</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="day-num">115</div></td>
+          <td><div class="day-branch">day-115-docker</div></td>
+          <td><div class="day-title">Docker + Environment Config</div></td>
+          <td><div class="day-features"><span class="feature-item">Dockerfile (API, multi-stage)</span><span class="feature-item">Dockerfile (Client, nginx)</span><span class="feature-item">docker-compose.yml (API + SQL Server + Redis + Seq)</span><span class="feature-item">appsettings.Development.json</span><span class="feature-item">appsettings.Staging.json</span><span class="feature-item">appsettings.Production.json</span><span class="feature-item">.env template</span><span class="feature-item">Health check in docker-compose</span></div></td>
+          <td><div class="day-tests">Docker: PASS</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">116</div></td>
+          <td><div class="day-branch">day-116-github-actions</div></td>
+          <td><div class="day-title">GitHub Actions CI/CD Pipeline</div></td>
+          <td><div class="day-features"><span class="feature-item">On every push: dotnet test + npm build</span><span class="feature-item">On merge to main: deploy to staging</span><span class="feature-item">On tag v*.*.*: deploy to production</span><span class="feature-item">Slack notification on failure</span><span class="feature-item">Test report artifact</span><span class="feature-item">Docker image build + push to registry</span><span class="feature-item">Branch protection rules</span></div></td>
+          <td><div class="day-tests">CI: PASS</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">117</div></td>
+          <td><div class="day-branch">day-117-railway</div></td>
+          <td><div class="day-title">Railway Backend Deployment</div></td>
+          <td><div class="day-features"><span class="feature-item">Railway project setup</span><span class="feature-item">SQL Server plugin configured</span><span class="feature-item">Redis plugin configured</span><span class="feature-item">Environment variables set</span><span class="feature-item">Custom domain (api.bdstockoms.com)</span><span class="feature-item">SSL certificate auto-managed</span><span class="feature-item">Auto-deploy on main push</span><span class="feature-item">Health endpoint verified on live URL</span></div></td>
+          <td><div class="day-tests">Live API: ✓</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">118</div></td>
+          <td><div class="day-branch">day-118-vercel</div></td>
+          <td><div class="day-title">Vercel Frontend Deployment</div></td>
+          <td><div class="day-features"><span class="feature-item">Vercel project setup</span><span class="feature-item">VITE_API_URL → Railway URL</span><span class="feature-item">Production build optimization</span><span class="feature-item">CDN caching for static assets</span><span class="feature-item">Custom domain (bdstockoms.com)</span><span class="feature-item">Preview deploys for all PRs</span><span class="feature-item">Analytics enabled</span></div></td>
+          <td><div class="day-tests">Live UI: ✓</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">119</div></td>
+          <td><div class="day-branch">day-119-smoke-tests</div></td>
+          <td><div class="day-title">Production Smoke Tests — All 6 Roles on Live URLs</div></td>
+          <td><div class="day-features"><span class="feature-item">SuperAdmin login → broker management</span><span class="feature-item">Admin login → admin settings</span><span class="feature-item">Trader login → place order → SignalR push</span><span class="feature-item">Investor login → portfolio + BOS</span><span class="feature-item">CCD login → account view</span><span class="feature-item">Compliance login → audit trail</span><span class="feature-item">Scraper running → prices updating</span><span class="feature-item">Performance verified on live</span></div></td>
+          <td><div class="day-tests">Smoke: PASS</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">120</div></td>
+          <td><div class="day-branch">day-120-performance-tuning</div></td>
+          <td><div class="day-title">Production Performance Tuning</div></td>
+          <td><div class="day-features"><span class="feature-item">Redis caching: market data 5s TTL</span><span class="feature-item">Redis caching: commission rates 1h TTL</span><span class="feature-item">Redis caching: portfolio values 30s TTL</span><span class="feature-item">DB index audit (add missing indexes)</span><span class="feature-item">N+1 query elimination (all services)</span><span class="feature-item">API p95 &lt; 50ms for market data verified</span><span class="feature-item">Frontend bundle size &lt; 500KB</span><span class="feature-item">Lighthouse score &gt; 90</span></div></td>
+          <td><div class="day-tests">Perf: PASS</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num">121</div></td>
+          <td><div class="day-branch">day-121-docs</div></td>
+          <td><div class="day-title">Documentation — README, Swagger, User Manuals</div></td>
+          <td><div class="day-features"><span class="feature-item">README.md (live URL, screenshots, feature list)</span><span class="feature-item">Swagger fully annotated (all 219 .cs endpoints)</span><span class="feature-item">Architecture diagram (Mermaid)</span><span class="feature-item">BSEC compliance checklist (with live status)</span><span class="feature-item">Trader User Manual (PDF)</span><span class="feature-item">Client User Manual (PDF)</span><span class="feature-item">Admin User Manual (PDF)</span><span class="feature-item">FIX Certification evidence documentation</span></div></td>
+          <td><div class="day-tests">Docs: ✓</div></td>
+        </tr>
+        <tr>
+          <td><div class="day-num" style="color:var(--accent3)">🚀 122</div></td>
+          <td><div class="day-branch" style="border-color:rgba(34,221,136,0.4);color:var(--green)">day-122-go-live-v1</div></td>
+          <td><div class="day-title" style="color:var(--accent3)">🚀 GO-LIVE — v1.0.0 Tag — DSE + CSE Live</div></td>
+          <td><div class="day-features"><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">git tag v1.0.0</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">1600+ xUnit tests ✓</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">40+ Vitest tests ✓</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">10 Playwright E2E ✓</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">bdstockoms.com LIVE</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">api.bdstockoms.com LIVE</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">DSE FIX cert test cases documented</span><span class="feature-item" style="border-color:rgba(34,221,136,0.3);color:var(--green)">All 6 roles tested on live</span></div></td>
+          <td><div class="day-tests" style="color:var(--accent3)">1600+</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE G: Post-Launch -->
+  <div class="phase" id="phase-g">
+    <div class="phase-header" style="background:linear-gradient(135deg,rgba(176,108,255,0.06),rgba(176,108,255,0.02));">
+      <span class="phase-label label-d">PHASE G</span>
+      <span class="phase-title">Post-Launch — Making It the World's Best OMS</span>
+      <span class="phase-range">Days 123–130 · 8 days</span>
+    </div>
+    <table class="day-table">
+      <thead><tr><th>Day</th><th>Branch</th><th>Feature</th><th>Details</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><div class="day-num">123</div></td><td><div class="day-branch">day-123-advanced-risk</div></td><td><div class="day-title">AI-Powered Risk Signals</div></td><td><div class="day-desc">Anomaly detection on order patterns. Unusual order size vs history flag. Off-hours order alert. Concentration risk (>20% portfolio in single stock). Rapid successive order detection (potential spoofing flag).</div></td><td></td></tr>
+        <tr><td><div class="day-num">124</div></td><td><div class="day-branch">day-124-market-intelligence</div></td><td><div class="day-title">Market Intelligence Dashboard</div></td><td><div class="day-desc">Sector rotation heatmap. Correlation matrix between selected stocks. Momentum score per sector. Circuit breaker status per stock. Market breadth indicator (advance/decline line).</div></td><td></td></tr>
+        <tr><td><div class="day-num">125</div></td><td><div class="day-branch">day-125-multi-monitor</div></td><td><div class="day-title">Multi-Monitor / Multi-Window Support</div></td><td><div class="day-desc">Pop out any widget to separate browser window. Window sync via BroadcastChannel API. Multi-monitor trading setup support. Widget state synced across all windows.</div></td><td></td></tr>
+        <tr><td><div class="day-num">126</div></td><td><div class="day-branch">day-126-mobile-app</div></td><td><div class="day-title">Mobile-Responsive Investor View</div></td><td><div class="day-desc">Dedicated mobile layout for Investor role. Touch-friendly order entry. Portfolio summary view. Push notifications for fills. PWA manifest for install-to-homescreen.</div></td><td></td></tr>
+        <tr><td><div class="day-num">127</div></td><td><div class="day-branch">day-127-api-marketplace</div></td><td><div class="day-title">Public API + Webhook System</div></td><td><div class="day-desc">Public REST API for brokerage integrations. API key management per client. Webhook delivery for order events. Rate-limited public market data API. Postman collection published.</div></td><td></td></tr>
+        <tr><td><div class="day-num">128</div></td><td><div class="day-branch">day-128-saml-sso</div></td><td><div class="day-title">SAML / SSO Enterprise Login</div></td><td><div class="day-desc">Azure AD / Okta SAML integration. Enterprise broker SSO support. SAML assertion mapping to OMS roles. Fallback to username/password.</div></td><td></td></tr>
+        <tr><td><div class="day-num">129</div></td><td><div class="day-branch">day-129-disaster-recovery</div></td><td><div class="day-title">Disaster Recovery + Blue-Green Deployment</div></td><td><div class="day-desc">Blue-green deployment strategy (zero downtime during market hours). DB backup automation (full + transaction log). Recovery runbook. Failover test. Railway multi-region config.</div></td><td></td></tr>
+        <tr><td><div class="day-num">130</div></td><td><div class="day-branch">day-130-v2-roadmap</div></td><td><div class="day-title">v2.0 Roadmap + Handoff</div></td><td><div class="day-desc">Complete technical audit. v2.0 feature roadmap document. All known issues triaged. Performance baseline established. Onboarding guide for new developers. Architecture decision records (ADRs) written.</div></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECTION 7: VS XPERT -->
+<div class="section" id="vs-xpert">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>BdStockOMS vs Xpert Trading (XFL OMS) — Feature Comparison</h2>
+  </div>
+  <table class="compare-table">
+    <thead>
+      <tr><th>Dimension</th><th>Xpert Trading (XFL)</th><th>BdStockOMS (Ours)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="compare-dim">UI Themes</td><td class="partial-c">Dark only</td><td class="superior">Dark + Light + i18n (3 languages)</td></tr>
+      <tr><td class="compare-dim">Keyboard Navigation</td><td class="partial-c">F1/F2/F3/F4/F10</td><td class="superior">F1-F10 + Ctrl+K palette + vim g-prefix + ? help + A/B/C/D presets</td></tr>
+      <tr><td class="compare-dim">Multi-Tenant</td><td class="check">Row-level isolation</td><td class="superior">Row-level + per-tenant DB provisioning ready + feature flags per tenant</td></tr>
+      <tr><td class="compare-dim">Multi-Exchange</td><td class="check">DSE + CSE</td><td class="superior">DSE + CSE + all 8 boards + exchange-specific validation</td></tr>
+      <tr><td class="compare-dim">Order Types</td><td class="check">Market/Limit/MarketAtBest/IOC/FOK/Private/Iceberg</td><td class="superior">Same + MinQty + DisplayQty + all boards + pre-open queuing</td></tr>
+      <tr><td class="compare-dim">RMS Levels</td><td class="check">Client/User/BO Group/Basket/Branch/Broker</td><td class="superior">Same + real-time utilization bars + cascade enforcement + intraday tracking</td></tr>
+      <tr><td class="compare-dim">FIX Protocol</td><td class="check">Real FIX (certified)</td><td class="superior">FIXT.1.1 + IFIXConnector interface (swap real FIX by config) + all cert tests simulated</td></tr>
+      <tr><td class="compare-dim">Charts & Analytics</td><td class="partial-c">TA Chart + Minute Chart</td><td class="superior">TradingView-style TA + drawing tools + Volume Profile + Compare overlay + all timeframes</td></tr>
+      <tr><td class="compare-dim">Market Data Widgets</td><td class="check">19 widget types</td><td class="superior">25+ widget types + Fundamental Module + AI Prediction + Compare + Multi-exchange tabs</td></tr>
+      <tr><td class="compare-dim">BOS Back Office</td><td class="check">XFL format upload + EDR reconciliation</td><td class="superior">Same + File History + auto-download upload report + DSE EOD + Broker Trade export</td></tr>
+      <tr><td class="compare-dim">Reports</td><td class="check">9 report types</td><td class="superior">18 report types + Contract Note PDF + Monthly Statement PDF + BSEC regulatory format</td></tr>
+      <tr><td class="compare-dim">Alerts</td><td class="partial-c">Margin alerts (basic)</td><td class="superior">3-tier margin + custom price/volume alerts + SMS/email/Slack/push delivery</td></tr>
+      <tr><td class="compare-dim">BO Account Opening</td><td class="check">4-step wizard</td><td class="superior">Same + CDBL link + draft save + document upload + BO Group assignment</td></tr>
+      <tr><td class="compare-dim">Trade Monitor</td><td class="check">Pie + bar charts + export</td><td class="superior">Same + anomaly detection + sector rotation + User Activities log</td></tr>
+      <tr><td class="compare-dim">Testing</td><td class="cross">Manual only</td><td class="superior">1600+ xUnit + 40+ Vitest + 10 Playwright E2E + NBomber load test</td></tr>
+      <tr><td class="compare-dim">Deployment</td><td class="partial-c">On-premise (unknown)</td><td class="superior">Railway + Vercel + Docker + GitHub Actions CI/CD + blue-green</td></tr>
+      <tr><td class="compare-dim">Monitoring & Logging</td><td class="cross">Unknown</td><td class="superior">Serilog JSON + Seq + health checks + performance metrics + alerting</td></tr>
+      <tr><td class="compare-dim">Security</td><td class="check">2FA + IP whitelist + session timeout</td><td class="superior">Same + progressive lockout + TOTP + rate limiting + IDOR audit + CORS hardening</td></tr>
+      <tr><td class="compare-dim">i18n</td><td class="partial-c">English + Bengali (toggle)</td><td class="superior">English + Bengali + Chinese + architecture for infinite more</td></tr>
+      <tr><td class="compare-dim">Performance</td><td class="check">Claimed fast</td><td class="superior">p95 &lt; 50ms market data, &lt; 200ms order placement, virtual scrolling, WebWorker calculations</td></tr>
+      <tr><td class="compare-dim">Mobile</td><td class="cross">Desktop only</td><td class="superior">PWA for Investor role + touch-optimized + install-to-homescreen</td></tr>
+      <tr><td class="compare-dim">Public API</td><td class="cross">No</td><td class="superior">Public REST API + API keys + webhooks + Postman collection</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 8: TECH STACK -->
+<div class="section" id="tech-stack">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Complete Tech Stack</h2>
+  </div>
+  <h3 style="font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Backend — Existing</h3>
+  <div class="tech-row">
+    <span class="tech-chip">ASP.NET Core 8</span>
+    <span class="tech-chip">C# 12</span>
+    <span class="tech-chip">Entity Framework Core 8</span>
+    <span class="tech-chip">SQL Server (single DB)</span>
+    <span class="tech-chip">Redis</span>
+    <span class="tech-chip">SignalR</span>
+    <span class="tech-chip">HtmlAgilityPack (scraper)</span>
+    <span class="tech-chip">BCrypt</span>
+    <span class="tech-chip">JWT</span>
+    <span class="tech-chip">xUnit + Moq</span>
+  </div>
+  <h3 style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Backend — New (Days 79–130)</h3>
+  <div class="tech-row">
+    <span class="tech-chip new">QuickFIX/N (FIX protocol)</span>
+    <span class="tech-chip new">ITenantDbContextFactory</span>
+    <span class="tech-chip new">FluentValidation</span>
+    <span class="tech-chip new">Serilog + Serilog.Sinks.Seq</span>
+    <span class="tech-chip new">AspNetCoreRateLimit</span>
+    <span class="tech-chip new">Microsoft.AspNetCore.Diagnostics.HealthChecks</span>
+    <span class="tech-chip new">NBomber (load testing)</span>
+  </div>
+  <h3 style="font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Frontend — Existing</h3>
+  <div class="tech-row">
+    <span class="tech-chip">React 18</span>
+    <span class="tech-chip">TypeScript</span>
+    <span class="tech-chip">Vite</span>
+    <span class="tech-chip">Zustand</span>
+    <span class="tech-chip">SignalR Client</span>
+    <span class="tech-chip">Chart.js</span>
+    <span class="tech-chip">react-grid-layout</span>
+    <span class="tech-chip">Axios</span>
+  </div>
+  <h3 style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Frontend — New (Days 79–130)</h3>
+  <div class="tech-row">
+    <span class="tech-chip new">react-i18next (i18n)</span>
+    <span class="tech-chip new">SheetJS / xlsx (Excel download)</span>
+    <span class="tech-chip new">D3.js (Market Map treemap)</span>
+    <span class="tech-chip new">react-window (virtual scrolling)</span>
+    <span class="tech-chip new">Vitest + React Testing Library</span>
+    <span class="tech-chip new">Playwright (E2E)</span>
+    <span class="tech-chip new">jsPDF (contract notes)</span>
+    <span class="tech-chip new">Web Push API (notifications)</span>
+  </div>
+  <h3 style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Infrastructure — New</h3>
+  <div class="tech-row">
+    <span class="tech-chip new">Docker + docker-compose</span>
+    <span class="tech-chip new">GitHub Actions (CI/CD)</span>
+    <span class="tech-chip new">Railway (API + DB + Redis)</span>
+    <span class="tech-chip new">Vercel (Frontend)</span>
+    <span class="tech-chip new">Seq (log aggregation)</span>
+  </div>
+</div>
+
+<!-- SECTION 9: DEV RULES -->
+<div class="section" id="rules">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>Non-Negotiable Development Rules</h2>
+  </div>
+  <div class="principle-grid">
+    <div class="principle-card p1">
+      <h4>📁 One Branch Per Day</h4>
+      <p><code>git checkout -b day-{N}-{slug}</code> at start of every day. Push before sleep. Never commit directly to main. PR merge only when tests pass.</p>
+    </div>
+    <div class="principle-card p2">
+      <h4>🧪 Tests Same Day</h4>
+      <p>Every new service: xUnit tests in same commit. <code>dotnet test</code> must pass before commit. Zero tolerance for failing tests. 0 failures always means always.</p>
+    </div>
+    <div class="principle-card p3">
+      <h4>🔑 Tenant Isolation Always</h4>
+      <p>Every DB query: <code>Where(x => x.BrokerageHouseId == tenantId)</code>. tenantId comes from JWT only — never from request body. If you see a service method without this: fix it same day.</p>
+    </div>
+    <div class="principle-card p4">
+      <h4>🌐 i18n From Day 100</h4>
+      <p>From Day 100 onward, every new UI string uses <code>t('key.subkey')</code>. Add the English, Bengali, and Chinese values same day. Never hardcode text in components.</p>
+    </div>
+    <div class="principle-card p5">
+      <h4>⚡ Live Data or Fallback</h4>
+      <p>Every widget attempts live data. If API fails or market is closed: fallback to demo data (never empty). Loading skeleton while fetching. Error state with retry button if demo fails too.</p>
+    </div>
+    <div class="principle-card p6">
+      <h4>🐱 Git Bash Heredocs</h4>
+      <p>Frontend files: <code>cat &gt; file &lt;&lt; 'ENDOFFILE'</code>. C# files with <code>!</code>: use <code>python -c</code> with list-of-strings. Run <code>set +H</code> before any bash with <code>!</code> chars. Stop API before build if locked.</p>
+    </div>
+  </div>
+
+  <div class="callout warn" style="margin-top:24px">
+    <div class="callout-title">⚠️ Critical Technical Rules</div>
+    <p><strong>OrderType</strong> = Buy | Sell (the side). <strong>OrderCategory</strong> = Market | Limit | MarketAtBest (the type). <strong>OrderStatus.Filled</strong> not Executed. Hub: <code>StockPriceHub</code>, signal: <code>TradeExecuted</code>. Auth store: <code>@/store/authStore</code>. DTO namespace: <code>BdStockOMS.API.Models.Admin</code>. DB: <code>BdStockOMS</code> (single DB, row-level isolation). AppDbContext is at <code>BdStockOMS.API/Data/AppDbContext.cs</code> not <code>Models/</code>.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="background:var(--surface);border-top:1px solid var(--border);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+  <div>
+    <div style="font-family:var(--sans);font-size:18px;font-weight:700;color:var(--text1);margin-bottom:4px">BdStockOMS Master Plan</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Rev 3.0 · Days 79–130 · March 2026</div>
+  </div>
+  <div style="display:flex;gap:24px;">
+    <div style="text-align:center"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent)">52</div><div style="font-size:11px;color:var(--text3)">Days Remaining</div></div>
+    <div style="text-align:center"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent3)">1,600+</div><div style="font-size:11px;color:var(--text3)">Target Tests</div></div>
+    <div style="text-align:center"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent2)">v1.0.0</div><div style="font-size:11px;color:var(--text3)">Go-Live Tag</div></div>
+    <div style="text-align:center"><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--yellow)">DSE+CSE</div><div style="font-size:11px;color:var(--text3)">Both Exchanges</div></div>
+  </div>
+</div>
+
+</div><!-- end main-content -->
+</body>
+</html>

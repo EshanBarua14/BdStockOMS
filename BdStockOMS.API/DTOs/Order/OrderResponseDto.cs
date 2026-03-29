@@ -1,4 +1,3 @@
-// DTOs/Order/OrderResponseDto.cs
 using BdStockOMS.API.Models;
 
 namespace BdStockOMS.API.DTOs.Order;
@@ -29,5 +28,19 @@ public class OrderResponseDto
     public DateTime? ExecutedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
-    public decimal TotalValue { get; set; } // Quantity × PriceAtOrder
+    public decimal TotalValue { get; set; }
+    public TimeInForce TimeInForce { get; set; }
+    public ExchangeId ExchangeId { get; set; }
+    public Board Board { get; set; }
+    public ExecInstruction ExecInstruction { get; set; }
+    public int? MinQty { get; set; }
+    public int? DisplayQty { get; set; }
+    public bool IsPrivate { get; set; }
+    public int ExecutedQuantity { get; set; }
+    public decimal? GrossTradeAmt { get; set; }
+    public AggressorSide AggressorIndicator { get; set; }
+    public string? ClOrdID { get; set; }
+    public string? OrigClOrdID { get; set; }
+    public string? TrdMatchID { get; set; }
+    public string? SettlDate { get; set; }
 }

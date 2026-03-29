@@ -1,4 +1,3 @@
-// DTOs/Order/PlaceOrderDto.cs
 using System.ComponentModel.DataAnnotations;
 using BdStockOMS.API.Models;
 
@@ -6,22 +5,18 @@ namespace BdStockOMS.API.DTOs.Order;
 
 public class PlaceOrderDto
 {
-    [Required]
-    public int StockId { get; set; }
-
-    [Required]
-    public OrderType OrderType { get; set; }      // Buy or Sell
-
-    [Required]
-    public OrderCategory OrderCategory { get; set; } // Market or Limit
-
-    [Required, Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
-    public int Quantity { get; set; }
-
-    // Required only for Limit orders
+    [Required] public int StockId { get; set; }
+    [Required] public OrderType OrderType { get; set; }
+    [Required] public OrderCategory OrderCategory { get; set; }
+    [Required, Range(1, int.MaxValue)] public int Quantity { get; set; }
     public decimal? LimitPrice { get; set; }
-
-    // Trader fills this when placing on behalf of an investor
-    // Null when investor places their own order
     public int? InvestorId { get; set; }
+    public TimeInForce TimeInForce { get; set; } = TimeInForce.Day;
+    public ExchangeId ExchangeId { get; set; } = ExchangeId.DSE;
+    public Board Board { get; set; } = Board.Public;
+    public ExecInstruction ExecInstruction { get; set; } = ExecInstruction.None;
+    public int? MinQty { get; set; }
+    public int? DisplayQty { get; set; }
+    public bool IsPrivate { get; set; } = false;
+    public string? ClOrdID { get; set; }
 }
