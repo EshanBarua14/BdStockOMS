@@ -99,6 +99,17 @@ builder.Services.AddScoped<IBosXmlService, BosXmlService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<ISessionPolicyService, SessionPolicyService>();
 builder.Services.AddScoped<IUserPermissionService, UserPermissionService>();
+builder.Services.AddHttpClient("DSE", c => {
+    c.BaseAddress = new Uri("https://dsebd.org/");
+    c.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddHttpClient("CSE", c => {
+    c.BaseAddress = new Uri("https://www.cse.com.bd/");
+    c.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddScoped<IDseScraperService, DseScraperService>();
+builder.Services.AddScoped<ICseScraperService, CseScraperService>();
+builder.Services.AddScoped<IExchangeScraperFactory, ExchangeScraperFactory>();
 builder.Services.AddScoped<IContractNoteService, ContractNoteService>();
 builder.Services.AddHostedService<BosComplianceHostedService>();
 
