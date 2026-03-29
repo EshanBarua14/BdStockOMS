@@ -49,3 +49,23 @@ public class UpdateCorporateActionDto
 
     public bool IsProcessed { get; set; }
 }
+
+public class ProcessCorporateActionResultDto
+{
+    public int CorporateActionId      { get; set; }
+    public string ActionType          { get; set; } = string.Empty;
+    public int AffectedHoldings       { get; set; }
+    public decimal TotalCashDistributed { get; set; }
+    public int TotalSharesAwarded     { get; set; }
+    public List<CorporateActionLedgerEntryDto> Entries { get; set; } = new();
+}
+
+public class CorporateActionLedgerEntryDto
+{
+    public int    InvestorId       { get; set; }
+    public int    HoldingQty       { get; set; }
+    public decimal CashAmount      { get; set; }
+    public int    SharesAwarded    { get; set; }
+    public string EntryType        { get; set; } = string.Empty;
+    public string Notes            { get; set; } = string.Empty;
+}

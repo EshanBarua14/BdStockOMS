@@ -12,4 +12,6 @@ public interface ICorporateActionService
     Task<Result<CorporateActionResponseDto>> UpdateAsync(int id, UpdateCorporateActionDto dto);
     Task<Result<bool>> MarkProcessedAsync(int id);
     Task<Result<bool>> DeleteAsync(int id);
+    Task<Result<ProcessCorporateActionResultDto>> ProcessAsync(int id);
+    Task<Result<List<CorporateActionLedgerEntryDto>>> GetLedgerAsync(int corporateActionId);
 }

@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<RMSLimit> RMSLimits { get; set; }
     public DbSet<SectorConfig> SectorConfigs { get; set; }
     public DbSet<CorporateAction> CorporateActions { get; set; }
+    public DbSet<CorporateActionLedger> CorporateActionLedgers => Set<CorporateActionLedger>();
     public DbSet<FundRequest> FundRequests { get; set; }
     public DbSet<MarketData> MarketData { get; set; }
     public DbSet<NewsItem> NewsItems { get; set; }

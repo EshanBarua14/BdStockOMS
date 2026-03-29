@@ -11,11 +11,7 @@ namespace BdStockOMS.API.Controllers;
 public class CorporateActionController : ControllerBase
 {
     private readonly ICorporateActionService _service;
-
-    public CorporateActionController(ICorporateActionService service)
-    {
-        _service = service;
-    }
+    public CorporateActionController(ICorporateActionService service) => _service = service;
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] int? stockId, [FromQuery] bool? isProcessed)
@@ -43,7 +39,9 @@ public class CorporateActionController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateCorporateActionDto dto)
     {
         var result = await _service.CreateAsync(dto);
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Error);
+        return result.IsSuccess
+            ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value)
+            : BadRequest(result.Error);
     }
 
     [HttpPut("{id:int}")]
@@ -59,7 +57,24 @@ public class CorporateActionController : ControllerBase
     public async Task<IActionResult> MarkProcessed(int id)
     {
         var result = await _service.MarkProcessedAsync(id);
-        return result.IsSuccess ? Ok(new { message = "Corporate action marked as processed." }) : BadRequest(result.Error);
+        return result.IsSuccess
+            ? Ok(new { message = "Corporate action marked as processed." })
+            : BadRequest(result.Error);
+    }
+
+    [HttpPost("{id:int}/process")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> Process(int id)
+    {
+        var result = await _service.ProcessAsync(id);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+    }
+
+    [HttpGet("{id:int}/ledger")]
+    public async Task<IActionResult> GetLedger(int id)
+    {
+        var result = await _service.GetLedgerAsync(id);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
     [HttpDelete("{id:int}")]
